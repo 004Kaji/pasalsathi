@@ -31,17 +31,14 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // Mark OTP as used
-  await supabase.from('phone_otps').update({ used: true }).eq('id', record.id)
-
   // Build a stable internal email from the phone number
-  const internalEmail = `${normalized.replace('+', '')}@merohisab.np`
+  const internalEmail = `${normalized.replace('+', '')}@pasalsathi.net`
 
-  // Create user if not exists (admin API — no email verification needed)
+  // Find existing user by email — listUsers has no filter param in v2, so paginate and find
+  const { data: userPage } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 })
+  const existing = userPage?.users?.find(u => u.email === internalEmail)
+
   let userId: string
-
-  const { data: existingUsers } = await supabase.auth.admin.listUsers()
-  const existing = existingUsers?.users.find((u) => u.email === internalEmail)
 
   if (existing) {
     userId = existing.id
@@ -70,6 +67,9 @@ export async function POST(request: NextRequest) {
   if (linkError || !linkData.properties?.hashed_token) {
     return NextResponse.json({ error: 'लगइन गर्न समस्या भयो' }, { status: 500 })
   }
+
+  // Mark OTP as used only after all operations succeed — prevents burning the OTP on a transient error
+  await supabase.from('phone_otps').update({ used: true }).eq('id', record.id)
 
   return NextResponse.json({
     success: true,

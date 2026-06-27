@@ -113,7 +113,7 @@ export default function CustomerDetailPage() {
 
     setSmsLoading(true)
     setSmsMsg('')
-    const message = `नमस्ते ${customer.name} जी, तपाईंको NPR ${outstanding.toLocaleString()} बाँकी छ। कृपया भुक्तान गर्नुहोस् - MeroHisab`
+    const message = `नमस्ते ${customer.name} जी, तपाईंको NPR ${outstanding.toLocaleString()} बाँकी छ। कृपया भुक्तान गर्नुहोस् - PasalSathi`
 
     const res = await fetch('/api/sms/send', {
       method: 'POST',

@@ -22,14 +22,14 @@ export default function GodamPage() {
     setLoading(true)
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) { setLoading(false); return }
 
     const { data: biz } = await supabase
       .from('businesses')
       .select('id, plan')
       .eq('owner_id', user.id)
       .single()
-    if (!biz) return
+    if (!biz) { setLoading(false); return }
 
     setPlan(biz.plan as Plan)
 
@@ -47,12 +47,12 @@ export default function GodamPage() {
   useEffect(() => { fetchProducts() }, [fetchProducts])
 
   const lowStockProducts = products.filter(
-    (p) => Number(p.current_stock) <= Number(p.low_stock_threshold)
+    (p) => Number(p.current_stock) < Number(p.low_stock_threshold)
   )
 
   const filtered = products.filter((p) => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase())
-    const matchFilter = filter === 'all' || Number(p.current_stock) <= Number(p.low_stock_threshold)
+    const matchFilter = filter === 'all' || Number(p.current_stock) < Number(p.low_stock_threshold)
     return matchSearch && matchFilter
   })
 
@@ -169,7 +169,7 @@ export default function GodamPage() {
 }
 
 function ProductCard({ product }: { product: Product }) {
-  const isLow = Number(product.current_stock) <= Number(product.low_stock_threshold)
+  const isLow = Number(product.current_stock) < Number(product.low_stock_threshold)
   const unit = UNIT_LABELS[product.unit] ?? product.unit
 
   return (

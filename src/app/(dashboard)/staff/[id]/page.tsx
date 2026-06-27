@@ -89,7 +89,7 @@ export default function StaffDetailPage() {
       month: viewMonth,
       year: viewYear,
       working_days: totalDays,
-      present_days: presentDays + halfDays,
+      present_days: presentDays,
       payable_amount: payableAmount,
       paid_amount: payableAmount,
       payment_date: new Date().toISOString().split('T')[0],

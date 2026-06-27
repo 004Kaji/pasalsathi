@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           token: sparrowToken,
-          from: 'MeroHisab',
+          from: 'PasalSathi',
           to: phone.replace('+977', '').replace(/\D/g, ''),
           text: message,
         }),

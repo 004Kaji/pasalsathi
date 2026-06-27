@@ -120,7 +120,7 @@ export default function ReportPage() {
 
   function handleExportCSV() {
     const rows = [
-      ['MeroHisab Report', `${MONTH_NAMES_NP[month - 1]} ${year}`],
+      ['PasalSathi Report', `${MONTH_NAMES_NP[month - 1]} ${year}`],
       [],
       ['विवरण', 'रकम (NPR)'],
       ['कुल आम्दानी', totalIn],
@@ -138,7 +138,7 @@ export default function ReportPage() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `MeroHisab-${year}-${month}.csv`
+    a.download = `PasalSathi-${year}-${month}.csv`
     a.click()
   }
 

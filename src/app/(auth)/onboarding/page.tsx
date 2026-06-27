@@ -60,6 +60,7 @@ export default function OnboardingPage() {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
+      setLoading(false)
       router.push('/login')
       return
     }
@@ -85,7 +86,7 @@ export default function OnboardingPage() {
     <div className="min-h-screen bg-gray-50 px-4 py-8">
       <div className="max-w-lg mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-orange-600">मेरो हिसाब</h1>
+          <h1 className="text-2xl font-bold text-orange-600">पसलसाथी</h1>
           <p className="text-gray-500 mt-1">तपाईंको व्यापार सेटअप गर्नुहोस्</p>
           <div className="flex justify-center gap-2 mt-4">
             {[1, 2].map((s) => (

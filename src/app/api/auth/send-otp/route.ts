@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
 
   // Send via Sparrow SMS (local format: remove +977)
   const localPhone = normalized.replace('+977', '')
-  const message = `MeroHisab: तपाईंको OTP कोड ${otp} हो। १० मिनटमा म्याद सकिन्छ।`
+  const message = `PasalSathi: तपाईंको OTP कोड ${otp} हो। १० मिनटमा म्याद सकिन्छ।`
 
   const sparrowToken = process.env.SPARROW_SMS_TOKEN
 
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         token: sparrowToken,
-        from: 'MeroHisab',
+        from: 'PasalSathi',
         to: localPhone,
         text: message,
       }),

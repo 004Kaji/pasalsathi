@@ -28,7 +28,7 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup')
   const isOnboarding = pathname.startsWith('/onboarding')
-  const isPublic = isAuthPage || pathname === '/'
+  const isPublic = isAuthPage || pathname === '/' || pathname.startsWith('/auth/callback')
 
   if (!user && !isPublic) {
     return NextResponse.redirect(new URL('/login', request.url))
