@@ -10,7 +10,7 @@ export type StockMovementType = 'in' | 'out'
 export type AttendanceStatus = 'present' | 'absent' | 'half_day' | 'holiday'
 export type SalaryStatus = 'pending' | 'paid'
 export type BusinessUserRole = 'owner' | 'manager' | 'staff'
-export type BusinessType = 'kirana' | 'hardware' | 'pharmacy' | 'clothing' | 'wholesale' | 'other'
+export type BusinessType = 'kirana' | 'hardware' | 'pharmacy' | 'clothing' | 'wholesale' | 'restaurant' | 'service' | 'salon' | 'hotel' | 'other'
 
 export interface Business {
   id: string
@@ -21,6 +21,7 @@ export interface Business {
   phone: string | null
   pan_number: string | null
   logo_url: string | null
+  track_stock: boolean
   plan: Plan
   billing_cycle: BillingCycle
   trial_ends_at: string
