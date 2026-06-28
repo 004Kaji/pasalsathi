@@ -91,6 +91,19 @@ export default function SupplierDetailPage() {
           total_paid: Number(supplier!.total_paid) + parseFloat(amount),
           updated_at: new Date().toISOString(),
         }).eq('id', id)
+
+        // Auto-create Hisab transaction when paying supplier
+        await supabase.from('transactions').insert({
+          business_id: businessId,
+          type: 'out',
+          amount: parseFloat(amount),
+          discount_percent: 0,
+          category: 'purchase',
+          description: `सप्लायर भुक्तानी — ${supplier?.name ?? ''}${description.trim() ? ': ' + description.trim() : ''}`,
+          payment_method: 'cash',
+          transaction_date: today.toISOString().split('T')[0],
+          created_by: null,
+        })
       }
       setAmount('')
       setDescription('')

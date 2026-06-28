@@ -99,6 +99,21 @@ export default function CustomerDetailPage() {
       .update({ [field]: current + amt })
       .eq('id', id)
 
+    // Auto-create Hisab transaction when collecting payment
+    if (entryType === 'payment') {
+      await supabase.from('transactions').insert({
+        business_id: businessId,
+        type: 'in',
+        amount: amt,
+        discount_percent: 0,
+        category: 'sales',
+        description: `खाता संकलन — ${customer?.name ?? ''}${description.trim() ? ': ' + description.trim() : ''}`,
+        payment_method: 'cash',
+        transaction_date: new Date().toISOString().split('T')[0],
+        created_by: user.id,
+      })
+    }
+
     // Reset form and refresh
     setAmount('')
     setDescription('')

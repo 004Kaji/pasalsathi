@@ -91,6 +91,8 @@ export default function StaffDetailPage() {
     const { data: biz } = await supabase.from('businesses').select('id').eq('owner_id', user.id).single()
     if (!biz) return
 
+    const today = new Date().toISOString().split('T')[0]
+
     await supabase.from('salary_payments').upsert({
       business_id: biz.id,
       staff_id: id,
@@ -100,10 +102,23 @@ export default function StaffDetailPage() {
       present_days: presentDays,
       payable_amount: payableAmount,
       paid_amount: payableAmount,
-      payment_date: new Date().toISOString().split('T')[0],
+      payment_date: today,
       payment_method: 'cash',
       status: 'paid',
     }, { onConflict: 'staff_id,month,year' })
+
+    // Auto-create Hisab transaction for salary payout
+    await supabase.from('transactions').insert({
+      business_id: biz.id,
+      type: 'out',
+      amount: payableAmount,
+      discount_percent: 0,
+      category: 'salary',
+      description: `तलब — ${staff?.name ?? ''}`,
+      payment_method: 'cash',
+      transaction_date: today,
+      created_by: user.id,
+    })
 
     await fetchData()
   }
