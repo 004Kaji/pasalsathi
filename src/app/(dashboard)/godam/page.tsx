@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { Plus, Search, AlertTriangle, Package, ChevronRight, TrendingUp } from 'lucide-react'
+import { Plus, Search, AlertTriangle, Package, ChevronRight, TrendingUp, Download } from 'lucide-react'
 import { PLAN_LIMITS } from '@/lib/plan-limits'
 import type { Product, Plan } from '@/types/database'
 
@@ -69,18 +69,26 @@ export default function GodamPage() {
       <div className="sticky top-0 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/10 z-10 px-4 pt-5 pb-3 space-y-3">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-white">📦 Warehouse</h1>
-          {atLimit ? (
-            <div className="text-xs text-red-400 font-medium bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-lg">
-              Limit Reached ({limit})
-            </div>
-          ) : (
+          <div className="flex gap-2">
             <Link
-              href="/godam/new"
-              className="flex items-center gap-1.5 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white px-4 py-2.5 rounded-xl font-semibold text-base active:scale-95 transition-transform"
+              href="/godam/receive"
+              className="flex items-center gap-1.5 bg-blue-600/80 border border-blue-500/40 text-white px-3 py-2.5 rounded-xl font-semibold text-sm active:scale-95 transition-transform"
             >
-              <Plus size={20} /> Add
+              <Download size={17} /> Receive
             </Link>
-          )}
+            {atLimit ? (
+              <div className="text-xs text-red-400 font-medium bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-lg">
+                Limit Reached ({limit})
+              </div>
+            ) : (
+              <Link
+                href="/godam/new"
+                className="flex items-center gap-1.5 bg-gradient-to-r from-orange-600 to-red-600 text-white px-3 py-2.5 rounded-xl font-semibold text-sm active:scale-95 transition-transform"
+              >
+                <Plus size={17} /> Add
+              </Link>
+            )}
+          </div>
         </div>
         <div className="relative">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
