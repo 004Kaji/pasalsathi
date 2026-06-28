@@ -91,33 +91,33 @@ export default function HisabPage() {
   return (
     <div className="pb-6">
       {/* Header */}
-      <div className="sticky top-0 bg-white border-b border-gray-100 z-10 px-4 pt-5 pb-3">
+      <div className="sticky top-0 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/10 z-10 px-4 pt-5 pb-3">
         <div className="flex items-center justify-between mb-3">
-          <h1 className="text-2xl font-bold text-gray-900">हिसाब किताब</h1>
+          <h1 className="text-2xl font-bold text-white">📒 हिसाब किताब</h1>
           <Link
             href="/hisab/new"
-            className="flex items-center gap-1.5 bg-orange-600 text-white px-4 py-2.5 rounded-xl font-semibold text-base active:scale-95 transition-transform"
+            className="flex items-center gap-1.5 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white px-4 py-2.5 rounded-xl font-semibold text-base active:scale-95 transition-transform"
           >
             <Plus size={20} /> थप्नुहोस्
           </Link>
         </div>
 
         {/* Date navigator */}
-        <div className="flex items-center justify-between bg-gray-50 rounded-xl p-2">
+        <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl p-2">
           <button
             onClick={() => setDate(shiftDate(date, -1))}
-            className="p-2 rounded-lg hover:bg-gray-200 active:scale-95 transition-transform"
+            className="p-2 rounded-lg hover:bg-white/10 text-gray-400 active:scale-95 transition-transform"
           >
             <ChevronLeft size={22} />
           </button>
           <div className="text-center">
-            <p className="font-semibold text-gray-800 text-base">{isoToDisplay(date)}</p>
-            {isToday && <span className="text-xs text-orange-600 font-medium">आज</span>}
+            <p className="font-semibold text-white text-base">{isoToDisplay(date)}</p>
+            {isToday && <span className="text-xs text-orange-400 font-medium">आज</span>}
           </div>
           <button
             onClick={() => setDate(shiftDate(date, 1))}
             disabled={date >= today}
-            className="p-2 rounded-lg hover:bg-gray-200 active:scale-95 transition-transform disabled:opacity-30"
+            className="p-2 rounded-lg hover:bg-white/10 text-gray-400 active:scale-95 transition-transform disabled:opacity-30"
           >
             <ChevronRight size={22} />
           </button>
@@ -127,17 +127,17 @@ export default function HisabPage() {
       <div className="px-4 pt-4 space-y-4">
         {/* Summary strip */}
         <div className="grid grid-cols-3 gap-2">
-          <div className="bg-green-50 rounded-xl p-3 text-center border border-green-100">
-            <p className="text-xs text-green-600 font-medium">आम्दानी</p>
-            <p className="text-lg font-bold text-green-800 mt-0.5">NPR {cashIn.toLocaleString('ne-NP')}</p>
+          <div className="bg-green-500/10 rounded-xl p-3 text-center border border-green-500/20">
+            <p className="text-xs text-green-400 font-medium">💰 आम्दानी</p>
+            <p className="text-lg font-bold text-green-300 mt-0.5">NPR {cashIn.toLocaleString('ne-NP')}</p>
           </div>
-          <div className="bg-red-50 rounded-xl p-3 text-center border border-red-100">
-            <p className="text-xs text-red-600 font-medium">खर्च</p>
-            <p className="text-lg font-bold text-red-800 mt-0.5">NPR {cashOut.toLocaleString('ne-NP')}</p>
+          <div className="bg-red-500/10 rounded-xl p-3 text-center border border-red-500/20">
+            <p className="text-xs text-red-400 font-medium">💸 खर्च</p>
+            <p className="text-lg font-bold text-red-300 mt-0.5">NPR {cashOut.toLocaleString('ne-NP')}</p>
           </div>
-          <div className={`rounded-xl p-3 text-center border ${net >= 0 ? 'bg-blue-50 border-blue-100' : 'bg-orange-50 border-orange-100'}`}>
-            <p className={`text-xs font-medium ${net >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>बाँकी</p>
-            <p className={`text-lg font-bold mt-0.5 ${net >= 0 ? 'text-blue-800' : 'text-orange-800'}`}>
+          <div className={`rounded-xl p-3 text-center border ${net >= 0 ? 'bg-blue-500/10 border-blue-500/20' : 'bg-orange-500/10 border-orange-500/20'}`}>
+            <p className={`text-xs font-medium ${net >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>📊 बाँकी</p>
+            <p className={`text-lg font-bold mt-0.5 ${net >= 0 ? 'text-blue-300' : 'text-orange-300'}`}>
               {net >= 0 ? '+' : ''}{NPR(net)}
             </p>
           </div>
@@ -145,12 +145,12 @@ export default function HisabPage() {
 
         {/* Transaction list */}
         {loading ? (
-          <div className="text-center py-12 text-gray-400 text-lg">लोड हुँदैछ...</div>
+          <div className="text-center py-12 text-gray-500 text-lg">लोड हुँदैछ...</div>
         ) : transactions.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-5xl mb-4">📒</p>
             <p className="text-xl font-semibold text-gray-500">यो दिनको हिसाब छैन</p>
-            <p className="text-base text-gray-400 mt-2">माथिको "+ थप्नुहोस्" थिच्नुहोस्</p>
+            <p className="text-base text-gray-600 mt-2">माथिको "+ थप्नुहोस्" थिच्नुहोस्</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -177,35 +177,35 @@ function TransactionCard({ tx, onDelete }: { tx: Transaction; onDelete: () => vo
   const cat = CATEGORY_LABELS[tx.category]
 
   return (
-    <div className={`rounded-2xl border-l-4 bg-white shadow-sm border border-gray-100 p-4 ${isIn ? 'border-l-green-500' : 'border-l-red-500'}`}>
+    <div className={`rounded-2xl border-l-4 bg-white/5 border border-white/10 p-4 ${isIn ? 'border-l-green-500' : 'border-l-red-500'}`}>
       <div className="flex items-start justify-between gap-2">
         {/* Left side */}
         <div className="flex items-start gap-3 flex-1 min-w-0">
-          <div className={`rounded-xl p-2.5 mt-0.5 shrink-0 ${isIn ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+          <div className={`rounded-xl p-2.5 mt-0.5 shrink-0 ${isIn ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
             {isIn ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
           </div>
           <div className="min-w-0">
-            <p className="text-base font-semibold text-gray-800 truncate">
+            <p className="text-base font-semibold text-white truncate">
               {tx.description || cat.label}
             </p>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <span className="flex items-center gap-1 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+              <span className="flex items-center gap-1 text-xs bg-white/10 text-gray-400 px-2 py-0.5 rounded-full">
                 {cat.icon} {cat.label}
               </span>
-              <span className="text-xs text-gray-400">{PAYMENT_LABELS[tx.payment_method] ?? tx.payment_method}</span>
+              <span className="text-xs text-gray-600">{PAYMENT_LABELS[tx.payment_method] ?? tx.payment_method}</span>
             </div>
           </div>
         </div>
 
         {/* Right side */}
         <div className="flex flex-col items-end gap-2 shrink-0">
-          <p className={`text-xl font-bold ${isIn ? 'text-green-700' : 'text-red-700'}`}>
+          <p className={`text-xl font-bold ${isIn ? 'text-green-400' : 'text-red-400'}`}>
             {isIn ? '+' : '-'} NPR {NPR(Number(tx.amount))}
           </p>
           <div className="flex gap-1">
             <Link
               href={`/hisab/${tx.id}`}
-              className="p-2 rounded-lg bg-gray-100 text-gray-500 hover:bg-blue-50 hover:text-blue-600 active:scale-95 transition-all"
+              className="p-2 rounded-lg bg-white/10 text-gray-500 hover:bg-blue-500/20 hover:text-blue-400 active:scale-95 transition-all"
             >
               <Pencil size={16} />
             </Link>

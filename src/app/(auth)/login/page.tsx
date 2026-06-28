@@ -104,10 +104,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <Card className="w-full max-w-sm">
+    <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] px-4">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-orange-600/10 rounded-full blur-[100px] pointer-events-none" />
+      <Card className="w-full max-w-sm bg-white/[0.04] border border-white/10 shadow-2xl relative">
         <CardHeader className="text-center pb-2">
-          <CardTitle className="text-2xl font-bold text-orange-600">पसलसाथी</CardTitle>
+          <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+            <span className="text-2xl">🏪</span>
+          </div>
+          <CardTitle className="text-2xl font-bold text-white">पसलसाथी</CardTitle>
           <p className="text-sm text-gray-500">आफ्नो खातामा लगइन गर्नुहोस्</p>
         </CardHeader>
         <CardContent>
@@ -115,7 +119,7 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={handleGoogleLogin}
-            className="w-full flex items-center justify-center gap-3 border border-gray-200 rounded-xl py-3 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 active:scale-[0.98] transition-all mb-4"
+            className="w-full flex items-center justify-center gap-3 border border-white/10 bg-white/5 rounded-xl py-3 px-4 text-sm font-medium text-gray-300 hover:bg-white/10 active:scale-[0.98] transition-all mb-4"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
@@ -127,15 +131,15 @@ export default function LoginPage() {
           </button>
 
           <div className="flex items-center gap-3 mb-4">
-            <div className="flex-1 h-px bg-gray-200" />
-            <span className="text-xs text-gray-400">वा</span>
-            <div className="flex-1 h-px bg-gray-200" />
+            <div className="flex-1 h-px bg-white/10" />
+            <span className="text-xs text-gray-600">वा</span>
+            <div className="flex-1 h-px bg-white/10" />
           </div>
 
           <Tabs defaultValue="phone">
-            <TabsList className="w-full mb-4">
-              <TabsTrigger value="phone" className="flex-1">📱 फोन नम्बर</TabsTrigger>
-              <TabsTrigger value="email" className="flex-1">✉️ इमेल</TabsTrigger>
+            <TabsList className="w-full mb-4 bg-white/5 border border-white/10">
+              <TabsTrigger value="phone" className="flex-1 data-[state=active]:bg-white/10 data-[state=active]:text-white text-gray-500">📱 फोन नम्बर</TabsTrigger>
+              <TabsTrigger value="email" className="flex-1 data-[state=active]:bg-white/10 data-[state=active]:text-white text-gray-500">✉️ इमेल</TabsTrigger>
             </TabsList>
 
             {/* Phone OTP Tab */}
@@ -237,9 +241,9 @@ export default function LoginPage() {
             </TabsContent>
           </Tabs>
 
-          <p className="mt-4 text-center text-sm text-gray-600">
+          <p className="mt-4 text-center text-sm text-gray-500">
             खाता छैन?{' '}
-            <Link href="/signup" className="text-orange-600 font-medium">
+            <Link href="/signup" className="text-orange-400 font-medium hover:text-orange-300">
               दर्ता गर्नुहोस्
             </Link>
           </p>

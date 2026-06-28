@@ -22,7 +22,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const subStatus = getSubscriptionStatus(business as Business)
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
       <SubscriptionBanner status={subStatus} />
       <main className="flex-1 pb-20 max-w-2xl mx-auto w-full">
         {children}

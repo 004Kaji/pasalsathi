@@ -66,30 +66,30 @@ export default function GodamPage() {
   return (
     <div className="pb-6">
       {/* Header */}
-      <div className="sticky top-0 bg-white border-b border-gray-100 z-10 px-4 pt-5 pb-3 space-y-3">
+      <div className="sticky top-0 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/10 z-10 px-4 pt-5 pb-3 space-y-3">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">गोदाम</h1>
+          <h1 className="text-2xl font-bold text-white">📦 गोदाम</h1>
           {atLimit ? (
-            <div className="text-xs text-red-600 font-medium bg-red-50 px-3 py-1.5 rounded-lg">
+            <div className="text-xs text-red-400 font-medium bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-lg">
               सीमा पुग्यो ({limit})
             </div>
           ) : (
             <Link
               href="/godam/new"
-              className="flex items-center gap-1.5 bg-orange-600 text-white px-4 py-2.5 rounded-xl font-semibold text-base active:scale-95 transition-transform"
+              className="flex items-center gap-1.5 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white px-4 py-2.5 rounded-xl font-semibold text-base active:scale-95 transition-transform"
             >
               <Plus size={20} /> थप्नुहोस्
             </Link>
           )}
         </div>
         <div className="relative">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
           <input
             type="text"
             placeholder="सामानको नाम खोज्नुहोस्..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-gray-100 rounded-xl text-base outline-none focus:ring-2 focus:ring-orange-400"
+            className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-base text-white placeholder:text-gray-600 outline-none focus:ring-2 focus:ring-orange-500/50"
           />
         </div>
       </div>
@@ -97,22 +97,22 @@ export default function GodamPage() {
       <div className="px-4 pt-4 space-y-4">
         {/* Stats row */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4">
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-1">
-              <Package size={18} className="text-blue-600" />
-              <p className="text-sm font-medium text-blue-600">कुल सामान</p>
+              <Package size={18} className="text-blue-400" />
+              <p className="text-sm font-medium text-blue-400">कुल सामान</p>
             </div>
-            <p className="text-2xl font-bold text-blue-900">{products.length}</p>
+            <p className="text-2xl font-bold text-blue-300">{products.length}</p>
             {limit !== Infinity && (
-              <p className="text-xs text-blue-400 mt-0.5">/ {limit} सीमा</p>
+              <p className="text-xs text-blue-500 mt-0.5">/ {limit} सीमा</p>
             )}
           </div>
-          <div className="bg-green-50 border border-green-100 rounded-2xl p-4">
+          <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-1">
-              <TrendingUp size={18} className="text-green-600" />
-              <p className="text-sm font-medium text-green-600">स्टक मूल्य</p>
+              <TrendingUp size={18} className="text-green-400" />
+              <p className="text-sm font-medium text-green-400">💵 स्टक मूल्य</p>
             </div>
-            <p className="text-2xl font-bold text-green-900">
+            <p className="text-2xl font-bold text-green-300">
               NPR {totalValue.toLocaleString('ne-NP')}
             </p>
           </div>
@@ -122,17 +122,17 @@ export default function GodamPage() {
         {lowStockProducts.length > 0 && (
           <button
             onClick={() => setFilter(filter === 'low' ? 'all' : 'low')}
-            className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all active:scale-[0.98] ${
+            className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all active:scale-[0.98] ${
               filter === 'low'
                 ? 'bg-red-600 border-red-600 text-white'
-                : 'bg-red-50 border-red-300 text-red-700'
+                : 'bg-red-500/10 border-red-500/30 text-red-400'
             }`}
           >
             <div className="flex items-center gap-3">
               <AlertTriangle size={22} />
               <div className="text-left">
                 <p className="font-bold text-base">
-                  {lowStockProducts.length} वस्तुको स्टक कम छ!
+                  ⚠️ {lowStockProducts.length} वस्तुको स्टक कम छ!
                 </p>
                 <p className={`text-sm ${filter === 'low' ? 'text-red-100' : 'text-red-500'}`}>
                   {filter === 'low' ? 'सबै देखाउन थिच्नुहोस्' : 'हेर्न थिच्नुहोस्'}
@@ -145,7 +145,7 @@ export default function GodamPage() {
 
         {/* Product list */}
         {loading ? (
-          <div className="text-center py-12 text-gray-400 text-lg">लोड हुँदैछ...</div>
+          <div className="text-center py-12 text-gray-500 text-lg">लोड हुँदैछ...</div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-5xl mb-4">📦</p>
@@ -153,7 +153,7 @@ export default function GodamPage() {
               {search || filter === 'low' ? 'कुनै सामान भेटिएन' : 'गोदाममा सामान छैन'}
             </p>
             {!search && filter === 'all' && (
-              <p className="text-base text-gray-400 mt-2">माथिको "+ थप्नुहोस्" थिच्नुहोस्</p>
+              <p className="text-base text-gray-600 mt-2">माथिको "+ थप्नुहोस्" थिच्नुहोस्</p>
             )}
           </div>
         ) : (
@@ -175,32 +175,32 @@ function ProductCard({ product }: { product: Product }) {
   return (
     <Link href={`/godam/${product.id}`}>
       <div className={`rounded-2xl border p-4 flex items-center justify-between active:scale-[0.98] transition-transform ${
-        isLow ? 'bg-red-50 border-red-200' : 'bg-white border-gray-100 shadow-sm'
+        isLow ? 'bg-red-500/10 border-red-500/20' : 'bg-white/5 border-white/10'
       }`}>
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className={`rounded-xl p-2.5 shrink-0 ${isLow ? 'bg-red-100' : 'bg-blue-50'}`}>
+          <div className={`rounded-xl p-2.5 shrink-0 ${isLow ? 'bg-red-500/20' : 'bg-blue-500/20'}`}>
             {isLow
-              ? <AlertTriangle size={22} className="text-red-500" />
-              : <Package size={22} className="text-blue-500" />
+              ? <AlertTriangle size={22} className="text-red-400" />
+              : <Package size={22} className="text-blue-400" />
             }
           </div>
           <div className="min-w-0">
-            <p className="text-base font-bold text-gray-900 truncate">{product.name}</p>
+            <p className="text-base font-bold text-white truncate">{product.name}</p>
             <div className="flex items-center gap-3 mt-0.5 flex-wrap">
               <span className="text-sm text-gray-500">
-                बेच्ने मूल्य: NPR {Number(product.selling_price).toLocaleString('ne-NP')}
+                💰 NPR {Number(product.selling_price).toLocaleString('ne-NP')}
               </span>
             </div>
           </div>
         </div>
         <div className="text-right ml-3 shrink-0">
-          <p className={`text-xl font-bold ${isLow ? 'text-red-700' : 'text-gray-900'}`}>
+          <p className={`text-xl font-bold ${isLow ? 'text-red-400' : 'text-white'}`}>
             {Number(product.current_stock).toLocaleString('ne-NP')}
           </p>
           <p className="text-xs text-gray-500">{unit}</p>
           {isLow && (
-            <span className="text-xs font-semibold text-red-600 bg-red-100 px-2 py-0.5 rounded-full mt-1 block">
-              कम छ!
+            <span className="text-xs font-semibold text-red-400 bg-red-500/20 px-2 py-0.5 rounded-full mt-1 block">
+              ⚠️ कम छ!
             </span>
           )}
         </div>
