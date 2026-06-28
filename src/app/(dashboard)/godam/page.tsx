@@ -8,7 +8,7 @@ import { PLAN_LIMITS } from '@/lib/plan-limits'
 import type { Product, Plan } from '@/types/database'
 
 const UNIT_LABELS: Record<string, string> = {
-  piece: 'पिस', kg: 'केजी', litre: 'लिटर', box: 'बक्स', dozen: 'दर्जन',
+  piece: 'Piece', kg: 'Kg', litre: 'Litre', box: 'Box', dozen: 'Dozen',
 }
 
 export default function GodamPage() {
@@ -68,17 +68,17 @@ export default function GodamPage() {
       {/* Header */}
       <div className="sticky top-0 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/10 z-10 px-4 pt-5 pb-3 space-y-3">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-white">📦 गोदाम</h1>
+          <h1 className="text-2xl font-bold text-white">📦 Warehouse</h1>
           {atLimit ? (
             <div className="text-xs text-red-400 font-medium bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-lg">
-              सीमा पुग्यो ({limit})
+              Limit Reached ({limit})
             </div>
           ) : (
             <Link
               href="/godam/new"
               className="flex items-center gap-1.5 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white px-4 py-2.5 rounded-xl font-semibold text-base active:scale-95 transition-transform"
             >
-              <Plus size={20} /> थप्नुहोस्
+              <Plus size={20} /> Add
             </Link>
           )}
         </div>
@@ -86,7 +86,7 @@ export default function GodamPage() {
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
           <input
             type="text"
-            placeholder="सामानको नाम खोज्नुहोस्..."
+            placeholder="Search item name..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-base text-white placeholder:text-gray-600 outline-none focus:ring-2 focus:ring-orange-500/50"
@@ -100,17 +100,17 @@ export default function GodamPage() {
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-1">
               <Package size={18} className="text-blue-400" />
-              <p className="text-sm font-medium text-blue-400">कुल सामान</p>
+              <p className="text-sm font-medium text-blue-400">Total Items</p>
             </div>
             <p className="text-2xl font-bold text-blue-300">{products.length}</p>
             {limit !== Infinity && (
-              <p className="text-xs text-blue-500 mt-0.5">/ {limit} सीमा</p>
+              <p className="text-xs text-blue-500 mt-0.5">/ {limit} limit</p>
             )}
           </div>
           <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-1">
               <TrendingUp size={18} className="text-green-400" />
-              <p className="text-sm font-medium text-green-400">💵 स्टक मूल्य</p>
+              <p className="text-sm font-medium text-green-400">💵 Stock Value</p>
             </div>
             <p className="text-2xl font-bold text-green-300">
               NPR {totalValue.toLocaleString('ne-NP')}
@@ -132,10 +132,10 @@ export default function GodamPage() {
               <AlertTriangle size={22} />
               <div className="text-left">
                 <p className="font-bold text-base">
-                  ⚠️ {lowStockProducts.length} वस्तुको स्टक कम छ!
+                  ⚠️ {lowStockProducts.length} items are low on stock!
                 </p>
                 <p className={`text-sm ${filter === 'low' ? 'text-red-100' : 'text-red-500'}`}>
-                  {filter === 'low' ? 'सबै देखाउन थिच्नुहोस्' : 'हेर्न थिच्नुहोस्'}
+                  {filter === 'low' ? 'Tap to show all' : 'Tap to view'}
                 </p>
               </div>
             </div>
@@ -145,15 +145,15 @@ export default function GodamPage() {
 
         {/* Product list */}
         {loading ? (
-          <div className="text-center py-12 text-gray-500 text-lg">लोड हुँदैछ...</div>
+          <div className="text-center py-12 text-gray-500 text-lg">Loading...</div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-5xl mb-4">📦</p>
             <p className="text-xl font-semibold text-gray-500">
-              {search || filter === 'low' ? 'कुनै सामान भेटिएन' : 'गोदाममा सामान छैन'}
+              {search || filter === 'low' ? 'No items found' : 'No items in warehouse'}
             </p>
             {!search && filter === 'all' && (
-              <p className="text-base text-gray-600 mt-2">माथिको "+ थप्नुहोस्" थिच्नुहोस्</p>
+              <p className="text-base text-gray-600 mt-2">Tap "+ Add" above</p>
             )}
           </div>
         ) : (
@@ -200,7 +200,7 @@ function ProductCard({ product }: { product: Product }) {
           <p className="text-xs text-gray-500">{unit}</p>
           {isLow && (
             <span className="text-xs font-semibold text-red-400 bg-red-500/20 px-2 py-0.5 rounded-full mt-1 block">
-              ⚠️ कम छ!
+              ⚠️ Low Stock!
             </span>
           )}
         </div>

@@ -5,12 +5,12 @@ import { usePathname } from 'next/navigation'
 import { LayoutDashboard, BookOpen, Users, Package, UserCheck, ShoppingCart } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { href: '/dashboard', icon: LayoutDashboard, label: 'घर' },
-  { href: '/sell',      icon: ShoppingCart,    label: 'बेच्नुस्' },
-  { href: '/hisab',    icon: BookOpen,         label: 'हिसाब' },
-  { href: '/khata',    icon: Users,            label: 'खाता' },
-  { href: '/godam',    icon: Package,          label: 'गोदाम' },
-  { href: '/staff',    icon: UserCheck,        label: 'स्टाफ' },
+  { href: '/dashboard', icon: LayoutDashboard, label: 'Home' },
+  { href: '/sell',      icon: ShoppingCart,    label: 'Sell' },
+  { href: '/hisab',    icon: BookOpen,         label: 'Ledger' },
+  { href: '/khata',    icon: Users,            label: 'Khata' },
+  { href: '/godam',    icon: Package,          label: 'Stock' },
+  { href: '/staff',    icon: UserCheck,        label: 'Staff' },
 ]
 
 export default function BottomNav() {

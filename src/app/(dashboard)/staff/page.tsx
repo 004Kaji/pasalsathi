@@ -10,10 +10,10 @@ import { formatBSFull, BS_DAYS_SHORT } from '@/lib/bs-date'
 import NepaliDate from 'nepali-date-converter'
 
 const STATUS_CONFIG: Record<AttendanceStatus, { label: string; bg: string; text: string; emoji: string }> = {
-  present:  { label: 'उपस्थित',   bg: 'bg-green-500/20',  text: 'text-green-400',  emoji: '✅' },
-  absent:   { label: 'अनुपस्थित', bg: 'bg-red-500/20',    text: 'text-red-400',    emoji: '❌' },
-  half_day: { label: 'आधा दिन',   bg: 'bg-amber-500/20',  text: 'text-amber-400',  emoji: '🌗' },
-  holiday:  { label: 'बिदा',      bg: 'bg-blue-500/20',   text: 'text-blue-400',   emoji: '🏖️' },
+  present:  { label: 'Present',  bg: 'bg-green-500/20',  text: 'text-green-400',  emoji: '✅' },
+  absent:   { label: 'Absent',   bg: 'bg-red-500/20',    text: 'text-red-400',    emoji: '❌' },
+  half_day: { label: 'Half Day', bg: 'bg-amber-500/20',  text: 'text-amber-400',  emoji: '🌗' },
+  holiday:  { label: 'Holiday',  bg: 'bg-blue-500/20',   text: 'text-blue-400',   emoji: '🏖️' },
 }
 
 export default function StaffPage() {
@@ -77,14 +77,14 @@ export default function StaffPage() {
       {/* Header */}
       <div className="sticky top-0 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/10 z-10 px-4 pt-5 pb-3">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-white">👥 स्टाफ</h1>
+          <h1 className="text-2xl font-bold text-white">👥 Staff</h1>
           <div className="flex gap-2">
             {staffList.length > 0 && (
               <Link
                 href="/staff/attendance"
                 className="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-500 text-white px-4 py-2.5 rounded-xl font-semibold text-sm active:scale-95 transition-transform"
               >
-                <CalendarCheck size={18} /> हाजिरी
+                <CalendarCheck size={18} /> Attendance
               </Link>
             )}
             {!atLimit && (
@@ -92,7 +92,7 @@ export default function StaffPage() {
                 href="/staff/new"
                 className="flex items-center gap-1.5 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white px-4 py-2.5 rounded-xl font-semibold text-sm active:scale-95 transition-transform"
               >
-                <Plus size={18} /> थप्नुहोस्
+                <Plus size={18} /> Add
               </Link>
             )}
           </div>
@@ -105,7 +105,7 @@ export default function StaffPage() {
           <p className="text-purple-300 text-sm">📅 {todayDisplay}</p>
           <div className="flex items-end justify-between mt-2">
             <div>
-              <p className="text-purple-300 text-sm font-medium">आज उपस्थित</p>
+              <p className="text-purple-300 text-sm font-medium">Present Today</p>
               <p className="text-white text-4xl font-bold mt-0.5">
                 {presentCount}
                 <span className="text-2xl text-purple-400">/{staffList.length}</span>
@@ -115,7 +115,7 @@ export default function StaffPage() {
               <UserCheck size={40} className="text-purple-400" />
               {markedCount < staffList.length && staffList.length > 0 && (
                 <p className="text-yellow-400 text-xs font-semibold mt-1">
-                  {staffList.length - markedCount} जनाको हाजिरी बाँकी
+                  {staffList.length - markedCount} attendance remaining
                 </p>
               )}
             </div>
@@ -125,7 +125,7 @@ export default function StaffPage() {
         {/* Plan usage */}
         {limit !== Infinity && (
           <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-4 py-3">
-            <span className="text-sm text-gray-400">स्टाफ: <strong className="text-white">{staffList.length}</strong> / {limit}</span>
+            <span className="text-sm text-gray-400">Staff: <strong className="text-white">{staffList.length}</strong> / {limit}</span>
             <div className="w-32 h-2 bg-white/10 rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all ${staffList.length / limit > 0.8 ? 'bg-red-500' : 'bg-purple-500'}`}
@@ -140,9 +140,9 @@ export default function StaffPage() {
           <Link href="/staff/attendance">
             <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-4 flex items-center justify-between active:scale-[0.98] transition-transform">
               <div>
-                <p className="font-bold text-yellow-400 text-base">⏰ आजको हाजिरी भर्नुहोस्</p>
+                <p className="font-bold text-yellow-400 text-base">⏰ Mark Today's Attendance</p>
                 <p className="text-yellow-500 text-sm mt-0.5">
-                  {staffList.length - markedCount} जनाको हाजिरी अझै भरिएको छैन
+                  {staffList.length - markedCount} staff not yet marked
                 </p>
               </div>
               <ChevronRight size={22} className="text-yellow-500" />
@@ -152,12 +152,12 @@ export default function StaffPage() {
 
         {/* Staff list */}
         {loading ? (
-          <div className="text-center py-12 text-gray-500 text-lg">लोड हुँदैछ...</div>
+          <div className="text-center py-12 text-gray-500 text-lg">Loading...</div>
         ) : staffList.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-5xl mb-4">👤</p>
-            <p className="text-xl font-semibold text-gray-500">कुनै स्टाफ छैन</p>
-            <p className="text-base text-gray-600 mt-2">माथिको "+ थप्नुहोस्" थिच्नुहोस्</p>
+            <p className="text-xl font-semibold text-gray-500">No staff yet</p>
+            <p className="text-base text-gray-600 mt-2">Tap "+ Add" above</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -176,7 +176,7 @@ export default function StaffPage() {
                       <div className="min-w-0">
                         <p className="text-base font-bold text-white truncate">{s.name}</p>
                         <p className="text-sm text-gray-500 mt-0.5">
-                          {s.role || 'स्टाफ'} · 💵 NPR {Number(s.monthly_salary).toLocaleString('ne-NP')}/महिना
+                          {s.role || 'Staff'} · 💵 NPR {Number(s.monthly_salary).toLocaleString('ne-NP')}/month
                         </p>
                       </div>
                     </div>
@@ -187,7 +187,7 @@ export default function StaffPage() {
                         </span>
                       ) : (
                         <span className="text-xs text-gray-500 bg-white/10 px-3 py-1.5 rounded-full">
-                          भरिएको छैन
+                          Not marked
                         </span>
                       )}
                       <ChevronRight size={18} className="text-gray-600" />

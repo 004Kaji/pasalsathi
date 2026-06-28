@@ -17,12 +17,12 @@ interface CartItem {
 }
 
 const PAYMENT_METHODS: { value: PaymentMethod; label: string; emoji: string }[] = [
-  { value: 'cash',    label: 'नगद',    emoji: '💵' },
-  { value: 'bank',    label: 'बैंक',   emoji: '🏦' },
+  { value: 'cash',    label: 'Cash',    emoji: '💵' },
+  { value: 'bank',    label: 'Bank',   emoji: '🏦' },
   { value: 'esewa',   label: 'eSewa',  emoji: '🟢' },
   { value: 'khalti',  label: 'Khalti', emoji: '🟣' },
   { value: 'fonepay', label: 'FonePay', emoji: '📱' },
-  { value: 'credit',  label: 'उधारो',  emoji: '📒' },
+  { value: 'credit',  label: 'Credit',  emoji: '📒' },
 ]
 
 export default function SellPage() {
@@ -142,9 +142,9 @@ export default function SellPage() {
   )
 
   async function handleSell() {
-    if (cart.length === 0) { setError('कम्तीमा एउटा सामान थप्नुहोस्'); return }
-    if (isCredit && !selectedCustomer) { setError('उधारोको लागि ग्राहक छान्नुहोस्'); return }
-    if (total <= 0) { setError('रकम सही छैन'); return }
+    if (cart.length === 0) { setError('Please add at least one item'); return }
+    if (isCredit && !selectedCustomer) { setError('Select a customer for credit sale'); return }
+    if (total <= 0) { setError('Invalid amount'); return }
 
     setSubmitting(true)
     setError('')
@@ -176,7 +176,7 @@ export default function SellPage() {
         quantity: i.qty,
         unit_price: i.unitPrice,
         total_price: i.qty * i.unitPrice,
-        notes: `बिक्री — ${isCredit ? selectedCustomer!.name : paymentMethod}`,
+        notes: `Sale — ${isCredit ? selectedCustomer!.name : paymentMethod}`,
         movement_date: todayStr,
         bs_date: bsDate,
         created_by: userId,
@@ -215,7 +215,7 @@ export default function SellPage() {
 
       setDone(true)
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'बिक्री राख्न समस्या भयो'
+      const msg = e instanceof Error ? e.message : 'Failed to save sale. Please try again.'
       setError(msg)
       setSubmitting(false)
     }
@@ -239,36 +239,36 @@ export default function SellPage() {
         <div className="w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center mb-6">
           <CheckCircle size={48} className="text-green-400" />
         </div>
-        <h1 className="text-3xl font-bold text-white mb-2">बिक्री भयो!</h1>
+        <h1 className="text-3xl font-bold text-white mb-2">Sale Complete!</h1>
         <p className="text-5xl font-bold text-green-400 mb-2">
           NPR {total.toLocaleString('ne-NP', { maximumFractionDigits: 2 })}
         </p>
         {discPct > 0 && (
-          <p className="text-sm text-gray-500 mb-1">{discPct}% छुट दिइयो</p>
+          <p className="text-sm text-gray-500 mb-1">{discPct}% discount applied</p>
         )}
         {isCredit && selectedCustomer && (
           <div className="mt-2 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-2">
             <p className="text-amber-400 text-sm font-semibold">
-              📒 {selectedCustomer.name} को खातामा उधारो थपियो
+              📒 Credit added to {selectedCustomer.name}'s account
             </p>
           </div>
         )}
         <p className="text-gray-600 text-sm mt-4 mb-8">
-          गोदाम स्वतः अपडेट भयो · हिसाब राखियो
-          {isCredit ? ' · खाता थपियो' : ''}
+          Stock updated · Ledger saved
+          {isCredit ? ' · Khata updated' : ''}
         </p>
         <div className="flex gap-3 w-full max-w-xs">
           <button
             onClick={resetSale}
             className="flex-1 py-4 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-2xl font-bold text-lg active:scale-95 transition-transform"
           >
-            अर्को बिक्री
+            New Sale
           </button>
           <button
             onClick={() => router.push('/dashboard')}
             className="flex-1 py-4 bg-white/10 border border-white/10 text-gray-300 rounded-2xl font-bold text-lg active:scale-95 transition-transform"
           >
-            घर
+            Home
           </button>
         </div>
       </div>
@@ -281,10 +281,10 @@ export default function SellPage() {
       {/* Header */}
       <div className="sticky top-0 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/10 z-20 px-4 pt-5 pb-3">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-white">🛒 बिक्री गर्नुहोस्</h1>
+          <h1 className="text-2xl font-bold text-white">🛒 Make a Sale</h1>
           {cart.length > 0 && (
             <div className="bg-orange-500/20 border border-orange-500/30 rounded-xl px-3 py-1.5">
-              <span className="text-orange-400 font-bold text-sm">{cart.length} सामान</span>
+              <span className="text-orange-400 font-bold text-sm">{cart.length} items</span>
             </div>
           )}
         </div>
@@ -299,7 +299,7 @@ export default function SellPage() {
             <input
               ref={searchRef}
               type="text"
-              placeholder="सामान खोज्नुहोस् र थप्नुहोस्..."
+              placeholder="Search products..."
               value={search}
               onChange={e => { setSearch(e.target.value); setShowProductList(true) }}
               onFocus={() => setShowProductList(true)}
@@ -311,9 +311,9 @@ export default function SellPage() {
           {showProductList && (
             <div className="absolute top-full left-0 right-0 mt-1 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl z-30 max-h-64 overflow-y-auto">
               {loading ? (
-                <p className="text-center py-4 text-gray-500 text-sm">लोड हुँदैछ...</p>
+                <p className="text-center py-4 text-gray-500 text-sm">Loading...</p>
               ) : filteredProducts.length === 0 ? (
-                <p className="text-center py-4 text-gray-600 text-sm">सामान भेटिएन</p>
+                <p className="text-center py-4 text-gray-600 text-sm">No products found</p>
               ) : (
                 filteredProducts.map(p => {
                   const inCart = cart.find(i => i.product.id === p.id)
@@ -330,8 +330,8 @@ export default function SellPage() {
                       <div>
                         <p className="text-sm font-semibold text-white">{p.name}</p>
                         <p className="text-xs text-gray-500">
-                          स्टक: {p.current_stock} {p.unit}
-                          {inCart && <span className="text-orange-400 ml-2">✓ कार्टमा छ</span>}
+                          Stock: {p.current_stock} {p.unit}
+                          {inCart && <span className="text-orange-400 ml-2">✓ in cart</span>}
                         </p>
                       </div>
                       <div className="text-right ml-3">
@@ -355,8 +355,8 @@ export default function SellPage() {
         {cart.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-6xl mb-4">🛒</p>
-            <p className="text-lg font-semibold text-gray-500">कार्ट खाली छ</p>
-            <p className="text-sm text-gray-700 mt-1">माथि सामान खोजेर थप्नुहोस्</p>
+            <p className="text-lg font-semibold text-gray-500">Cart is empty</p>
+            <p className="text-sm text-gray-700 mt-1">Search for products above to add them</p>
           </div>
         ) : (
           <>
@@ -367,7 +367,7 @@ export default function SellPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <p className="text-base font-bold text-white truncate">{item.product.name}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">स्टक: {item.product.current_stock} {item.product.unit}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">Stock: {item.product.current_stock} {item.product.unit}</p>
                     </div>
                     <button
                       onClick={() => removeFromCart(item.product.id)}
@@ -400,7 +400,7 @@ export default function SellPage() {
 
                     {/* Unit price */}
                     <div className="flex items-center bg-white/5 border border-white/10 rounded-xl px-3 py-2 flex-1">
-                      <span className="text-gray-500 text-sm mr-1">रु.</span>
+                      <span className="text-gray-500 text-sm mr-1">Rs.</span>
                       <input
                         type="number"
                         value={item.unitPrice}
@@ -423,7 +423,7 @@ export default function SellPage() {
             <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Tag size={16} className="text-amber-400" />
-                <p className="text-sm font-semibold text-amber-400">छुट</p>
+                <p className="text-sm font-semibold text-amber-400">Discount</p>
               </div>
               <div className="flex items-center gap-3">
                 <input
@@ -438,7 +438,7 @@ export default function SellPage() {
                 <span className="text-amber-400 font-bold text-lg">%</span>
                 {discPct > 0 && (
                   <div className="flex-1 text-right">
-                    <p className="text-xs text-gray-500">छुट: NPR {discountAmt.toLocaleString('ne-NP', { maximumFractionDigits: 2 })}</p>
+                    <p className="text-xs text-gray-500">Discount: NPR {discountAmt.toLocaleString('ne-NP', { maximumFractionDigits: 2 })}</p>
                   </div>
                 )}
               </div>
@@ -446,7 +446,7 @@ export default function SellPage() {
 
             {/* Payment method */}
             <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-              <p className="text-sm font-semibold text-gray-400 mb-3">भुक्तानी</p>
+              <p className="text-sm font-semibold text-gray-400 mb-3">Payment Method</p>
               <div className="grid grid-cols-3 gap-2">
                 {PAYMENT_METHODS.map(pm => (
                   <button
@@ -472,7 +472,7 @@ export default function SellPage() {
               <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <User size={16} className="text-amber-400" />
-                  <p className="text-sm font-semibold text-amber-400">ग्राहक छान्नुहोस् *</p>
+                  <p className="text-sm font-semibold text-amber-400">Select Customer *</p>
                 </div>
 
                 {selectedCustomer ? (
@@ -483,14 +483,14 @@ export default function SellPage() {
                         <p className="text-xs text-gray-500">📱 {selectedCustomer.phone}</p>
                       )}
                       <p className="text-xs text-amber-600 mt-0.5">
-                        बाँकी उधारो: NPR {Math.max(0, Number(selectedCustomer.total_credit) - Number(selectedCustomer.total_paid)).toLocaleString('ne-NP')}
+                        Outstanding Credit: NPR {Math.max(0, Number(selectedCustomer.total_credit) - Number(selectedCustomer.total_paid)).toLocaleString('ne-NP')}
                       </p>
                     </div>
                     <button
                       onClick={() => setSelectedCustomer(null)}
                       className="text-xs text-gray-500 bg-white/10 px-3 py-1.5 rounded-lg"
                     >
-                      बदल्नुहोस्
+                      Change
                     </button>
                   </div>
                 ) : (
@@ -499,7 +499,7 @@ export default function SellPage() {
                       <Search size={16} className="text-gray-500" />
                       <input
                         type="text"
-                        placeholder="ग्राहकको नाम खोज्नुहोस्..."
+                        placeholder="Search customer name..."
                         value={customerSearch}
                         onChange={e => setCustomerSearch(e.target.value)}
                         className="flex-1 bg-transparent text-white placeholder:text-gray-600 outline-none text-sm"
@@ -508,7 +508,7 @@ export default function SellPage() {
                     {customerSearch && (
                       <div className="absolute top-full left-0 right-0 mt-1 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-xl z-30 max-h-48 overflow-y-auto">
                         {filteredCustomers.length === 0 ? (
-                          <p className="text-center py-3 text-gray-600 text-sm">ग्राहक भेटिएन</p>
+                          <p className="text-center py-3 text-gray-600 text-sm">No customers found</p>
                         ) : (
                           filteredCustomers.map(c => (
                             <button
@@ -521,7 +521,7 @@ export default function SellPage() {
                                 {c.phone && <p className="text-xs text-gray-500">{c.phone}</p>}
                               </div>
                               <p className="text-xs text-amber-400 ml-2">
-                                बाँकी: NPR {Math.max(0, Number(c.total_credit) - Number(c.total_paid)).toLocaleString('ne-NP')}
+                                Due: NPR {Math.max(0, Number(c.total_credit) - Number(c.total_paid)).toLocaleString('ne-NP')}
                               </p>
                             </button>
                           ))
@@ -552,8 +552,8 @@ export default function SellPage() {
                 <p className="text-sm text-gray-500 line-through">NPR {subtotal.toLocaleString('ne-NP', { maximumFractionDigits: 2 })}</p>
               )}
               <p className="text-sm text-gray-400">
-                {cart.reduce((s, i) => s + i.qty, 0)} वस्तु
-                {discPct > 0 && <span className="text-amber-400 ml-2">{discPct}% छुट</span>}
+                {cart.reduce((s, i) => s + i.qty, 0)} items
+                {discPct > 0 && <span className="text-amber-400 ml-2">{discPct}% off</span>}
               </p>
             </div>
             <p className="text-4xl font-bold text-white">
@@ -566,11 +566,11 @@ export default function SellPage() {
             disabled={submitting || cart.length === 0}
             className="w-full py-5 rounded-2xl font-bold text-xl text-white active:scale-[0.98] transition-all disabled:opacity-50 bg-gradient-to-r from-green-600 to-emerald-700"
           >
-            {submitting ? 'बिक्री राख्दैछ...' : (
+            {submitting ? 'Saving sale...' : (
               <>
-                ✓ बेच्नुहोस्
+                ✓ Sell
                 <span className="ml-2 text-green-300 font-normal text-base">
-                  {isCredit ? '📒 उधारोमा' : '💵 ' + PAYMENT_METHODS.find(p => p.value === paymentMethod)?.label}
+                  {isCredit ? '📒 on Credit' : '💵 ' + PAYMENT_METHODS.find(p => p.value === paymentMethod)?.label}
                 </span>
               </>
             )}

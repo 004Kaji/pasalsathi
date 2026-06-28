@@ -10,16 +10,16 @@ import { Building2, CreditCard, Users, LogOut, ChevronRight } from 'lucide-react
 import type { Business, BusinessType } from '@/types/database'
 
 const BUSINESS_TYPES: { value: BusinessType; label: string }[] = [
-  { value: 'kirana',    label: 'किराना / पसल' },
-  { value: 'hardware',  label: 'हार्डवेयर' },
-  { value: 'pharmacy',  label: 'फार्मेसी' },
-  { value: 'clothing',  label: 'कपडा पसल' },
-  { value: 'wholesale', label: 'थोक व्यापार' },
-  { value: 'other',     label: 'अन्य' },
+  { value: 'kirana',    label: 'Grocery / Shop' },
+  { value: 'hardware',  label: 'Hardware' },
+  { value: 'pharmacy',  label: 'Pharmacy' },
+  { value: 'clothing',  label: 'Clothing Store' },
+  { value: 'wholesale', label: 'Wholesale' },
+  { value: 'other',     label: 'Other' },
 ]
 
 const PLAN_NP: Record<string, string> = {
-  sano: 'सानो', madhyam: 'मध्यम', thulo: 'ठूलो',
+  sano: 'Sano', madhyam: 'Madhyam', thulo: 'Thulo',
 }
 
 export default function SettingsPage() {
@@ -86,14 +86,14 @@ export default function SettingsPage() {
     router.refresh()
   }
 
-  if (loading) return <div className="flex items-center justify-center min-h-screen text-gray-400 text-lg">लोड हुँदैछ...</div>
+  if (loading) return <div className="flex items-center justify-center min-h-screen text-gray-400 text-lg">Loading...</div>
 
   return (
     <div className="pb-10">
       {/* Header */}
       <div className="bg-gray-800 px-4 pt-5 pb-6">
-        <h1 className="text-2xl font-bold text-white">सेटिङ</h1>
-        <p className="text-gray-400 text-sm mt-1">व्यापार र खाताको जानकारी</p>
+        <h1 className="text-2xl font-bold text-white">Settings</h1>
+        <p className="text-gray-400 text-sm mt-1">Business and account information</p>
       </div>
 
       <div className="px-4 pt-4 space-y-4">
@@ -103,8 +103,8 @@ export default function SettingsPage() {
             <div className="flex items-center gap-3">
               <div className="bg-orange-100 rounded-xl p-2.5"><CreditCard size={20} className="text-orange-600" /></div>
               <div>
-                <p className="text-base font-semibold text-gray-900">बिलिङ र प्लान</p>
-                <p className="text-sm text-gray-400">हालको प्लान: {PLAN_NP[business?.plan ?? 'sano']}</p>
+                <p className="text-base font-semibold text-gray-900">Billing & Plan</p>
+                <p className="text-sm text-gray-400">Current plan: {PLAN_NP[business?.plan ?? 'sano']}</p>
               </div>
             </div>
             <ChevronRight size={20} className="text-gray-400" />
@@ -113,8 +113,8 @@ export default function SettingsPage() {
             <div className="flex items-center gap-3">
               <div className="bg-blue-100 rounded-xl p-2.5"><Users size={20} className="text-blue-600" /></div>
               <div>
-                <p className="text-base font-semibold text-gray-900">टोली सदस्य</p>
-                <p className="text-sm text-gray-400">स्टाफलाई पहुँच दिनुहोस्</p>
+                <p className="text-base font-semibold text-gray-900">Team Members</p>
+                <p className="text-sm text-gray-400">Give staff access</p>
               </div>
             </div>
             <ChevronRight size={20} className="text-gray-400" />
@@ -126,17 +126,17 @@ export default function SettingsPage() {
           <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <Building2 size={20} className="text-gray-600" />
-              <h3 className="text-base font-bold text-gray-800">व्यापारको जानकारी</h3>
+              <h3 className="text-base font-bold text-gray-800">Business Information</h3>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-base font-semibold text-gray-700">व्यापारको नाम *</Label>
+              <Label className="text-base font-semibold text-gray-700">Business Name *</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)}
                 className="text-base h-12 rounded-xl" required />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-base font-semibold text-gray-700">व्यापारको प्रकार</Label>
+              <Label className="text-base font-semibold text-gray-700">Business Type</Label>
               <div className="grid grid-cols-2 gap-2">
                 {BUSINESS_TYPES.map((bt) => (
                   <button key={bt.value} type="button" onClick={() => setType(bt.value)}
@@ -150,20 +150,20 @@ export default function SettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-base font-semibold text-gray-700">फोन नम्बर</Label>
+              <Label className="text-base font-semibold text-gray-700">Phone Number</Label>
               <Input type="tel" placeholder="98XXXXXXXX" value={phone}
                 onChange={(e) => setPhone(e.target.value)} className="text-base h-12 rounded-xl" />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-base font-semibold text-gray-700">ठेगाना</Label>
-              <Input placeholder="जस्तै: न्यूरोड, काठमाडौं" value={address}
+              <Label className="text-base font-semibold text-gray-700">Address</Label>
+              <Input placeholder="e.g.: New Road, Kathmandu" value={address}
                 onChange={(e) => setAddress(e.target.value)} className="text-base h-12 rounded-xl" />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-base font-semibold text-gray-700">PAN नम्बर</Label>
-              <Input placeholder="VAT/PAN नम्बर (वैकल्पिक)" value={panNumber}
+              <Label className="text-base font-semibold text-gray-700">PAN Number</Label>
+              <Input placeholder="VAT/PAN number (optional)" value={panNumber}
                 onChange={(e) => setPanNumber(e.target.value)} className="text-base h-12 rounded-xl" />
             </div>
           </div>
@@ -172,7 +172,7 @@ export default function SettingsPage() {
             className={`w-full py-5 rounded-2xl font-bold text-xl active:scale-[0.98] transition-all disabled:opacity-60 ${
               saved ? 'bg-green-600 text-white' : 'bg-gray-800 hover:bg-gray-900 text-white'
             }`}>
-            {saved ? '✓ सुरक्षित भयो!' : saving ? 'सुरक्षित गर्दैछ...' : 'सुरक्षित गर्नुहोस्'}
+            {saved ? '✓ Saved!' : saving ? 'Saving...' : 'Save'}
           </button>
         </form>
 
@@ -181,7 +181,7 @@ export default function SettingsPage() {
           onClick={handleLogout}
           className="w-full flex items-center justify-center gap-3 py-4 bg-red-50 border-2 border-red-200 text-red-700 rounded-2xl font-bold text-base active:scale-[0.98] transition-all"
         >
-          <LogOut size={20} /> लगआउट गर्नुहोस्
+          <LogOut size={20} /> Logout
         </button>
       </div>
     </div>

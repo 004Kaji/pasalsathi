@@ -12,7 +12,7 @@ import {
 import type { Product, StockMovement } from '@/types/database'
 
 const UNIT_LABELS: Record<string, string> = {
-  piece: 'पिस', kg: 'केजी', litre: 'लिटर', box: 'बक्स', dozen: 'दर्जन',
+  piece: 'Piece', kg: 'Kg', litre: 'Litre', box: 'Box', dozen: 'Dozen',
 }
 
 type MovementType = 'in' | 'out'
@@ -76,9 +76,9 @@ export default function ProductDetailPage() {
   async function handleAddMovement() {
     setFormError('')
     const qty = parseFloat(quantity)
-    if (!qty || qty <= 0) { setFormError('सही मात्रा हाल्नुहोस्'); return }
+    if (!qty || qty <= 0) { setFormError('Please enter a valid quantity'); return }
     if (movType === 'out' && product && qty > Number(product.current_stock)) {
-      setFormError(`स्टकमा केवल ${product.current_stock} ${UNIT_LABELS[product.unit] ?? product.unit} मात्र छ`)
+      setFormError(`Only ${product.current_stock} ${UNIT_LABELS[product.unit] ?? product.unit} available in stock`)
       return
     }
 
@@ -133,8 +133,8 @@ export default function ProductDetailPage() {
     router.push('/godam')
   }
 
-  if (loading) return <div className="flex items-center justify-center min-h-screen text-gray-400 text-lg">लोड हुँदैछ...</div>
-  if (!product) return <div className="flex items-center justify-center min-h-screen text-red-500 text-lg">सामान भेटिएन</div>
+  if (loading) return <div className="flex items-center justify-center min-h-screen text-gray-400 text-lg">Loading...</div>
+  if (!product) return <div className="flex items-center justify-center min-h-screen text-red-500 text-lg">Item not found</div>
 
   const isLow = Number(product.current_stock) <= Number(product.low_stock_threshold)
   const unit = UNIT_LABELS[product.unit] ?? product.unit
@@ -160,19 +160,19 @@ export default function ProductDetailPage() {
             </button>
             <AlertDialog>
               <AlertDialogTrigger className="p-2 rounded-xl bg-white/20 text-white active:scale-95 transition-transform text-sm font-semibold px-3">
-                हटाउनुहोस्
+                Delete
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle className="text-xl">सामान हटाउने?</AlertDialogTitle>
+                  <AlertDialogTitle className="text-xl">Remove Item?</AlertDialogTitle>
                   <AlertDialogDescription className="text-base">
-                    "{product.name}" गोदामबाट हटाइनेछ।
+                    "{product.name}" will be removed from the warehouse.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel className="text-base">रद्द</AlertDialogCancel>
+                  <AlertDialogCancel className="text-base">Cancel</AlertDialogCancel>
                   <AlertDialogAction onClick={handleDeactivate} className="bg-red-600 hover:bg-red-700 text-base">
-                    हटाउनुहोस्
+                    Delete
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -183,16 +183,16 @@ export default function ProductDetailPage() {
         {/* Stock info */}
         <div className="grid grid-cols-3 gap-2 mt-2">
           <div className="bg-white/15 rounded-xl p-3 text-center">
-            <p className="text-white/70 text-xs">हालको स्टक</p>
+            <p className="text-white/70 text-xs">Current Stock</p>
             <p className="text-white text-2xl font-bold">{Number(product.current_stock).toLocaleString('ne-NP')}</p>
             <p className="text-white/70 text-xs">{unit}</p>
           </div>
           <div className="bg-white/15 rounded-xl p-3 text-center">
-            <p className="text-white/70 text-xs">बेच्ने मूल्य</p>
+            <p className="text-white/70 text-xs">Selling Price</p>
             <p className="text-white text-lg font-bold">NPR {Number(product.selling_price).toLocaleString('ne-NP')}</p>
           </div>
           <div className="bg-white/15 rounded-xl p-3 text-center">
-            <p className="text-white/70 text-xs">स्टक मूल्य</p>
+            <p className="text-white/70 text-xs">Stock Value</p>
             <p className="text-white text-lg font-bold">NPR {stockValue.toLocaleString('ne-NP')}</p>
           </div>
         </div>
@@ -201,7 +201,7 @@ export default function ProductDetailPage() {
           <div className="mt-3 flex items-center gap-2 bg-white/20 rounded-xl px-4 py-2.5">
             <AlertTriangle size={18} className="text-yellow-300 shrink-0" />
             <p className="text-white text-sm font-medium">
-              स्टक कम छ! न्यूनतम {product.low_stock_threshold} {unit} राख्नुहोस्
+              Low stock! Minimum {product.low_stock_threshold} {unit} required
             </p>
           </div>
         )}
@@ -211,16 +211,16 @@ export default function ProductDetailPage() {
         {/* Edit form */}
         {showEdit && (
           <div className="bg-white rounded-2xl p-5 shadow-sm space-y-3 border-2 border-blue-200">
-            <h3 className="text-base font-bold text-blue-700">सामान सम्पादन</h3>
+            <h3 className="text-base font-bold text-blue-700">Edit Item</h3>
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700 block">नाम</label>
+              <label className="text-sm font-semibold text-gray-700 block">Name</label>
               <input value={editName} onChange={(e) => setEditName(e.target.value)}
                 className="w-full text-base border border-gray-200 rounded-xl px-4 h-12 outline-none focus:ring-2 focus:ring-blue-400" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: 'किनेको मूल्य', val: editBuyPrice, set: setEditBuyPrice },
-                { label: 'बेच्ने मूल्य', val: editSellPrice, set: setEditSellPrice },
+                { label: 'Buying Price', val: editBuyPrice, set: setEditBuyPrice },
+                { label: 'Selling Price', val: editSellPrice, set: setEditSellPrice },
               ].map(({ label, val, set }) => (
                 <div key={label} className="space-y-1">
                   <label className="text-xs font-semibold text-gray-600 block">{label}</label>
@@ -230,15 +230,15 @@ export default function ProductDetailPage() {
               ))}
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-600 block">कम स्टक अलर्ट ({unit})</label>
+              <label className="text-xs font-semibold text-gray-600 block">Low Stock Alert ({unit})</label>
               <input type="number" value={editThreshold} onChange={(e) => setEditThreshold(e.target.value)}
                 className="w-full text-base border border-orange-200 rounded-xl px-3 h-11 outline-none bg-orange-50 focus:ring-2 focus:ring-orange-400" />
             </div>
             <div className="flex gap-3">
-              <button onClick={() => setShowEdit(false)} className="flex-1 py-3 rounded-xl border-2 border-gray-200 text-gray-600 font-semibold active:scale-[0.98]">रद्द</button>
+              <button onClick={() => setShowEdit(false)} className="flex-1 py-3 rounded-xl border-2 border-gray-200 text-gray-600 font-semibold active:scale-[0.98]">Cancel</button>
               <button onClick={handleSaveEdit} disabled={editSaving}
                 className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-bold active:scale-[0.98] disabled:opacity-50">
-                {editSaving ? 'सुरक्षित...' : '✓ सुरक्षित'}
+                {editSaving ? 'Saving...' : '✓ Save'}
               </button>
             </div>
           </div>
@@ -250,13 +250,13 @@ export default function ProductDetailPage() {
             onClick={() => { setMovType('in'); setShowForm(true) }}
             className="flex items-center justify-center gap-2 py-4 bg-green-600 text-white rounded-2xl font-bold text-base active:scale-[0.98] transition-transform"
           >
-            <TrendingUp size={20} /> स्टक थप्नुहोस्
+            <TrendingUp size={20} /> Add Stock
           </button>
           <button
             onClick={() => { setMovType('out'); setShowForm(true) }}
             className="flex items-center justify-center gap-2 py-4 bg-red-600 text-white rounded-2xl font-bold text-base active:scale-[0.98] transition-transform"
           >
-            <TrendingDown size={20} /> स्टक घटाउनुहोस्
+            <TrendingDown size={20} /> Reduce Stock
           </button>
         </div>
 
@@ -264,11 +264,11 @@ export default function ProductDetailPage() {
         {showForm && (
           <div className={`rounded-2xl p-5 border-2 shadow-sm ${movType === 'in' ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`}>
             <h3 className={`text-lg font-bold mb-4 ${movType === 'in' ? 'text-green-700' : 'text-red-700'}`}>
-              {movType === 'in' ? '🟢 स्टक आयो (Stock In)' : '🔴 स्टक गयो (Stock Out)'}
+              {movType === 'in' ? '🟢 Stock In' : '🔴 Stock Out'}
             </h3>
             <div className="space-y-3">
               <div>
-                <label className="text-sm font-semibold text-gray-700 block mb-2">मात्रा ({unit}) *</label>
+                <label className="text-sm font-semibold text-gray-700 block mb-2">Quantity ({unit}) *</label>
                 <div className="flex items-center bg-white rounded-xl px-4 py-3 border border-gray-200 gap-2">
                   <input type="number" inputMode="decimal" placeholder="0" value={quantity}
                     onChange={(e) => setQuantity(e.target.value)}
@@ -280,22 +280,22 @@ export default function ProductDetailPage() {
               {movType === 'in' && (
                 <>
                   <div>
-                    <label className="text-sm font-semibold text-gray-700 block mb-2">एकाइ मूल्य (NPR)</label>
+                    <label className="text-sm font-semibold text-gray-700 block mb-2">Unit Price (NPR)</label>
                     <input type="number" inputMode="decimal" placeholder="0" value={unitPrice}
                       onChange={(e) => setUnitPrice(e.target.value)}
                       className="w-full text-base border border-gray-200 rounded-xl px-4 h-12 outline-none focus:ring-2 focus:ring-green-400 bg-white" />
                   </div>
                   <div>
-                    <label className="text-sm font-semibold text-gray-700 block mb-2">आपूर्तिकर्ता (Supplier)</label>
-                    <input type="text" placeholder="जस्तै: राम ट्रेडर्स, काठमाडौं" value={supplier}
+                    <label className="text-sm font-semibold text-gray-700 block mb-2">Supplier</label>
+                    <input type="text" placeholder="e.g.: Ram Traders, Kathmandu" value={supplier}
                       onChange={(e) => setSupplier(e.target.value)}
                       className="w-full text-base border border-gray-200 rounded-xl px-4 h-12 outline-none focus:ring-2 focus:ring-green-400 bg-white" />
                   </div>
                 </>
               )}
               <div>
-                <label className="text-sm font-semibold text-gray-700 block mb-2">नोट (वैकल्पिक)</label>
-                <input type="text" placeholder="थप जानकारी..." value={notes}
+                <label className="text-sm font-semibold text-gray-700 block mb-2">Note (optional)</label>
+                <input type="text" placeholder="Additional info..." value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   className="w-full text-base border border-gray-200 rounded-xl px-4 h-12 outline-none bg-white" />
               </div>
@@ -303,11 +303,11 @@ export default function ProductDetailPage() {
               <div className="flex gap-3 pt-1">
                 <button type="button" onClick={() => { setShowForm(false); setQuantity(''); setUnitPrice(''); setSupplier(''); setNotes(''); setFormError('') }}
                   className="flex-1 py-4 rounded-xl border-2 border-gray-300 text-gray-600 font-semibold text-base active:scale-[0.98]">
-                  रद्द
+                  Cancel
                 </button>
                 <button type="button" onClick={handleAddMovement} disabled={saving || !quantity}
                   className={`flex-1 py-4 rounded-xl text-white font-bold text-base active:scale-[0.98] disabled:opacity-50 ${movType === 'in' ? 'bg-green-600' : 'bg-red-600'}`}>
-                  {saving ? 'राख्दैछ...' : '✓ राख्नुहोस्'}
+                  {saving ? 'Saving...' : '✓ Save'}
                 </button>
               </div>
             </div>
@@ -316,11 +316,11 @@ export default function ProductDetailPage() {
 
         {/* Movement history */}
         <div>
-          <h2 className="text-lg font-bold text-gray-800 mb-3">स्टक इतिहास</h2>
+          <h2 className="text-lg font-bold text-gray-800 mb-3">Stock History</h2>
           {movements.length === 0 ? (
             <div className="text-center py-10">
               <p className="text-4xl mb-3">📊</p>
-              <p className="text-gray-500 text-base">अहिलेसम्म कुनै हलचल छैन</p>
+              <p className="text-gray-500 text-base">No movements yet</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -345,7 +345,7 @@ function MovementRow({ movement, unit }: { movement: StockMovement; unit: string
         </div>
         <div>
           <p className="text-sm font-semibold text-gray-800">
-            {isIn ? (movement.supplier_name ?? 'स्टक थपियो') : (movement.notes ?? 'स्टक घट्यो')}
+            {isIn ? (movement.supplier_name ?? 'Stock added') : (movement.notes ?? 'Stock reduced')}
           </p>
           <p className="text-xs text-gray-400 mt-0.5">
             {new Date(movement.movement_date).toLocaleDateString('ne-NP', { year: 'numeric', month: 'short', day: 'numeric' })}

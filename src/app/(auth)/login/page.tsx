@@ -46,7 +46,7 @@ export default function LoginPage() {
     const data = await res.json() as { error?: string }
 
     if (!res.ok) {
-      setPhoneError(data.error ?? 'OTP पठाउन समस्या भयो')
+      setPhoneError(data.error ?? 'Error sending OTP')
       setPhoneLoading(false)
       return
     }
@@ -67,7 +67,7 @@ export default function LoginPage() {
     const data = await res.json() as { hashed_token?: string; error?: string }
 
     if (!res.ok || !data.hashed_token) {
-      setPhoneError(data.error ?? 'OTP गलत छ')
+      setPhoneError(data.error ?? 'Incorrect OTP')
       setPhoneLoading(false)
       return
     }
@@ -79,7 +79,7 @@ export default function LoginPage() {
     })
 
     if (error) {
-      setPhoneError('लगइन गर्न समस्या भयो। फेरि प्रयास गर्नुहोस्।')
+      setPhoneError('Login failed. Please try again.')
       setPhoneLoading(false)
       return
     }
@@ -95,7 +95,7 @@ export default function LoginPage() {
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
-      setEmailError('इमेल वा पासवर्ड गलत छ')
+      setEmailError('Incorrect email or password')
       setEmailLoading(false)
       return
     }
@@ -111,8 +111,8 @@ export default function LoginPage() {
           <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
             <span className="text-2xl">🏪</span>
           </div>
-          <CardTitle className="text-2xl font-bold text-white">पसलसाथी</CardTitle>
-          <p className="text-sm text-gray-500">आफ्नो खातामा लगइन गर्नुहोस्</p>
+          <CardTitle className="text-2xl font-bold text-white">PasalSathi</CardTitle>
+          <p className="text-sm text-gray-500">Login to your account</p>
         </CardHeader>
         <CardContent>
           {/* Google OAuth */}
@@ -127,19 +127,19 @@ export default function LoginPage() {
               <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
               <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
             </svg>
-            Google बाट लगइन गर्नुहोस्
+            Login with Google
           </button>
 
           <div className="flex items-center gap-3 mb-4">
             <div className="flex-1 h-px bg-white/10" />
-            <span className="text-xs text-gray-600">वा</span>
+            <span className="text-xs text-gray-600">or</span>
             <div className="flex-1 h-px bg-white/10" />
           </div>
 
           <Tabs defaultValue="phone">
             <TabsList className="w-full mb-4 bg-white/5 border border-white/10">
-              <TabsTrigger value="phone" className="flex-1 data-[state=active]:bg-white/10 data-[state=active]:text-white text-gray-500">📱 फोन नम्बर</TabsTrigger>
-              <TabsTrigger value="email" className="flex-1 data-[state=active]:bg-white/10 data-[state=active]:text-white text-gray-500">✉️ इमेल</TabsTrigger>
+              <TabsTrigger value="phone" className="flex-1 data-[state=active]:bg-white/10 data-[state=active]:text-white text-gray-500">📱 Phone Number</TabsTrigger>
+              <TabsTrigger value="email" className="flex-1 data-[state=active]:bg-white/10 data-[state=active]:text-white text-gray-500">✉️ Email</TabsTrigger>
             </TabsList>
 
             {/* Phone OTP Tab */}
@@ -147,7 +147,7 @@ export default function LoginPage() {
               {!otpSent ? (
                 <>
                   <div className="space-y-2">
-                    <Label>फोन नम्बर</Label>
+                    <Label>Phone Number</Label>
                     <div className="flex gap-2">
                       <span className="flex items-center px-3 bg-gray-100 border rounded-md text-sm text-gray-600 whitespace-nowrap">
                         +977
@@ -167,19 +167,19 @@ export default function LoginPage() {
                     onClick={handleSendOtp}
                     disabled={phoneLoading || phone.length < 10}
                   >
-                    {phoneLoading ? 'पठाउँदैछ...' : 'OTP पठाउनुहोस्'}
+                    {phoneLoading ? 'Sending...' : 'Send OTP'}
                   </Button>
                 </>
               ) : (
                 <>
                   <p className="text-sm text-gray-600 text-center">
-                    <span className="font-medium">+977 {phone}</span> मा OTP पठाइयो
+                    OTP sent to <span className="font-medium">+977 {phone}</span>
                   </p>
                   <div className="space-y-2">
-                    <Label>OTP कोड</Label>
+                    <Label>OTP Code</Label>
                     <Input
                       type="number"
-                      placeholder="6 अंकको कोड"
+                      placeholder="6-digit code"
                       value={otp}
                       onChange={(e) => setOtp(e.target.value)}
                       className="text-center text-xl tracking-widest"
@@ -191,14 +191,14 @@ export default function LoginPage() {
                     onClick={handleVerifyOtp}
                     disabled={phoneLoading || otp.length < 6}
                   >
-                    {phoneLoading ? 'जाँच गर्दैछ...' : 'लगइन गर्नुहोस्'}
+                    {phoneLoading ? 'Verifying...' : 'Login'}
                   </Button>
                   <button
                     type="button"
                     onClick={() => { setOtpSent(false); setOtp(''); setPhoneError('') }}
                     className="w-full text-sm text-gray-500 hover:text-gray-700"
                   >
-                    नम्बर बदल्नुहोस्
+                    Change number
                   </button>
                 </>
               )}
@@ -208,7 +208,7 @@ export default function LoginPage() {
             <TabsContent value="email">
               <form onSubmit={handleEmailLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">इमेल</Label>
+                  <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
                     type="email"
@@ -219,11 +219,11 @@ export default function LoginPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">पासवर्ड</Label>
+                  <Label htmlFor="password">Password</Label>
                   <Input
                     id="password"
                     type="password"
-                    placeholder="पासवर्ड"
+                    placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -235,16 +235,16 @@ export default function LoginPage() {
                   className="w-full bg-orange-600 hover:bg-orange-700"
                   disabled={emailLoading}
                 >
-                  {emailLoading ? 'लगइन हुँदैछ...' : 'लगइन गर्नुहोस्'}
+                  {emailLoading ? 'Logging in...' : 'Login'}
                 </Button>
               </form>
             </TabsContent>
           </Tabs>
 
           <p className="mt-4 text-center text-sm text-gray-500">
-            खाता छैन?{' '}
+            Don&apos;t have an account?{' '}
             <Link href="/signup" className="text-orange-400 font-medium hover:text-orange-300">
-              दर्ता गर्नुहोस्
+              Sign up
             </Link>
           </p>
         </CardContent>

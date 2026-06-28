@@ -7,20 +7,20 @@ import { ArrowLeft, TrendingUp, TrendingDown, Tag } from 'lucide-react'
 import type { TransactionCategory, PaymentMethod, TransactionType } from '@/types/database'
 
 const CATEGORIES: { value: TransactionCategory; label: string; emoji: string }[] = [
-  { value: 'sales',    label: 'बिक्री',  emoji: '💰' },
-  { value: 'purchase', label: 'खरिद',   emoji: '🛒' },
-  { value: 'expense',  label: 'खर्च',   emoji: '💸' },
-  { value: 'salary',   label: 'तलब',    emoji: '👤' },
-  { value: 'other',    label: 'अन्य',   emoji: '📦' },
+  { value: 'sales',    label: 'Sales',    emoji: '💰' },
+  { value: 'purchase', label: 'Purchase', emoji: '🛒' },
+  { value: 'expense',  label: 'Expense',  emoji: '💸' },
+  { value: 'salary',   label: 'Salary',   emoji: '👤' },
+  { value: 'other',    label: 'Other',    emoji: '📦' },
 ]
 
 const PAYMENT_METHODS: { value: PaymentMethod; label: string; emoji: string }[] = [
-  { value: 'cash',    label: 'नगद',    emoji: '💵' },
-  { value: 'bank',    label: 'बैंक',   emoji: '🏦' },
+  { value: 'cash',    label: 'Cash',    emoji: '💵' },
+  { value: 'bank',    label: 'Bank',    emoji: '🏦' },
   { value: 'esewa',   label: 'eSewa',  emoji: '🟢' },
   { value: 'khalti',  label: 'Khalti', emoji: '🟣' },
   { value: 'fonepay', label: 'FonePay', emoji: '📱' },
-  { value: 'credit',  label: 'उधारो',  emoji: '📒' },
+  { value: 'credit',  label: 'Credit',  emoji: '📒' },
 ]
 
 const QUICK_AMOUNTS = [100, 500, 1000, 5000]
@@ -49,8 +49,8 @@ export default function NewTransactionPage() {
     e.preventDefault()
     setError('')
 
-    if (!rawAmt || rawAmt <= 0) { setError('सही रकम हाल्नुहोस्'); return }
-    if (discPct < 0 || discPct > 100) { setError('छुट ०-१०० बीचमा हुनुपर्छ'); return }
+    if (!rawAmt || rawAmt <= 0) { setError('Enter a valid amount'); return }
+    if (discPct < 0 || discPct > 100) { setError('Discount must be 0-100'); return }
 
     setLoading(true)
     const supabase = createClient()
@@ -74,7 +74,7 @@ export default function NewTransactionPage() {
     })
 
     if (insertError) {
-      setError('हिसाब राख्न समस्या भयो। फेरि प्रयास गर्नुहोस्।')
+      setError('Failed to save. Please try again.')
       setLoading(false)
       return
     }
@@ -98,7 +98,7 @@ export default function NewTransactionPage() {
           >
             <ArrowLeft size={22} />
           </button>
-          <h1 className="text-xl font-bold text-white">नयाँ हिसाब</h1>
+          <h1 className="text-xl font-bold text-white">New Entry</h1>
         </div>
 
         {/* आम्दानी / खर्च toggle */}
@@ -110,7 +110,7 @@ export default function NewTransactionPage() {
               isIn ? 'bg-white text-green-700 shadow-lg' : 'text-white/70'
             }`}
           >
-            <TrendingUp size={22} /> आम्दानी
+            <TrendingUp size={22} /> Income
           </button>
           <button
             type="button"
@@ -119,7 +119,7 @@ export default function NewTransactionPage() {
               !isIn ? 'bg-white text-red-700 shadow-lg' : 'text-white/70'
             }`}
           >
-            <TrendingDown size={22} /> खर्च
+            <TrendingDown size={22} /> Expense
           </button>
         </div>
       </div>
@@ -128,9 +128,9 @@ export default function NewTransactionPage() {
 
         {/* Amount card */}
         <div className="bg-[#111] border border-white/10 rounded-2xl p-5 shadow-xl">
-          <p className="text-sm font-semibold text-gray-400 mb-3">रकम (NPR) *</p>
+          <p className="text-sm font-semibold text-gray-400 mb-3">Amount (NPR) *</p>
           <div className="flex items-center gap-3">
-            <span className="text-3xl font-bold text-gray-600">रु.</span>
+            <span className="text-3xl font-bold text-gray-600">Rs.</span>
             <input
               type="number"
               inputMode="decimal"
@@ -162,7 +162,7 @@ export default function NewTransactionPage() {
             <div className="border-t border-white/10 mt-3 pt-3 space-y-2">
               <div className="flex items-center gap-2">
                 <Tag size={15} className="text-amber-400" />
-                <p className="text-sm font-medium text-amber-400">छुट (Discount)</p>
+                <p className="text-sm font-medium text-amber-400">Discount</p>
               </div>
               <div className="flex items-center gap-2">
                 <input
@@ -178,9 +178,9 @@ export default function NewTransactionPage() {
                 <span className="text-amber-400 font-bold text-xl">%</span>
                 {discPct > 0 && rawAmt > 0 && (
                   <div className="flex-1 text-right">
-                    <p className="text-xs text-gray-500">छुट: रु. {discountAmt.toLocaleString('ne-NP', { maximumFractionDigits: 2 })}</p>
+                    <p className="text-xs text-gray-500">Discount: Rs. {discountAmt.toLocaleString('ne-NP', { maximumFractionDigits: 2 })}</p>
                     <p className={`text-base font-bold ${highDiscount ? 'text-red-400' : 'text-green-400'}`}>
-                      अन्तिम: रु. {finalAmt.toLocaleString('ne-NP', { maximumFractionDigits: 2 })}
+                      Final: Rs. {finalAmt.toLocaleString('ne-NP', { maximumFractionDigits: 2 })}
                     </p>
                   </div>
                 )}
@@ -188,7 +188,7 @@ export default function NewTransactionPage() {
               {highDiscount && (
                 <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl p-2.5">
                   <span className="text-lg">⚠️</span>
-                  <p className="text-xs text-red-400 font-medium">उच्च छुट! मालिकको अनुमति आवश्यक छ।</p>
+                  <p className="text-xs text-red-400 font-medium">High discount! Owner approval required.</p>
                 </div>
               )}
             </div>
@@ -197,7 +197,7 @@ export default function NewTransactionPage() {
 
         {/* Category */}
         <div className="bg-[#111] border border-white/10 rounded-2xl p-4">
-          <p className="text-sm font-semibold text-gray-400 mb-3">किसिम *</p>
+          <p className="text-sm font-semibold text-gray-400 mb-3">Category *</p>
           <div className="grid grid-cols-5 gap-2">
             {CATEGORIES.map(cat => (
               <button
@@ -220,7 +220,7 @@ export default function NewTransactionPage() {
 
         {/* Payment Method */}
         <div className="bg-[#111] border border-white/10 rounded-2xl p-4">
-          <p className="text-sm font-semibold text-gray-400 mb-3">भुक्तानी *</p>
+          <p className="text-sm font-semibold text-gray-400 mb-3">Payment Method *</p>
           <div className="grid grid-cols-3 gap-2">
             {PAYMENT_METHODS.map(pm => (
               <button
@@ -242,10 +242,10 @@ export default function NewTransactionPage() {
 
         {/* Description */}
         <div className="bg-[#111] border border-white/10 rounded-2xl p-4">
-          <p className="text-sm font-semibold text-gray-400 mb-3">विवरण (वैकल्पिक)</p>
+          <p className="text-sm font-semibold text-gray-400 mb-3">Description (optional)</p>
           <input
             type="text"
-            placeholder="जस्तै: चामल बेच्यो, बिजुली बिल..."
+            placeholder="e.g. Rice sold, electricity bill..."
             value={description}
             onChange={e => setDescription(e.target.value)}
             className={inputClass}
@@ -254,7 +254,7 @@ export default function NewTransactionPage() {
 
         {/* Date */}
         <div className="bg-[#111] border border-white/10 rounded-2xl p-4">
-          <p className="text-sm font-semibold text-gray-400 mb-3">मिति</p>
+          <p className="text-sm font-semibold text-gray-400 mb-3">Date</p>
           <input
             type="date"
             value={date}
@@ -277,12 +277,12 @@ export default function NewTransactionPage() {
           className={`w-full py-5 rounded-2xl text-white font-bold text-xl active:scale-[0.98] transition-all disabled:opacity-50 bg-gradient-to-r ${accentActive}`}
         >
           {loading
-            ? 'राख्दैछ...'
+            ? 'Saving...'
             : isIn
               ? isSales && discPct > 0
-                ? `✓ रु. ${finalAmt.toLocaleString('ne-NP', { maximumFractionDigits: 2 })} आम्दानी राख्नुहोस्`
-                : '✓ आम्दानी राख्नुहोस्'
-              : '✓ खर्च राख्नुहोस्'}
+                ? `✓ Save Income Rs. ${finalAmt.toLocaleString('ne-NP', { maximumFractionDigits: 2 })}`
+                : '✓ Save Income'
+              : '✓ Save Expense'}
         </button>
       </form>
     </div>

@@ -9,7 +9,7 @@ import { ArrowLeft } from 'lucide-react'
 import { PLAN_LIMITS } from '@/lib/plan-limits'
 import type { Plan } from '@/types/database'
 
-const ROLES = ['क्यासियर', 'सेल्समान', 'गोदाम स्टाफ', 'डेलिभरी', 'सफाइ', 'म्यानेजर', 'अन्य']
+const ROLES = ['Cashier', 'Salesman', 'Warehouse Staff', 'Delivery', 'Cleaning', 'Manager', 'Other']
 
 export default function NewStaffPage() {
   const router = useRouter()
@@ -24,8 +24,8 @@ export default function NewStaffPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    if (!name.trim()) { setError('नाम आवश्यक छ'); return }
-    if (!salary || Number(salary) <= 0) { setError('तलब राख्नुहोस्'); return }
+    if (!name.trim()) { setError('Name is required'); return }
+    if (!salary || Number(salary) <= 0) { setError('Please enter a salary'); return }
 
     setLoading(true)
     const supabase = createClient()
@@ -48,7 +48,7 @@ export default function NewStaffPage() {
 
     const limit = PLAN_LIMITS[biz.plan as Plan].staff
     if (limit !== Infinity && (count ?? 0) >= limit) {
-      setError(`तपाईंको प्लानमा अधिकतम ${limit} स्टाफ राख्न सकिन्छ। अपग्रेड गर्नुहोस्।`)
+      setError(`Your plan allows a maximum of ${limit} staff. Please upgrade.`)
       setLoading(false)
       return
     }
@@ -63,7 +63,7 @@ export default function NewStaffPage() {
     })
 
     if (insertError) {
-      setError('स्टाफ थप्न समस्या भयो। फेरि प्रयास गर्नुहोस्।')
+      setError('Error adding staff. Please try again.')
       setLoading(false)
       return
     }
@@ -78,9 +78,9 @@ export default function NewStaffPage() {
           <button onClick={() => router.back()} className="p-2 rounded-xl bg-white/20 text-white active:scale-95 transition-transform">
             <ArrowLeft size={22} />
           </button>
-          <h1 className="text-xl font-bold text-white">नयाँ स्टाफ थप्नुहोस्</h1>
+          <h1 className="text-xl font-bold text-white">Add New Staff</h1>
         </div>
-        <p className="text-purple-100 text-sm mt-3">कर्मचारीको जानकारी राख्नुहोस्</p>
+        <p className="text-purple-100 text-sm mt-3">Enter employee details</p>
       </div>
 
       <form onSubmit={handleSubmit} className="px-4 pt-5 space-y-4 pb-10">
@@ -88,10 +88,10 @@ export default function NewStaffPage() {
         {/* Name */}
         <div className="bg-white rounded-2xl p-5 shadow-sm space-y-2">
           <Label className="text-base font-semibold text-gray-700">
-            पूरा नाम <span className="text-red-500">*</span>
+            Full Name <span className="text-red-500">*</span>
           </Label>
           <Input
-            placeholder="जस्तै: सुनिता श्रेष्ठ"
+            placeholder="e.g.: Sunita Shrestha"
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="text-base h-12 rounded-xl"
@@ -101,7 +101,7 @@ export default function NewStaffPage() {
 
         {/* Role */}
         <div className="bg-white rounded-2xl p-5 shadow-sm space-y-3">
-          <Label className="text-base font-semibold text-gray-700">पद (Role)</Label>
+          <Label className="text-base font-semibold text-gray-700">Role</Label>
           <div className="grid grid-cols-3 gap-2">
             {ROLES.map((r) => (
               <button
@@ -119,7 +119,7 @@ export default function NewStaffPage() {
             ))}
           </div>
           <Input
-            placeholder="वा आफ्नै पद लेख्नुहोस्..."
+            placeholder="Or type your own role..."
             value={role}
             onChange={(e) => setRole(e.target.value)}
             className="text-base h-12 rounded-xl"
@@ -129,7 +129,7 @@ export default function NewStaffPage() {
         {/* Phone & Salary */}
         <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
           <div className="space-y-2">
-            <Label className="text-base font-semibold text-gray-700">फोन नम्बर</Label>
+            <Label className="text-base font-semibold text-gray-700">Phone Number</Label>
             <div className="flex gap-2">
               <span className="flex items-center px-3 bg-gray-100 border rounded-xl text-sm text-gray-600 whitespace-nowrap">+977</span>
               <Input
@@ -145,10 +145,10 @@ export default function NewStaffPage() {
 
           <div className="space-y-2">
             <Label className="text-base font-semibold text-gray-700">
-              मासिक तलब (NPR) <span className="text-red-500">*</span>
+              Monthly Salary (NPR) <span className="text-red-500">*</span>
             </Label>
             <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden h-12">
-              <span className="px-3 bg-gray-50 text-gray-500 font-semibold border-r border-gray-200 h-full flex items-center">रु.</span>
+              <span className="px-3 bg-gray-50 text-gray-500 font-semibold border-r border-gray-200 h-full flex items-center">Rs.</span>
               <input
                 type="number"
                 inputMode="numeric"
@@ -173,7 +173,7 @@ export default function NewStaffPage() {
 
         {/* Join date */}
         <div className="bg-white rounded-2xl p-5 shadow-sm space-y-2">
-          <Label className="text-base font-semibold text-gray-700">सुरु मिति</Label>
+          <Label className="text-base font-semibold text-gray-700">Start Date</Label>
           <input
             type="date"
             value={joinDate}
@@ -193,7 +193,7 @@ export default function NewStaffPage() {
           disabled={loading || !name.trim() || !salary}
           className="w-full py-5 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xl active:scale-[0.98] transition-all disabled:opacity-50"
         >
-          {loading ? 'थप्दैछ...' : '✓ स्टाफ थप्नुहोस्'}
+          {loading ? 'Adding...' : '✓ Add Staff'}
         </button>
       </form>
     </div>

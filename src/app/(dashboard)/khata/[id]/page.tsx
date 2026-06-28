@@ -69,7 +69,7 @@ export default function CustomerDetailPage() {
   async function handleAddEntry() {
     setFormError('')
     const amt = parseFloat(amount)
-    if (!amt || amt <= 0) { setFormError('सही रकम हाल्नुहोस्'); return }
+    if (!amt || amt <= 0) { setFormError('Please enter a valid amount'); return }
 
     setSaving(true)
     const supabase = createClient()
@@ -86,7 +86,7 @@ export default function CustomerDetailPage() {
       created_by: user.id,
     })
 
-    if (error) { setFormError('राख्न समस्या भयो'); setSaving(false); return }
+    if (error) { setFormError('Error saving entry'); setSaving(false); return }
 
     // Update customer totals
     const field = entryType === 'credit' ? 'total_credit' : 'total_paid'
@@ -107,7 +107,7 @@ export default function CustomerDetailPage() {
         amount: amt,
         discount_percent: 0,
         category: 'sales',
-        description: `खाता संकलन — ${customer?.name ?? ''}${description.trim() ? ': ' + description.trim() : ''}`,
+        description: `Khata Collection — ${customer?.name ?? ''}${description.trim() ? ': ' + description.trim() : ''}`,
         payment_method: 'cash',
         transaction_date: new Date().toISOString().split('T')[0],
         created_by: user.id,
@@ -129,7 +129,7 @@ export default function CustomerDetailPage() {
 
     setSmsLoading(true)
     setSmsMsg('')
-    const message = `नमस्ते ${customer.name} जी, तपाईंको NPR ${outstanding.toLocaleString()} बाँकी छ। कृपया भुक्तान गर्नुहोस् - PasalSathi`
+    const message = `Hello ${customer.name}, you have NPR ${outstanding.toLocaleString()} outstanding. Please make payment - PasalSathi`
 
     const res = await fetch('/api/sms/send', {
       method: 'POST',
@@ -137,12 +137,12 @@ export default function CustomerDetailPage() {
       body: JSON.stringify({ phone: customer.phone, message, businessId, customerId: id }),
     })
     const data = await res.json() as { error?: string }
-    setSmsMsg(res.ok ? '✓ SMS पठाइयो' : (data.error ?? 'SMS पठाउन सकिएन'))
+    setSmsMsg(res.ok ? '✓ SMS sent' : (data.error ?? 'Failed to send SMS'))
     setSmsLoading(false)
   }
 
-  if (loading) return <div className="flex items-center justify-center min-h-screen text-gray-400 text-lg">लोड हुँदैछ...</div>
-  if (!customer) return <div className="flex items-center justify-center min-h-screen text-red-500 text-lg">ग्राहक भेटिएन</div>
+  if (loading) return <div className="flex items-center justify-center min-h-screen text-gray-400 text-lg">Loading...</div>
+  if (!customer) return <div className="flex items-center justify-center min-h-screen text-red-500 text-lg">Customer not found</div>
 
   const outstanding = Math.max(0, Number(customer.total_credit) - Number(customer.total_paid))
   const isClean = outstanding === 0
@@ -179,11 +179,11 @@ export default function CustomerDetailPage() {
 
         {/* Outstanding balance */}
         <div className="mt-4 text-center">
-          <p className="text-white/80 text-sm font-medium">कुल बाँकी उधारो</p>
+          <p className="text-white/80 text-sm font-medium">Total Outstanding</p>
           <p className="text-white text-4xl font-bold mt-1">
             NPR {outstanding.toLocaleString('ne-NP')}
           </p>
-          {isClean && <p className="text-white/80 text-sm mt-1">✓ सबै भुक्तान भयो</p>}
+          {isClean && <p className="text-white/80 text-sm mt-1">✓ All paid up</p>}
         </div>
       </div>
 
@@ -194,13 +194,13 @@ export default function CustomerDetailPage() {
             onClick={() => { setEntryType('credit'); setShowForm(true) }}
             className="flex items-center justify-center gap-2 py-4 bg-red-600 text-white rounded-2xl font-bold text-base active:scale-[0.98] transition-transform"
           >
-            <TrendingUp size={20} /> उधारो दिनुहोस्
+            <TrendingUp size={20} /> Give Credit
           </button>
           <button
             onClick={() => { setEntryType('payment'); setShowForm(true) }}
             className="flex items-center justify-center gap-2 py-4 bg-green-600 text-white rounded-2xl font-bold text-base active:scale-[0.98] transition-transform"
           >
-            <TrendingDown size={20} /> भुक्तान लिनुहोस्
+            <TrendingDown size={20} /> Collect Payment
           </button>
         </div>
 
@@ -212,7 +212,7 @@ export default function CustomerDetailPage() {
             className="w-full flex items-center justify-center gap-2 py-4 bg-white border-2 border-amber-400 text-amber-700 rounded-2xl font-semibold text-base active:scale-[0.98] transition-all disabled:opacity-50"
           >
             <MessageSquare size={20} />
-            {smsLoading ? 'पठाउँदैछ...' : 'SMS रिमाइन्डर पठाउनुहोस्'}
+            {smsLoading ? 'Sending...' : 'Send SMS Reminder'}
           </button>
         )}
         {smsMsg && (
@@ -225,14 +225,14 @@ export default function CustomerDetailPage() {
         {showForm && (
           <div className={`rounded-2xl p-5 border-2 shadow-sm ${entryType === 'credit' ? 'bg-red-50 border-red-300' : 'bg-green-50 border-green-300'}`}>
             <h3 className={`text-lg font-bold mb-4 ${entryType === 'credit' ? 'text-red-700' : 'text-green-700'}`}>
-              {entryType === 'credit' ? '🔴 उधारो दिएको रकम' : '🟢 भुक्तान लिएको रकम'}
+              {entryType === 'credit' ? '🔴 Credit Amount' : '🟢 Payment Amount'}
             </h3>
 
             <div className="space-y-3">
               <div>
-                <label className="text-base font-semibold text-gray-700 block mb-2">रकम (NPR) *</label>
+                <label className="text-base font-semibold text-gray-700 block mb-2">Amount (NPR) *</label>
                 <div className="flex items-center gap-2 bg-white rounded-xl px-4 py-3 border border-gray-200">
-                  <span className="text-xl font-bold text-gray-400">रु.</span>
+                  <span className="text-xl font-bold text-gray-400">Rs.</span>
                   <input
                     type="number"
                     inputMode="decimal"
@@ -254,10 +254,10 @@ export default function CustomerDetailPage() {
               </div>
 
               <div>
-                <label className="text-base font-semibold text-gray-700 block mb-2">विवरण (वैकल्पिक)</label>
+                <label className="text-base font-semibold text-gray-700 block mb-2">Description (optional)</label>
                 <input
                   type="text"
-                  placeholder="जस्तै: चामल उधारो, आंशिक भुक्तान..."
+                  placeholder="e.g.: Rice credit, partial payment..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full text-base border border-gray-200 rounded-xl px-4 h-12 outline-none focus:ring-2 focus:ring-orange-400 bg-white"
@@ -272,7 +272,7 @@ export default function CustomerDetailPage() {
                   onClick={() => { setShowForm(false); setAmount(''); setDescription(''); setFormError('') }}
                   className="flex-1 py-4 rounded-xl border-2 border-gray-300 text-gray-600 font-semibold text-base active:scale-[0.98]"
                 >
-                  रद्द
+                  Cancel
                 </button>
                 <button
                   type="button"
@@ -280,7 +280,7 @@ export default function CustomerDetailPage() {
                   disabled={saving || !amount}
                   className={`flex-1 py-4 rounded-xl text-white font-bold text-base active:scale-[0.98] disabled:opacity-50 ${entryType === 'credit' ? 'bg-red-600' : 'bg-green-600'}`}
                 >
-                  {saving ? 'राख्दैछ...' : '✓ राख्नुहोस्'}
+                  {saving ? 'Saving...' : '✓ Save'}
                 </button>
               </div>
             </div>
@@ -289,11 +289,11 @@ export default function CustomerDetailPage() {
 
         {/* Entry history */}
         <div>
-          <h2 className="text-lg font-bold text-gray-800 mb-3">कारोबारको इतिहास</h2>
+          <h2 className="text-lg font-bold text-gray-800 mb-3">Transaction History</h2>
           {entries.length === 0 ? (
             <div className="text-center py-10">
               <p className="text-4xl mb-3">📋</p>
-              <p className="text-gray-500 text-base">अहिलेसम्म कुनै कारोबार छैन</p>
+              <p className="text-gray-500 text-base">No transactions yet</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -318,7 +318,7 @@ function EntryRow({ entry }: { entry: KhataEntry }) {
         </div>
         <div>
           <p className="text-sm font-semibold text-gray-800">
-            {entry.description || (isCredit ? 'उधारो दिएको' : 'भुक्तान लिएको')}
+            {entry.description || (isCredit ? 'Credit given' : 'Payment collected')}
           </p>
           <p className="text-xs text-gray-400 mt-0.5">
             {formatBSFull(new Date(entry.entry_date + 'T00:00:00'))}

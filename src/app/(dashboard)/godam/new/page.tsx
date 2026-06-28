@@ -10,11 +10,11 @@ import { PLAN_LIMITS } from '@/lib/plan-limits'
 import type { Plan } from '@/types/database'
 
 const UNITS = [
-  { value: 'piece', label: 'पिस', emoji: '📦' },
-  { value: 'kg',    label: 'केजी',  emoji: '⚖️' },
-  { value: 'litre', label: 'लिटर', emoji: '🧴' },
-  { value: 'box',   label: 'बक्स',  emoji: '🗃️' },
-  { value: 'dozen', label: 'दर्जन', emoji: '🔢' },
+  { value: 'piece', label: 'Piece', emoji: '📦' },
+  { value: 'kg',    label: 'Kg',    emoji: '⚖️' },
+  { value: 'litre', label: 'Litre', emoji: '🧴' },
+  { value: 'box',   label: 'Box',   emoji: '🗃️' },
+  { value: 'dozen', label: 'Dozen', emoji: '🔢' },
 ]
 
 export default function NewProductPage() {
@@ -31,7 +31,7 @@ export default function NewProductPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    if (!name.trim()) { setError('सामानको नाम आवश्यक छ'); return }
+    if (!name.trim()) { setError('Item name is required'); return }
 
     setLoading(true)
     const supabase = createClient()
@@ -54,7 +54,7 @@ export default function NewProductPage() {
 
     const limit = PLAN_LIMITS[biz.plan as Plan].products
     if (limit !== Infinity && (count ?? 0) >= limit) {
-      setError(`तपाईंको प्लानमा अधिकतम ${limit} सामान राख्न सकिन्छ। अपग्रेड गर्नुहोस्।`)
+      setError(`Your plan allows a maximum of ${limit} items. Please upgrade.`)
       setLoading(false)
       return
     }
@@ -70,7 +70,7 @@ export default function NewProductPage() {
     })
 
     if (insertError) {
-      setError('सामान थप्न समस्या भयो। फेरि प्रयास गर्नुहोस्।')
+      setError('Error adding item. Please try again.')
       setLoading(false)
       return
     }
@@ -85,10 +85,10 @@ export default function NewProductPage() {
           <button onClick={() => router.back()} className="p-2 rounded-xl bg-white/20 text-white active:scale-95 transition-transform">
             <ArrowLeft size={22} />
           </button>
-          <h1 className="text-xl font-bold text-white">नयाँ सामान थप्नुहोस्</h1>
+          <h1 className="text-xl font-bold text-white">Add New Item</h1>
         </div>
         <p className="text-blue-100 text-sm mt-3">
-          सामानको मूल्य र स्टक राख्नुहोस्
+          Enter item price and stock details
         </p>
       </div>
 
@@ -97,10 +97,10 @@ export default function NewProductPage() {
         {/* Name */}
         <div className="bg-white rounded-2xl p-5 shadow-sm space-y-2">
           <Label className="text-base font-semibold text-gray-700">
-            सामानको नाम <span className="text-red-500">*</span>
+            Item Name <span className="text-red-500">*</span>
           </Label>
           <Input
-            placeholder="जस्तै: बासमती चामल, तेल, सिमेन्ट..."
+            placeholder="e.g.: Basmati Rice, Oil, Cement..."
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="text-base h-12 rounded-xl"
@@ -110,7 +110,7 @@ export default function NewProductPage() {
 
         {/* Unit */}
         <div className="bg-white rounded-2xl p-5 shadow-sm">
-          <Label className="text-base font-semibold text-gray-700 block mb-3">एकाइ (Unit)</Label>
+          <Label className="text-base font-semibold text-gray-700 block mb-3">Unit</Label>
           <div className="grid grid-cols-5 gap-2">
             {UNITS.map((u) => (
               <button
@@ -132,12 +132,12 @@ export default function NewProductPage() {
 
         {/* Prices */}
         <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
-          <h3 className="text-base font-semibold text-gray-700">मूल्य</h3>
+          <h3 className="text-base font-semibold text-gray-700">Price</h3>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-600">किनेको मूल्य</Label>
+              <Label className="text-sm font-medium text-gray-600">Buying Price</Label>
               <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden h-12">
-                <span className="px-3 bg-gray-50 text-gray-500 text-sm border-r border-gray-200 h-full flex items-center">रु.</span>
+                <span className="px-3 bg-gray-50 text-gray-500 text-sm border-r border-gray-200 h-full flex items-center">Rs.</span>
                 <input
                   type="number"
                   inputMode="decimal"
@@ -150,9 +150,9 @@ export default function NewProductPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-600">बेच्ने मूल्य</Label>
+              <Label className="text-sm font-medium text-gray-600">Selling Price</Label>
               <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden h-12">
-                <span className="px-3 bg-gray-50 text-gray-500 text-sm border-r border-gray-200 h-full flex items-center">रु.</span>
+                <span className="px-3 bg-gray-50 text-gray-500 text-sm border-r border-gray-200 h-full flex items-center">Rs.</span>
                 <input
                   type="number"
                   inputMode="decimal"
@@ -167,7 +167,7 @@ export default function NewProductPage() {
           </div>
           {buyingPrice && sellingPrice && Number(sellingPrice) > Number(buyingPrice) && (
             <p className="text-sm text-green-600 font-medium bg-green-50 rounded-lg px-3 py-2">
-              ✓ नाफा: NPR {(Number(sellingPrice) - Number(buyingPrice)).toLocaleString('ne-NP')} प्रति{' '}
+              ✓ Profit: NPR {(Number(sellingPrice) - Number(buyingPrice)).toLocaleString('ne-NP')} per{' '}
               {UNITS.find((u) => u.value === unit)?.label}
             </p>
           )}
@@ -175,10 +175,10 @@ export default function NewProductPage() {
 
         {/* Stock */}
         <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
-          <h3 className="text-base font-semibold text-gray-700">स्टक</h3>
+          <h3 className="text-base font-semibold text-gray-700">Stock</h3>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-600">हालको स्टक</Label>
+              <Label className="text-sm font-medium text-gray-600">Current Stock</Label>
               <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden h-12">
                 <input
                   type="number"
@@ -195,7 +195,7 @@ export default function NewProductPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-600">कम स्टक अलर्ट</Label>
+              <Label className="text-sm font-medium text-gray-600">Low Stock Alert</Label>
               <div className="flex items-center border border-orange-200 rounded-xl overflow-hidden h-12 bg-orange-50">
                 <input
                   type="number"
@@ -210,7 +210,7 @@ export default function NewProductPage() {
                   {UNITS.find((u) => u.value === unit)?.label}
                 </span>
               </div>
-              <p className="text-xs text-gray-400">यति भन्दा कम भए सतर्कता आउँछ</p>
+              <p className="text-xs text-gray-400">Alert when stock falls below this</p>
             </div>
           </div>
         </div>
@@ -226,7 +226,7 @@ export default function NewProductPage() {
           disabled={loading || !name.trim()}
           className="w-full py-5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xl active:scale-[0.98] transition-all disabled:opacity-50"
         >
-          {loading ? 'थप्दैछ...' : '✓ सामान थप्नुहोस्'}
+          {loading ? 'Adding...' : '✓ Add Item'}
         </button>
       </form>
     </div>

@@ -7,10 +7,10 @@ import { ArrowLeft, Save } from 'lucide-react'
 import type { Staff, AttendanceStatus } from '@/types/database'
 
 const STATUS_OPTIONS: { value: AttendanceStatus; label: string; emoji: string; bg: string; activeBg: string; activeText: string }[] = [
-  { value: 'present',  label: 'उपस्थित',   emoji: '✅', bg: 'bg-gray-50 border-gray-200 text-gray-600',       activeBg: 'bg-green-500',  activeText: 'text-white' },
-  { value: 'absent',   label: 'अनुपस्थित', emoji: '❌', bg: 'bg-gray-50 border-gray-200 text-gray-600',       activeBg: 'bg-red-500',    activeText: 'text-white' },
-  { value: 'half_day', label: 'आधा दिन',   emoji: '🌗', bg: 'bg-gray-50 border-gray-200 text-gray-600',       activeBg: 'bg-amber-500',  activeText: 'text-white' },
-  { value: 'holiday',  label: 'बिदा',      emoji: '🏖️', bg: 'bg-gray-50 border-gray-200 text-gray-600',       activeBg: 'bg-blue-500',   activeText: 'text-white' },
+  { value: 'present',  label: 'Present',  emoji: '✅', bg: 'bg-gray-50 border-gray-200 text-gray-600', activeBg: 'bg-green-500',  activeText: 'text-white' },
+  { value: 'absent',   label: 'Absent',   emoji: '❌', bg: 'bg-gray-50 border-gray-200 text-gray-600', activeBg: 'bg-red-500',    activeText: 'text-white' },
+  { value: 'half_day', label: 'Half Day', emoji: '🌗', bg: 'bg-gray-50 border-gray-200 text-gray-600', activeBg: 'bg-amber-500',  activeText: 'text-white' },
+  { value: 'holiday',  label: 'Holiday',  emoji: '🏖️', bg: 'bg-gray-50 border-gray-200 text-gray-600', activeBg: 'bg-blue-500',   activeText: 'text-white' },
 ]
 
 export default function AttendancePage() {
@@ -83,7 +83,7 @@ export default function AttendancePage() {
 
   const markedCount = Object.keys(attendance).length
 
-  if (loading) return <div className="flex items-center justify-center min-h-screen text-gray-400 text-lg">लोड हुँदैछ...</div>
+  if (loading) return <div className="flex items-center justify-center min-h-screen text-gray-400 text-lg">Loading...</div>
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -93,18 +93,18 @@ export default function AttendancePage() {
           <button onClick={() => router.back()} className="p-2 rounded-xl bg-white/20 text-white active:scale-95 transition-transform">
             <ArrowLeft size={22} />
           </button>
-          <h1 className="text-xl font-bold text-white">हाजिरी</h1>
+          <h1 className="text-xl font-bold text-white">Attendance</h1>
         </div>
         <p className="text-purple-100 text-base font-medium">{todayDisplay}</p>
         <p className="text-purple-200 text-sm mt-0.5">
-          {markedCount}/{staffList.length} जनाको हाजिरी भरियो
+          {markedCount}/{staffList.length} attendance marked
         </p>
       </div>
 
       <div className="px-4 pt-4 space-y-4 pb-32">
         {/* Mark all buttons */}
         <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <p className="text-sm font-semibold text-gray-600 mb-3">सबैलाई एकैचोटि चिन्ह लगाउनुहोस्:</p>
+          <p className="text-sm font-semibold text-gray-600 mb-3">Mark all at once:</p>
           <div className="grid grid-cols-4 gap-2">
             {STATUS_OPTIONS.map((opt) => (
               <button
@@ -124,7 +124,7 @@ export default function AttendancePage() {
         {staffList.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-5xl mb-4">👤</p>
-            <p className="text-xl text-gray-500">कुनै स्टाफ छैन</p>
+            <p className="text-xl text-gray-500">No staff yet</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -139,7 +139,7 @@ export default function AttendancePage() {
                     </div>
                     <div>
                       <p className="text-base font-bold text-gray-900">{s.name}</p>
-                      <p className="text-xs text-gray-400">{s.role || 'स्टाफ'}</p>
+                      <p className="text-xs text-gray-400">{s.role || 'Staff'}</p>
                     </div>
                   </div>
 
@@ -180,11 +180,11 @@ export default function AttendancePage() {
             }`}
           >
             {saved ? (
-              '✓ सुरक्षित भयो!'
+              '✓ Saved!'
             ) : (
               <>
                 <Save size={22} />
-                {saving ? 'सुरक्षित गर्दैछ...' : `हाजिरी सुरक्षित गर्नुहोस् (${markedCount}/${staffList.length})`}
+                {saving ? 'Saving...' : `Save Attendance (${markedCount}/${staffList.length})`}
               </>
             )}
           </button>

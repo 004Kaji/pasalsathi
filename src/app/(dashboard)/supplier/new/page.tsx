@@ -24,20 +24,20 @@ export default function NewSupplierPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!form.name.trim()) { setError('सप्लायरको नाम खाली हुन मिल्दैन'); return }
+    if (!form.name.trim()) { setError('Supplier name cannot be empty'); return }
 
     setLoading(true)
     setError('')
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setError('लगइन गर्नुहोस्'); setLoading(false); return }
+    if (!user) { setError('Please log in'); setLoading(false); return }
 
     const { data: biz } = await supabase
       .from('businesses')
       .select('id')
       .eq('owner_id', user.id)
       .single()
-    if (!biz) { setError('व्यापार भेटिएन'); setLoading(false); return }
+    if (!biz) { setError('Business not found'); setLoading(false); return }
 
     const { error: err } = await supabase.from('suppliers').insert({
       business_id: biz.id,
@@ -48,7 +48,7 @@ export default function NewSupplierPage() {
       notes: form.notes.trim() || null,
     })
 
-    if (err) { setError('सप्लायर थप्न समस्या भयो'); setLoading(false); return }
+    if (err) { setError('Error adding supplier'); setLoading(false); return }
     router.push('/supplier')
     router.refresh()
   }
@@ -63,15 +63,15 @@ export default function NewSupplierPage() {
         <button onClick={() => router.back()} className="p-2 rounded-xl bg-white/10 text-gray-400">
           <ArrowLeft size={20} />
         </button>
-        <h1 className="text-xl font-bold text-white">नयाँ सप्लायर थप्नुहोस्</h1>
+        <h1 className="text-xl font-bold text-white">Add New Supplier</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="px-4 pt-6 space-y-5">
         <div>
-          <label className={labelClass}>🏭 सप्लायरको नाम *</label>
+          <label className={labelClass}>🏭 Supplier Name *</label>
           <input
             type="text"
-            placeholder="जस्तै: रामेश ट्रेडर्स"
+            placeholder="e.g.: Ramesh Traders"
             value={form.name}
             onChange={e => set('name', e.target.value)}
             className={inputClass}
@@ -80,7 +80,7 @@ export default function NewSupplierPage() {
         </div>
 
         <div>
-          <label className={labelClass}>📱 फोन नम्बर</label>
+          <label className={labelClass}>📱 Phone Number</label>
           <div className="flex gap-2">
             <span className="flex items-center px-3 bg-white/5 border border-white/10 rounded-xl text-gray-500 text-sm whitespace-nowrap">
               +977
@@ -97,10 +97,10 @@ export default function NewSupplierPage() {
         </div>
 
         <div>
-          <label className={labelClass}>📍 ठेगाना</label>
+          <label className={labelClass}>📍 Address</label>
           <input
             type="text"
-            placeholder="जस्तै: नयाँ बजार, काठमाडौं"
+            placeholder="e.g.: New Bazaar, Kathmandu"
             value={form.address}
             onChange={e => set('address', e.target.value)}
             className={inputClass}
@@ -108,10 +108,10 @@ export default function NewSupplierPage() {
         </div>
 
         <div>
-          <label className={labelClass}>📦 सामानको प्रकार</label>
+          <label className={labelClass}>📦 Product Categories</label>
           <input
             type="text"
-            placeholder="जस्तै: किराना, तेल, दाल"
+            placeholder="e.g.: Grocery, Oil, Lentils"
             value={form.product_categories}
             onChange={e => set('product_categories', e.target.value)}
             className={inputClass}
@@ -119,9 +119,9 @@ export default function NewSupplierPage() {
         </div>
 
         <div>
-          <label className={labelClass}>📝 नोट</label>
+          <label className={labelClass}>📝 Note</label>
           <textarea
-            placeholder="थप जानकारी..."
+            placeholder="Additional info..."
             value={form.notes}
             onChange={e => set('notes', e.target.value)}
             className={`${inputClass} resize-none`}
@@ -140,7 +140,7 @@ export default function NewSupplierPage() {
           disabled={loading}
           className="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white py-4 rounded-2xl font-bold text-lg active:scale-95 transition-transform disabled:opacity-50"
         >
-          {loading ? 'सुरक्षित गर्दैछ...' : '✓ सप्लायर सुरक्षित गर्नुहोस्'}
+          {loading ? 'Saving...' : '✓ Save Supplier'}
         </button>
       </form>
     </div>

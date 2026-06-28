@@ -103,7 +103,7 @@ export default async function DashboardPage() {
           <h1 className="text-2xl font-bold text-white mt-0.5">{business.name}</h1>
           {subStatus.status === 'trial' && (
             <span className="text-sm text-orange-400 font-medium">
-              नि:शुल्क परीक्षण — {subStatus.daysLeft} दिन बाँकी
+              Free Trial — {subStatus.daysLeft} days remaining
             </span>
           )}
         </div>
@@ -111,14 +111,14 @@ export default async function DashboardPage() {
           <Link
             href="/report"
             className="p-2.5 rounded-xl bg-white/10 text-gray-400 hover:bg-white/15 active:scale-95 transition-transform"
-            aria-label="रिपोर्ट"
+            aria-label="Report"
           >
             <FileText size={22} />
           </Link>
           <Link
             href="/settings"
             className="p-2.5 rounded-xl bg-white/10 text-gray-400 hover:bg-white/15 active:scale-95 transition-transform"
-            aria-label="सेटिङ"
+            aria-label="Settings"
           >
             <Settings size={22} />
           </Link>
@@ -140,7 +140,7 @@ export default async function DashboardPage() {
                 <TrendingUp size={28} className="text-green-400" />
               </div>
               <div>
-                <p className="text-green-400 text-base font-medium">💰 आजको आम्दानी</p>
+                <p className="text-green-400 text-base font-medium">💰 Today's Income</p>
                 <p className="text-green-300 text-3xl font-bold mt-0.5">
                   {formatNPR(cashIn)}
                 </p>
@@ -158,7 +158,7 @@ export default async function DashboardPage() {
                 <TrendingDown size={28} className="text-red-400" />
               </div>
               <div>
-                <p className="text-red-400 text-base font-medium">💸 आजको खर्च</p>
+                <p className="text-red-400 text-base font-medium">💸 Today's Expense</p>
                 <p className="text-red-300 text-3xl font-bold mt-0.5">
                   {formatNPR(cashOut)}
                 </p>
@@ -176,7 +176,7 @@ export default async function DashboardPage() {
             </div>
             <div>
               <p className={`text-base font-medium ${netCash >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>
-                📊 आजको नाफा / नोक्सान
+                📊 Today's Profit / Loss
               </p>
               <p className={`text-3xl font-bold mt-0.5 ${netCash >= 0 ? 'text-blue-300' : 'text-orange-300'}`}>
                 {netCash >= 0 ? '+' : ''}{formatNPR(netCash)}
@@ -199,7 +199,7 @@ export default async function DashboardPage() {
                 <Users size={24} className="text-amber-400" />
               </div>
               <div>
-                <p className="text-amber-400 text-sm font-medium">📒 कुल बाँकी उधारो</p>
+                <p className="text-amber-400 text-sm font-medium">📒 Total Outstanding Credit</p>
                 <p className="text-amber-300 text-2xl font-bold">
                   {formatNPR(totalOutstanding)}
                 </p>
@@ -220,12 +220,12 @@ export default async function DashboardPage() {
             </div>
             <div className="mt-3">
               <p className={`text-sm font-medium ${lowStockCount > 0 ? 'text-red-400' : 'text-gray-500'}`}>
-                📦 कम स्टक
+                📦 Low Stock
               </p>
               <p className={`text-3xl font-bold ${lowStockCount > 0 ? 'text-red-300' : 'text-gray-400'}`}>
                 {lowStockCount}
               </p>
-              <p className="text-xs text-gray-600 mt-0.5">वस्तुहरू</p>
+              <p className="text-xs text-gray-600 mt-0.5">items</p>
             </div>
           </div>
         </Link>
@@ -237,12 +237,12 @@ export default async function DashboardPage() {
               <UserCheck size={24} className="text-purple-400" />
             </div>
             <div className="mt-3">
-              <p className="text-sm font-medium text-purple-400">👥 स्टाफ उपस्थित</p>
+              <p className="text-sm font-medium text-purple-400">👥 Staff Present</p>
               <p className="text-3xl font-bold text-purple-300">
                 {presentToday}
                 <span className="text-xl text-purple-500">/{totalStaff}</span>
               </p>
-              <p className="text-xs text-gray-600 mt-0.5">आज उपस्थित</p>
+              <p className="text-xs text-gray-600 mt-0.5">present today</p>
             </div>
           </div>
         </Link>
@@ -250,18 +250,18 @@ export default async function DashboardPage() {
 
       {/* Quick Actions */}
       <div>
-        <p className="text-base font-semibold text-gray-400 mb-3">⚡ छिटो काम</p>
+        <p className="text-base font-semibold text-gray-400 mb-3">⚡ Quick Actions</p>
         <div className="grid grid-cols-2 gap-3">
-          <QuickAction href="/hisab/new" label="हिसाब थप्नुहोस्" color="green" />
-          <QuickAction href="/khata/new" label="उधारो थप्नुहोस्" color="amber" />
-          <QuickAction href="/godam/new" label="सामान थप्नुहोस्" color="blue" />
-          <QuickAction href="/staff/attendance" label="हाजिरी भर्नुहोस्" color="purple" />
+          <QuickAction href="/hisab/new" label="Add Transaction" color="green" />
+          <QuickAction href="/khata/new" label="Add Credit" color="amber" />
+          <QuickAction href="/godam/new" label="Add Item" color="blue" />
+          <QuickAction href="/staff/attendance" label="Mark Attendance" color="purple" />
         </div>
       </div>
 
       {/* Nepali Calendar */}
       <div>
-        <p className="text-base font-semibold text-gray-400 mb-3">📅 नेपाली पात्रो</p>
+        <p className="text-base font-semibold text-gray-400 mb-3">📅 Nepali Calendar</p>
         <NepaliCalendar />
       </div>
 
@@ -298,9 +298,9 @@ function QuickAction({
 
 function getGreeting(): string {
   const hour = new Date().getHours()
-  if (hour < 12) return 'शुभ प्रभात 🌅'
-  if (hour < 17) return 'शुभ दिन ☀️'
-  return 'शुभ साँझ 🌙'
+  if (hour < 12) return 'Good Morning 🌅'
+  if (hour < 17) return 'Good Afternoon ☀️'
+  return 'Good Evening 🌙'
 }
 
 function formatNepaliDate(): string {

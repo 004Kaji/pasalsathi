@@ -99,7 +99,7 @@ export default function SupplierDetailPage() {
           amount: parseFloat(amount),
           discount_percent: 0,
           category: 'purchase',
-          description: `सप्लायर भुक्तानी — ${supplier?.name ?? ''}${description.trim() ? ': ' + description.trim() : ''}`,
+          description: `Supplier Payment — ${supplier?.name ?? ''}${description.trim() ? ': ' + description.trim() : ''}`,
           payment_method: 'cash',
           transaction_date: today.toISOString().split('T')[0],
           created_by: null,
@@ -138,23 +138,23 @@ export default function SupplierDetailPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         phone: supplier.phone,
-        message: `नमस्ते ${supplier.name} जी, हामीले NPR ${outstanding.toLocaleString()} तिर्न बाँकी छ। — PasalSathi`,
+        message: `Hello ${supplier.name}, we have NPR ${outstanding.toLocaleString()} outstanding to pay. — PasalSathi`,
         type: 'supplier_reminder',
         business_id: businessId,
       }),
     })
     setSmsLoading(false)
-    if (res.ok) alert('SMS पठाइयो!')
+    if (res.ok) alert('SMS sent!')
   }
 
   const inputClass = "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-600 outline-none focus:ring-2 focus:ring-orange-500/50 text-base"
 
   if (loading) return (
-    <div className="flex items-center justify-center py-20 text-gray-500">लोड हुँदैछ...</div>
+    <div className="flex items-center justify-center py-20 text-gray-500">Loading...</div>
   )
 
   if (!supplier) return (
-    <div className="flex items-center justify-center py-20 text-gray-500">सप्लायर भेटिएन</div>
+    <div className="flex items-center justify-center py-20 text-gray-500">Supplier not found</div>
   )
 
   return (
@@ -172,7 +172,7 @@ export default function SupplierDetailPage() {
           onClick={() => setShowAddForm(f => !f)}
           className="flex items-center gap-1.5 bg-gradient-to-r from-orange-600 to-red-600 text-white px-4 py-2.5 rounded-xl font-semibold text-sm active:scale-95 transition-transform"
         >
-          <Plus size={18} /> थप्नुहोस्
+          <Plus size={18} /> Add
         </button>
       </div>
 
@@ -184,14 +184,14 @@ export default function SupplierDetailPage() {
             : 'bg-red-500/10 border-red-500/20'
         }`}>
           <p className={`text-sm font-medium mb-1 ${outstanding === 0 ? 'text-green-400' : 'text-red-400'}`}>
-            {outstanding === 0 ? '✅ सबै भुक्तानी भइसक्यो' : '⚠️ तिर्न बाँकी रकम'}
+            {outstanding === 0 ? '✅ All payments done' : '⚠️ Amount Due'}
           </p>
           <p className={`text-4xl font-bold ${outstanding === 0 ? 'text-green-300' : 'text-red-300'}`}>
             {formatNPR(outstanding)}
           </p>
           <div className="flex gap-4 mt-3 text-sm">
-            <span className="text-gray-500">लिएको: <span className="text-white font-semibold">{formatNPR(Number(supplier.total_credit_taken))}</span></span>
-            <span className="text-gray-500">तिरेको: <span className="text-green-400 font-semibold">{formatNPR(Number(supplier.total_paid))}</span></span>
+            <span className="text-gray-500">Received: <span className="text-white font-semibold">{formatNPR(Number(supplier.total_credit_taken))}</span></span>
+            <span className="text-gray-500">Paid: <span className="text-green-400 font-semibold">{formatNPR(Number(supplier.total_paid))}</span></span>
           </div>
         </div>
 
@@ -203,14 +203,14 @@ export default function SupplierDetailPage() {
             className="w-full flex items-center justify-center gap-2 bg-blue-500/10 border border-blue-500/20 text-blue-400 py-3 rounded-2xl font-semibold active:scale-95 transition-transform disabled:opacity-50"
           >
             <MessageSquare size={18} />
-            {smsLoading ? 'पठाउँदैछ...' : 'SMS पठाउनुहोस्'}
+            {smsLoading ? 'Sending...' : 'Send SMS'}
           </button>
         )}
 
         {/* Add entry form */}
         {showAddForm && (
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-4">
-            <p className="font-semibold text-white">नयाँ प्रविष्टि</p>
+            <p className="font-semibold text-white">New Entry</p>
 
             {/* Type toggle */}
             <div className="grid grid-cols-2 gap-2">
@@ -222,7 +222,7 @@ export default function SupplierDetailPage() {
                     : 'bg-white/5 border border-white/10 text-gray-500'
                 }`}
               >
-                📦 माल लिएको
+                📦 Stock Received
               </button>
               <button
                 onClick={() => setEntryType('payment_made')}
@@ -232,27 +232,27 @@ export default function SupplierDetailPage() {
                     : 'bg-white/5 border border-white/10 text-gray-500'
                 }`}
               >
-                ✅ भुक्तानी गरेको
+                ✅ Payment Made
               </button>
             </div>
 
             <input
               type="number"
-              placeholder="रकम (NPR)"
+              placeholder="Amount (NPR)"
               value={amount}
               onChange={e => setAmount(e.target.value)}
               className={inputClass}
             />
             <input
               type="text"
-              placeholder="विवरण (वैकल्पिक)"
+              placeholder="Description (optional)"
               value={description}
               onChange={e => setDescription(e.target.value)}
               className={inputClass}
             />
             {entryType === 'credit_taken' && (
               <div>
-                <label className="text-xs text-gray-500 mb-1 block">भुक्तानी म्याद (वैकल्पिक)</label>
+                <label className="text-xs text-gray-500 mb-1 block">Payment Due Date (optional)</label>
                 <input
                   type="date"
                   value={dueDate}
@@ -266,14 +266,14 @@ export default function SupplierDetailPage() {
                 onClick={() => setShowAddForm(false)}
                 className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-400 font-semibold"
               >
-                रद्द
+                Cancel
               </button>
               <button
                 onClick={handleAddEntry}
                 disabled={saving || !amount}
                 className="flex-1 py-3 rounded-xl bg-gradient-to-r from-orange-600 to-red-600 text-white font-semibold active:scale-95 transition-transform disabled:opacity-50"
               >
-                {saving ? 'सुरक्षित...' : 'सुरक्षित गर्नुहोस्'}
+                {saving ? 'Saving...' : 'Save'}
               </button>
             </div>
           </div>
@@ -281,9 +281,9 @@ export default function SupplierDetailPage() {
 
         {/* Entry list */}
         <div>
-          <p className="text-sm font-semibold text-gray-500 mb-3">📋 कारोबार इतिहास</p>
+          <p className="text-sm font-semibold text-gray-500 mb-3">📋 Transaction History</p>
           {entries.length === 0 ? (
-            <div className="text-center py-10 text-gray-600">कुनै कारोबार छैन</div>
+            <div className="text-center py-10 text-gray-600">No transactions yet</div>
           ) : (
             <div className="space-y-2">
               {entries.map(entry => (
@@ -306,14 +306,14 @@ export default function SupplierDetailPage() {
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-white">
-                        {entry.type === 'credit_taken' ? '📦 माल लिएको' : '✅ भुक्तानी गरेको'}
+                        {entry.type === 'credit_taken' ? '📦 Stock Received' : '✅ Payment Made'}
                       </p>
                       {entry.description && (
                         <p className="text-xs text-gray-500 mt-0.5 truncate">{entry.description}</p>
                       )}
                       <p className="text-xs text-gray-600 mt-0.5">{entry.bs_date}</p>
                       {entry.due_date && (
-                        <p className="text-xs text-amber-500 mt-0.5">📅 म्याद: {entry.due_date}</p>
+                        <p className="text-xs text-amber-500 mt-0.5">📅 Due: {entry.due_date}</p>
                       )}
                     </div>
                   </div>
@@ -329,18 +329,18 @@ export default function SupplierDetailPage() {
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>हटाउने?</AlertDialogTitle>
+                          <AlertDialogTitle>Delete?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            यो प्रविष्टि हटाइनेछ। यो काम उल्टाउन सकिँदैन।
+                            This entry will be deleted. This action cannot be undone.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>रद्द</AlertDialogCancel>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
                           <AlertDialogAction
                             onClick={() => handleDelete(entry.id, entry)}
                             className="bg-red-600 hover:bg-red-700"
                           >
-                            हटाउनुहोस्
+                            Delete
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>

@@ -16,15 +16,15 @@ import type { Transaction, TransactionCategory } from '@/types/database'
 import { formatBSFull } from '@/lib/bs-date'
 
 const CATEGORY_LABELS: Record<TransactionCategory, { label: string; icon: React.ReactNode }> = {
-  sales:    { label: 'बिक्री',   icon: <ShoppingBag size={16} /> },
-  purchase: { label: 'खरिद',    icon: <ShoppingCart size={16} /> },
-  expense:  { label: 'खर्च',    icon: <Wallet size={16} /> },
-  salary:   { label: 'तलब',     icon: <User size={16} /> },
-  other:    { label: 'अन्य',    icon: <MoreHorizontal size={16} /> },
+  sales:    { label: 'Sales',    icon: <ShoppingBag size={16} /> },
+  purchase: { label: 'Purchase', icon: <ShoppingCart size={16} /> },
+  expense:  { label: 'Expense',  icon: <Wallet size={16} /> },
+  salary:   { label: 'Salary',   icon: <User size={16} /> },
+  other:    { label: 'Other',    icon: <MoreHorizontal size={16} /> },
 }
 
 const PAYMENT_LABELS: Record<string, string> = {
-  cash: 'नगद', bank: 'बैंक', esewa: 'eSewa', khalti: 'Khalti',
+  cash: 'Cash', bank: 'Bank', esewa: 'eSewa', khalti: 'Khalti',
 }
 
 function formatNPR(n: number) {
@@ -92,12 +92,12 @@ export default function HisabPage() {
       {/* Header */}
       <div className="sticky top-0 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/10 z-10 px-4 pt-5 pb-3">
         <div className="flex items-center justify-between mb-3">
-          <h1 className="text-2xl font-bold text-white">📒 हिसाब किताब</h1>
+          <h1 className="text-2xl font-bold text-white">📒 Ledger</h1>
           <Link
             href="/hisab/new"
             className="flex items-center gap-1.5 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white px-4 py-2.5 rounded-xl font-semibold text-base active:scale-95 transition-transform"
           >
-            <Plus size={20} /> थप्नुहोस्
+            <Plus size={20} /> Add
           </Link>
         </div>
 
@@ -111,7 +111,7 @@ export default function HisabPage() {
           </button>
           <div className="text-center">
             <p className="font-semibold text-white text-base">{isoToDisplay(date)}</p>
-            {isToday && <span className="text-xs text-orange-400 font-medium">आज</span>}
+            {isToday && <span className="text-xs text-orange-400 font-medium">Today</span>}
           </div>
           <button
             onClick={() => setDate(shiftDate(date, 1))}
@@ -127,15 +127,15 @@ export default function HisabPage() {
         {/* Summary strip */}
         <div className="grid grid-cols-3 gap-2">
           <div className="bg-green-500/10 rounded-xl p-3 text-center border border-green-500/20">
-            <p className="text-xs text-green-400 font-medium">💰 आम्दानी</p>
+            <p className="text-xs text-green-400 font-medium">💰 Income</p>
             <p className="text-lg font-bold text-green-300 mt-0.5">NPR {cashIn.toLocaleString('ne-NP')}</p>
           </div>
           <div className="bg-red-500/10 rounded-xl p-3 text-center border border-red-500/20">
-            <p className="text-xs text-red-400 font-medium">💸 खर्च</p>
+            <p className="text-xs text-red-400 font-medium">💸 Expense</p>
             <p className="text-lg font-bold text-red-300 mt-0.5">NPR {cashOut.toLocaleString('ne-NP')}</p>
           </div>
           <div className={`rounded-xl p-3 text-center border ${net >= 0 ? 'bg-blue-500/10 border-blue-500/20' : 'bg-orange-500/10 border-orange-500/20'}`}>
-            <p className={`text-xs font-medium ${net >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>📊 बाँकी</p>
+            <p className={`text-xs font-medium ${net >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>📊 Net</p>
             <p className={`text-lg font-bold mt-0.5 ${net >= 0 ? 'text-blue-300' : 'text-orange-300'}`}>
               {net >= 0 ? '+' : ''}{NPR(net)}
             </p>
@@ -144,12 +144,12 @@ export default function HisabPage() {
 
         {/* Transaction list */}
         {loading ? (
-          <div className="text-center py-12 text-gray-500 text-lg">लोड हुँदैछ...</div>
+          <div className="text-center py-12 text-gray-500 text-lg">Loading...</div>
         ) : transactions.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-5xl mb-4">📒</p>
-            <p className="text-xl font-semibold text-gray-500">यो दिनको हिसाब छैन</p>
-            <p className="text-base text-gray-600 mt-2">माथिको "+ थप्नुहोस्" थिच्नुहोस्</p>
+            <p className="text-xl font-semibold text-gray-500">No entries for this day</p>
+            <p className="text-base text-gray-600 mt-2">Tap '+ Add' above</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -214,18 +214,18 @@ function TransactionCard({ tx, onDelete }: { tx: Transaction; onDelete: () => vo
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle className="text-xl">हटाउने?</AlertDialogTitle>
+                  <AlertDialogTitle className="text-xl">Delete?</AlertDialogTitle>
                   <AlertDialogDescription className="text-base">
-                    यो हिसाब हटाइनेछ। यो काम उल्टाउन सकिँदैन।
+                    This entry will be deleted. This cannot be undone.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel className="text-base">रद्द गर्नुहोस्</AlertDialogCancel>
+                  <AlertDialogCancel className="text-base">Cancel</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={onDelete}
                     className="bg-red-600 hover:bg-red-700 text-base"
                   >
-                    हटाउनुहोस्
+                    Delete
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

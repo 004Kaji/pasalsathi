@@ -49,7 +49,7 @@ export default function ReportPage() {
   const [supplierPaid, setSupplierPaid] = useState(0)
 
   // Chart + other
-  const [catData, setCatData] = useState<{ name: string; आम्दानी: number; खर्च: number }[]>([])
+  const [catData, setCatData] = useState<{ name: string; Income: number; Expense: number }[]>([])
   const [khataStats, setKhataStats] = useState({ totalCredit: 0, totalPaid: 0, customers: 0 })
   const [supplierStats, setSupplierStats] = useState({ total: 0, outstanding: 0, count: 0 })
   const [topProducts, setTopProducts] = useState<{ name: string; qty: number }[]>([])
@@ -120,9 +120,9 @@ export default function ReportPage() {
     setOtherExpenses(otherOut)
     setCatData(
       Object.entries(catMap).map(([cat, v]) => ({
-        name: { sales: 'बिक्री', purchase: 'खरिद', expense: 'खर्च', salary: 'तलब', other: 'अन्य' }[cat] ?? cat,
-        आम्दानी: v.in,
-        खर्च: v.out,
+        name: { sales: 'Sales', purchase: 'Purchase', expense: 'Expense', salary: 'Salary', other: 'Other' }[cat] ?? cat,
+        Income: v.in,
+        Expense: v.out,
       }))
     )
 
@@ -160,7 +160,7 @@ export default function ReportPage() {
       Object.entries(prodMap)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5)
-        .map(([pid, qty]) => ({ name: prodNames[pid] ?? 'अज्ञात', qty }))
+        .map(([pid, qty]) => ({ name: prodNames[pid] ?? 'Unknown', qty }))
     )
 
     setLoading(false)
@@ -180,14 +180,14 @@ export default function ReportPage() {
     const rows = [
       ['PasalSathi P&L Report', `${AD_MONTHS_NP[month - 1]} ${year}`],
       [],
-      ['बिक्री आम्दानी', salesRevenue],
-      ['अन्य आम्दानी', otherIncome],
-      ['खरिद लागत (COGS)', -cogs],
-      ['= कुल नाफा (Gross Profit)', grossProfit],
-      ['सञ्चालन खर्च', -opExpenses],
-      ['तलब खर्च', -(staffCost || salaryExpense)],
-      ['अन्य खर्च', -otherExpenses],
-      ['= खाँटी नाफा (Net Profit)', trueProfitFromSales],
+      ['Sales Revenue', salesRevenue],
+      ['Other Income', otherIncome],
+      ['Cost of Goods (COGS)', -cogs],
+      ['= Gross Profit', grossProfit],
+      ['Operating Expenses', -opExpenses],
+      ['Staff Salaries', -(staffCost || salaryExpense)],
+      ['Other Expenses', -otherExpenses],
+      ['= Net Profit', trueProfitFromSales],
     ]
     const csv = rows.map(r => r.join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
@@ -203,7 +203,7 @@ export default function ReportPage() {
       {/* Header */}
       <div className="sticky top-0 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/10 z-10 px-4 pt-5 pb-3">
         <div className="flex items-center justify-between mb-3">
-          <h1 className="text-2xl font-bold text-white">📊 रिपोर्ट</h1>
+          <h1 className="text-2xl font-bold text-white">📊 Report</h1>
           <div className="flex gap-2">
             {canUseReport(plan, 'pdf') && (
               <button onClick={handlePrintPDF}
@@ -236,14 +236,14 @@ export default function ReportPage() {
       </div>
 
       {loading ? (
-        <div className="text-center py-16 text-gray-500 text-lg">लोड हुँदैछ...</div>
+        <div className="text-center py-16 text-gray-500 text-lg">Loading...</div>
       ) : (
         <div className="px-4 pt-4 space-y-5">
 
           {/* ─── TRUE PROFIT WATERFALL ─── */}
           <div className="bg-[#111] border border-white/10 rounded-2xl overflow-hidden">
             <div className="px-5 pt-4 pb-3 border-b border-white/10">
-              <h2 className="text-base font-bold text-white">💹 खाँटी नाफा / नोक्सान</h2>
+              <h2 className="text-base font-bold text-white">💹 Net Profit / Loss</h2>
               <p className="text-xs text-gray-500 mt-0.5">P&L breakdown — {AD_MONTHS_NP[month - 1]} {year}</p>
             </div>
 
@@ -251,20 +251,20 @@ export default function ReportPage() {
               {/* Sales Revenue */}
               <PLRow
                 icon={<ShoppingBag size={15} />}
-                label="बिक्री आम्दानी"
+                label="Sales Revenue"
                 value={salesRevenue}
                 color="green"
                 bold
               />
               {otherIncome > 0 && (
-                <PLRow icon={<TrendingUp size={15} />} label="अन्य आम्दानी" value={otherIncome} color="green" />
+                <PLRow icon={<TrendingUp size={15} />} label="Other Income" value={otherIncome} color="green" />
               )}
 
               {/* COGS */}
               <div className="border-t border-white/5 pt-2">
                 <PLRow
                   icon={<ShoppingCart size={15} />}
-                  label="खरिद लागत (COGS)"
+                  label="Cost of Goods (COGS)"
                   value={-cogs}
                   color="red"
                 />
@@ -275,7 +275,7 @@ export default function ReportPage() {
                 grossProfit >= 0 ? 'bg-green-500/10' : 'bg-red-500/10'
               }`}>
                 <span className={`text-sm font-bold ${grossProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  = कुल नाफा (Gross Profit)
+                  = Gross Profit
                 </span>
                 <span className={`text-lg font-bold ${grossProfit >= 0 ? 'text-green-300' : 'text-red-300'}`}>
                   {grossProfit >= 0 ? '+' : '-'}{formatFull(grossProfit)}
@@ -285,22 +285,22 @@ export default function ReportPage() {
               {/* Operating expenses */}
               <div className="border-t border-white/5 pt-2 space-y-2">
                 {opExpenses > 0 && (
-                  <PLRow icon={<Wallet size={15} />} label="सञ्चालन खर्च" value={-opExpenses} color="red" />
+                  <PLRow icon={<Wallet size={15} />} label="Operating Expenses" value={-opExpenses} color="red" />
                 )}
                 {(staffCost > 0 || salaryExpense > 0) && (
                   <PLRow
                     icon={<Banknote size={15} />}
-                    label="तलब खर्च"
+                    label="Staff Salaries"
                     value={-(staffCost > 0 ? staffCost : salaryExpense)}
                     color="purple"
-                    note={staffCost > 0 ? 'salary slip अनुसार' : undefined}
+                    note={staffCost > 0 ? 'per salary slips' : undefined}
                   />
                 )}
                 {supplierPaid > 0 && (
-                  <PLRow icon={<Truck size={15} />} label="सप्लायर भुक्तानी" value={-supplierPaid} color="red" />
+                  <PLRow icon={<Truck size={15} />} label="Supplier Payments" value={-supplierPaid} color="red" />
                 )}
                 {otherExpenses > 0 && (
-                  <PLRow icon={<Receipt size={15} />} label="अन्य खर्च" value={-otherExpenses} color="red" />
+                  <PLRow icon={<Receipt size={15} />} label="Other Expenses" value={-otherExpenses} color="red" />
                 )}
               </div>
 
@@ -311,7 +311,7 @@ export default function ReportPage() {
                   : 'bg-red-500/10 border-red-500/30'
               }`}>
                 <p className={`text-sm font-semibold mb-1 ${trueProfitFromSales >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {trueProfitFromSales >= 0 ? '🎉 खाँटी नाफा' : '⚠️ खाँटी नोक्सान'}
+                  {trueProfitFromSales >= 0 ? '🎉 Net Profit' : '⚠️ Net Loss'}
                 </p>
                 <p className={`text-5xl font-bold tracking-tight ${trueProfitFromSales >= 0 ? 'text-green-300' : 'text-red-300'}`}>
                   {trueProfitFromSales >= 0 ? '+' : '-'}
@@ -319,7 +319,7 @@ export default function ReportPage() {
                 </p>
                 {salesRevenue > 0 && (
                   <p className={`text-xs mt-2 ${trueProfitFromSales >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    मार्जिन: {Math.round((trueProfitFromSales / (salesRevenue + otherIncome)) * 100)}%
+                    Margin: {Math.round((trueProfitFromSales / (salesRevenue + otherIncome)) * 100)}%
                   </p>
                 )}
               </div>
@@ -328,14 +328,14 @@ export default function ReportPage() {
 
           {/* Quick summary tiles */}
           <div className="grid grid-cols-2 gap-3">
-            <MiniCard label="कुल आम्दानी" value={salesRevenue + otherIncome} color="green" icon="💰" />
-            <MiniCard label="कुल खर्च" value={totalCost} color="red" icon="💸" />
+            <MiniCard label="Total Income" value={salesRevenue + otherIncome} color="green" icon="💰" />
+            <MiniCard label="Total Expense" value={totalCost} color="red" icon="💸" />
           </div>
 
           {/* Bar chart */}
           {catData.length > 0 && (
             <div className="bg-[#111] border border-white/10 rounded-2xl p-5">
-              <h3 className="text-base font-bold text-white mb-4">📈 वर्गीकरण अनुसार</h3>
+              <h3 className="text-base font-bold text-white mb-4">📈 By Category</h3>
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={catData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
                   <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#9ca3af' }} />
@@ -345,8 +345,8 @@ export default function ReportPage() {
                     contentStyle={{ fontSize: 13, borderRadius: 8, background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
                   />
                   <Legend wrapperStyle={{ fontSize: 13, color: '#9ca3af' }} />
-                  <Bar dataKey="आम्दानी" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="खर्च" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Income" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Expense" fill="#ef4444" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -354,20 +354,20 @@ export default function ReportPage() {
 
           {/* Khata collection */}
           <div className="bg-[#111] border border-white/10 rounded-2xl p-5">
-            <h3 className="text-base font-bold text-white mb-4">📒 खाता संकलन</h3>
+            <h3 className="text-base font-bold text-white mb-4">📒 Khata Collection</h3>
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div className="bg-red-500/10 rounded-xl p-3 text-center">
-                <p className="text-xs text-red-400 font-medium">उधारो दिएको</p>
+                <p className="text-xs text-red-400 font-medium">Credit Given</p>
                 <p className="text-xl font-bold text-red-300 mt-0.5">{formatNPR(khataStats.totalCredit)}</p>
               </div>
               <div className="bg-green-500/10 rounded-xl p-3 text-center">
-                <p className="text-xs text-green-400 font-medium">संकलन भएको</p>
+                <p className="text-xs text-green-400 font-medium">Collected</p>
                 <p className="text-xl font-bold text-green-300 mt-0.5">{formatNPR(khataStats.totalPaid)}</p>
               </div>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between text-sm font-semibold">
-                <span className="text-gray-500">संकलन दर</span>
+                <span className="text-gray-500">Collection Rate</span>
                 <span className={collectionRate >= 80 ? 'text-green-400' : collectionRate >= 50 ? 'text-amber-400' : 'text-red-400'}>
                   {collectionRate}%
                 </span>
@@ -379,7 +379,7 @@ export default function ReportPage() {
                 />
               </div>
               <p className="text-xs text-gray-600">
-                {formatNPR(khataStats.totalCredit - khataStats.totalPaid)} अझै बाँकी ({khataStats.customers} ग्राहक)
+                {formatNPR(khataStats.totalCredit - khataStats.totalPaid)} still outstanding ({khataStats.customers} customers)
               </p>
             </div>
           </div>
@@ -387,20 +387,20 @@ export default function ReportPage() {
           {/* Supplier outstanding */}
           {supplierStats.count > 0 && (
             <div className="bg-[#111] border border-white/10 rounded-2xl p-5">
-              <h3 className="text-base font-bold text-white mb-4">🏭 सप्लायर देनदारी</h3>
+              <h3 className="text-base font-bold text-white mb-4">🏭 Supplier Payables</h3>
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-orange-500/10 rounded-xl p-3 text-center">
-                  <p className="text-xs text-orange-400 font-medium">कुल लिएको</p>
+                  <p className="text-xs text-orange-400 font-medium">Total Received</p>
                   <p className="text-xl font-bold text-orange-300 mt-0.5">{formatNPR(supplierStats.total)}</p>
                 </div>
                 <div className="bg-red-500/10 rounded-xl p-3 text-center">
-                  <p className="text-xs text-red-400 font-medium">तिर्न बाँकी</p>
+                  <p className="text-xs text-red-400 font-medium">Amount Due</p>
                   <p className="text-xl font-bold text-red-300 mt-0.5">{formatNPR(supplierStats.outstanding)}</p>
                 </div>
               </div>
               {supplierPaid > 0 && (
                 <p className="text-xs text-gray-500 mt-3">
-                  यो महिना सप्लायरलाई {formatNPR(supplierPaid)} तिरियो
+                  Paid to suppliers this month: {formatNPR(supplierPaid)}
                 </p>
               )}
             </div>
@@ -409,7 +409,7 @@ export default function ReportPage() {
           {/* Top products */}
           {topProducts.length > 0 && (
             <div className="bg-[#111] border border-white/10 rounded-2xl p-5">
-              <h3 className="text-base font-bold text-white mb-4">📦 धेरै बिकेका सामान</h3>
+              <h3 className="text-base font-bold text-white mb-4">📦 Top Selling Products</h3>
               <div className="space-y-3">
                 {topProducts.map((p, i) => {
                   const pct = (p.qty / topProducts[0].qty) * 100
@@ -434,11 +434,11 @@ export default function ReportPage() {
           {/* Plan upsell */}
           {plan === 'sano' && (
             <div className="bg-orange-500/10 border-2 border-orange-500/30 rounded-2xl p-5 text-center">
-              <p className="text-orange-300 font-bold text-base">PDF र Excel निर्यात चाहिन्छ?</p>
-              <p className="text-orange-500 text-sm mt-1">Madhyam वा Thulo प्लानमा अपग्रेड गर्नुहोस्</p>
+              <p className="text-orange-300 font-bold text-base">Need PDF and Excel export?</p>
+              <p className="text-orange-500 text-sm mt-1">Upgrade to Madhyam or Thulo plan</p>
               <a href="/settings/billing"
                 className="mt-3 block bg-orange-600 text-white py-3 rounded-xl font-semibold text-base active:scale-[0.98] transition-transform">
-                अपग्रेड गर्नुहोस् →
+                Upgrade →
               </a>
             </div>
           )}
