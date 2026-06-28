@@ -13,6 +13,7 @@ import {
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import type { Transaction, TransactionCategory } from '@/types/database'
+import { formatBSFull } from '@/lib/bs-date'
 
 const CATEGORY_LABELS: Record<TransactionCategory, { label: string; icon: React.ReactNode }> = {
   sales:    { label: 'बिक्री',   icon: <ShoppingBag size={16} /> },
@@ -31,9 +32,7 @@ function formatNPR(n: number) {
 }
 
 function isoToDisplay(dateStr: string) {
-  return new Date(dateStr + 'T00:00:00').toLocaleDateString('ne-NP', {
-    year: 'numeric', month: 'long', day: 'numeric',
-  })
+  return formatBSFull(new Date(dateStr + 'T00:00:00'))
 }
 
 function shiftDate(base: string, days: number): string {
@@ -210,7 +209,7 @@ function TransactionCard({ tx, onDelete }: { tx: Transaction; onDelete: () => vo
               <Pencil size={16} />
             </Link>
             <AlertDialog>
-              <AlertDialogTrigger className="p-2 rounded-lg bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-600 active:scale-95 transition-all">
+              <AlertDialogTrigger className="p-2 rounded-lg bg-white/10 text-gray-500 hover:bg-red-500/20 hover:text-red-400 active:scale-95 transition-all">
                 <Trash2 size={16} />
               </AlertDialogTrigger>
               <AlertDialogContent>

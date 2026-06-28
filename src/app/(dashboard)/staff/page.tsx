@@ -6,12 +6,14 @@ import { createClient } from '@/lib/supabase/client'
 import { Plus, UserCheck, ChevronRight, CalendarCheck } from 'lucide-react'
 import { PLAN_LIMITS } from '@/lib/plan-limits'
 import type { Staff, Attendance, AttendanceStatus, Plan } from '@/types/database'
+import { formatBSFull, BS_DAYS_SHORT } from '@/lib/bs-date'
+import NepaliDate from 'nepali-date-converter'
 
 const STATUS_CONFIG: Record<AttendanceStatus, { label: string; bg: string; text: string; emoji: string }> = {
-  present:  { label: 'उपस्थित',   bg: 'bg-green-100',  text: 'text-green-700',  emoji: '✅' },
-  absent:   { label: 'अनुपस्थित', bg: 'bg-red-100',    text: 'text-red-700',    emoji: '❌' },
-  half_day: { label: 'आधा दिन',   bg: 'bg-amber-100',  text: 'text-amber-700',  emoji: '🌗' },
-  holiday:  { label: 'बिदा',      bg: 'bg-blue-100',   text: 'text-blue-700',   emoji: '🏖️' },
+  present:  { label: 'उपस्थित',   bg: 'bg-green-500/20',  text: 'text-green-400',  emoji: '✅' },
+  absent:   { label: 'अनुपस्थित', bg: 'bg-red-500/20',    text: 'text-red-400',    emoji: '❌' },
+  half_day: { label: 'आधा दिन',   bg: 'bg-amber-500/20',  text: 'text-amber-400',  emoji: '🌗' },
+  holiday:  { label: 'बिदा',      bg: 'bg-blue-500/20',   text: 'text-blue-400',   emoji: '🏖️' },
 }
 
 export default function StaffPage() {
@@ -67,9 +69,8 @@ export default function StaffPage() {
   const limit = PLAN_LIMITS[plan].staff
   const atLimit = limit !== Infinity && staffList.length >= limit
 
-  const todayDisplay = new Date().toLocaleDateString('ne-NP', {
-    weekday: 'long', month: 'long', day: 'numeric',
-  })
+  const nd = new NepaliDate()
+  const todayDisplay = `${BS_DAYS_SHORT[nd.getDay()]}, ${formatBSFull()}`
 
   return (
     <div className="pb-6">

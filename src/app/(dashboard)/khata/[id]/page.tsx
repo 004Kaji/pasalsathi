@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { ArrowLeft, MessageSquare, TrendingUp, TrendingDown, Phone, MapPin, FileText } from 'lucide-react'
+import { formatBSFull } from '@/lib/bs-date'
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
@@ -305,7 +306,7 @@ function EntryRow({ entry }: { entry: KhataEntry }) {
             {entry.description || (isCredit ? 'उधारो दिएको' : 'भुक्तान लिएको')}
           </p>
           <p className="text-xs text-gray-400 mt-0.5">
-            {new Date(entry.entry_date).toLocaleDateString('ne-NP', { year: 'numeric', month: 'short', day: 'numeric' })}
+            {formatBSFull(new Date(entry.entry_date + 'T00:00:00'))}
             {entry.sms_sent && <span className="ml-2 text-blue-400">📱 SMS</span>}
           </p>
         </div>
