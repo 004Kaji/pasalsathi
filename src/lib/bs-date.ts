@@ -25,14 +25,17 @@ export function formatBSShort(adDate?: Date): string {
   return `${bs.year}-${String(bs.month + 1).padStart(2, '0')}-${String(bs.date).padStart(2, '0')}`
 }
 
-// Returns number of days in a BS month
-// Source: nepali-date-converter dateConfigMap
 import { dateConfigMap } from 'nepali-date-converter'
 
+const MONTH_KEYS = [
+  'Baisakh','Jestha','Asar','Shrawan','Bhadra','Aswin',
+  'Kartik','Mangsir','Poush','Magh','Falgun','Chaitra',
+] as const
+
 export function daysInBSMonth(year: number, month: number): number {
-  const yearData = (dateConfigMap as Record<number, number[]>)[year]
+  const yearData = (dateConfigMap as Record<number, Record<string, number>>)[year]
   if (!yearData) return 30
-  return yearData[month - 1] ?? 30
+  return yearData[MONTH_KEYS[month - 1]] ?? 30
 }
 
 // Get the AD weekday (0=Sun) of BS year/month/day 1
