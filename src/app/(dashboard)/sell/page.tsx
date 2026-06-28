@@ -189,8 +189,8 @@ export default function SellPage() {
       })
       if (txErr) throw txErr
 
-      // 2. Stock movements — catalog items only
-      const catalogItems = cart.filter(i => !i.isQuick && i.product)
+      // 2. Stock movements — catalog products only (not quick items, not services)
+      const catalogItems = cart.filter(i => !i.isQuick && i.product && i.product.item_type !== 'service')
       if (catalogItems.length > 0) {
         const movements = catalogItems.map(i => ({
           business_id:  bizId,
@@ -424,8 +424,9 @@ export default function SellPage() {
                   <p className="text-center py-4 text-gray-600 text-sm">No products found</p>
                 ) : (
                   filteredProducts.map(p => {
-                    const inCart    = cart.find(i => i.id === p.id)
-                    const outOfStock = p.current_stock <= 0
+                    const isService  = p.item_type === 'service'
+                    const inCart     = cart.find(i => i.id === p.id)
+                    const outOfStock = !isService && p.current_stock <= 0
                     return (
                       <button
                         key={p.id}
@@ -434,15 +435,20 @@ export default function SellPage() {
                         className={`w-full flex items-center justify-between px-4 py-3 border-b border-white/5 last:border-0 text-left active:bg-white/5 ${outOfStock ? 'opacity-40' : ''}`}
                       >
                         <div>
-                          <p className="text-sm font-semibold text-white">{p.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold text-white">{p.name}</p>
+                            {isService && <span className="text-xs bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded font-semibold">SERVICE</span>}
+                          </div>
                           <p className="text-xs text-gray-500">
-                            Stock: {p.current_stock} {p.unit}
+                            {isService ? `per ${p.unit}` : `Stock: ${p.current_stock} ${p.unit}`}
                             {outOfStock && <span className="text-red-400 ml-1">Out of stock</span>}
                             {inCart && <span className="text-orange-400 ml-2">✓ in cart</span>}
                           </p>
                         </div>
                         <div className="text-right ml-3">
-                          <p className="text-sm font-bold text-orange-400">NPR {Number(p.selling_price).toLocaleString('ne-NP')}</p>
+                          <p className={`text-sm font-bold ${isService ? 'text-purple-400' : 'text-orange-400'}`}>
+                            NPR {Number(p.selling_price).toLocaleString('ne-NP')}
+                          </p>
                           <p className="text-xs text-gray-600">/{p.unit}</p>
                         </div>
                       </button>
@@ -475,8 +481,11 @@ export default function SellPage() {
                       {item.isQuick && (
                         <span className="text-[10px] bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded font-semibold shrink-0">QUICK</span>
                       )}
+                      {!item.isQuick && item.product?.item_type === 'service' && (
+                        <span className="text-[10px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded font-semibold shrink-0">SERVICE</span>
+                      )}
                     </div>
-                    {!item.isQuick && item.product && (
+                    {!item.isQuick && item.product && item.product.item_type !== 'service' && (
                       <p className="text-xs text-gray-500 mt-0.5">Stock: {item.product.current_stock} {item.product.unit}</p>
                     )}
                   </div>
@@ -497,7 +506,7 @@ export default function SellPage() {
                     <span className="px-3 text-white font-bold text-lg min-w-[2.5rem] text-center">{item.qty}</span>
                     <button
                       onClick={() => updateQty(item.id, 1)}
-                      disabled={!item.isQuick && !!item.product && item.qty >= item.product.current_stock}
+                      disabled={!item.isQuick && !!item.product && item.product.item_type !== 'service' && item.qty >= item.product.current_stock}
                       className="px-3 py-2.5 text-gray-400 active:bg-white/10 disabled:opacity-30"
                     >
                       <Plus size={16} />

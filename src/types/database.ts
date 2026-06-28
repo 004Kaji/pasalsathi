@@ -85,6 +85,8 @@ export interface KhataEntry {
   created_at: string
 }
 
+export type ItemType = 'product' | 'service'
+
 export interface Product {
   id: string
   business_id: string
@@ -94,6 +96,7 @@ export interface Product {
   selling_price: number
   current_stock: number
   low_stock_threshold: number
+  item_type: ItemType | null   // null = legacy product (treat as 'product')
   is_active: boolean
   created_at: string
   updated_at: string

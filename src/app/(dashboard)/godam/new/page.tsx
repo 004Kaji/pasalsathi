@@ -1,37 +1,57 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Package, Wrench } from 'lucide-react'
 import { PLAN_LIMITS } from '@/lib/plan-limits'
 import type { Plan } from '@/types/database'
 
-const UNITS = [
+const PRODUCT_UNITS = [
   { value: 'piece', label: 'Piece', emoji: '📦' },
-  { value: 'kg',    label: 'Kg',    emoji: '⚖️' },
-  { value: 'litre', label: 'Litre', emoji: '🧴' },
-  { value: 'box',   label: 'Box',   emoji: '🗃️' },
-  { value: 'dozen', label: 'Dozen', emoji: '🔢' },
+  { value: 'kg',    label: 'Kg',   emoji: '⚖️' },
+  { value: 'litre', label: 'Litre',emoji: '🧴' },
+  { value: 'box',   label: 'Box',  emoji: '🗃️' },
+  { value: 'dozen', label: 'Dozen',emoji: '🔢' },
 ]
 
-export default function NewProductPage() {
-  const router = useRouter()
-  const [name, setName] = useState('')
-  const [unit, setUnit] = useState('piece')
-  const [buyingPrice, setBuyingPrice] = useState('')
-  const [sellingPrice, setSellingPrice] = useState('')
-  const [currentStock, setCurrentStock] = useState('')
-  const [lowThreshold, setLowThreshold] = useState('5')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+const SERVICE_UNITS = [
+  { value: 'session', label: 'Session', emoji: '🎯' },
+  { value: 'hour',    label: 'Hour',    emoji: '⏱️' },
+  { value: 'piece',   label: 'Per item',emoji: '✂️' },
+  { value: 'service', label: 'Service', emoji: '🛠️' },
+]
+
+function NewProductForm() {
+  const router     = useRouter()
+  const params     = useSearchParams()
+  const initType   = params.get('type') === 'service' ? 'service' : 'product'
+
+  const [itemType,      setItemType]      = useState<'product' | 'service'>(initType)
+  const [name,          setName]          = useState('')
+  const [unit,          setUnit]          = useState(initType === 'service' ? 'session' : 'piece')
+  const [buyingPrice,   setBuyingPrice]   = useState('')
+  const [sellingPrice,  setSellingPrice]  = useState('')
+  const [currentStock,  setCurrentStock]  = useState('')
+  const [lowThreshold,  setLowThreshold]  = useState('5')
+  const [loading,       setLoading]       = useState(false)
+  const [error,         setError]         = useState('')
+
+  const isService = itemType === 'service'
+  const units     = isService ? SERVICE_UNITS : PRODUCT_UNITS
+  const accent    = isService ? 'from-purple-600 to-violet-700' : 'from-orange-600 to-red-600'
+  const accentBorder = isService ? 'border-purple-500 bg-purple-500/10 text-purple-400' : 'border-orange-500 bg-orange-500/10 text-orange-400'
+
+  function handleTypeSwitch(t: 'product' | 'service') {
+    setItemType(t)
+    setUnit(t === 'service' ? 'session' : 'piece')
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    if (!name.trim()) { setError('Item name is required'); return }
+    if (!name.trim()) { setError('Name is required'); return }
+    if (!sellingPrice || parseFloat(sellingPrice) <= 0) { setError('Enter a valid price'); return }
 
     setLoading(true)
     const supabase = createClient()
@@ -60,17 +80,18 @@ export default function NewProductPage() {
     }
 
     const { error: insertError } = await supabase.from('products').insert({
-      business_id: biz.id,
-      name: name.trim(),
+      business_id:         biz.id,
+      name:                name.trim(),
       unit,
-      buying_price: parseFloat(buyingPrice) || 0,
-      selling_price: parseFloat(sellingPrice) || 0,
-      current_stock: parseFloat(currentStock) || 0,
-      low_stock_threshold: parseFloat(lowThreshold) || 5,
+      item_type:           itemType,
+      buying_price:        isService ? 0 : (parseFloat(buyingPrice) || 0),
+      selling_price:       parseFloat(sellingPrice) || 0,
+      current_stock:       isService ? 0 : (parseFloat(currentStock) || 0),
+      low_stock_threshold: isService ? 0 : (parseFloat(lowThreshold) || 5),
     })
 
     if (insertError) {
-      setError('Error adding item. Please try again.')
+      setError('Failed to add. Please try again.')
       setLoading(false)
       return
     }
@@ -78,49 +99,79 @@ export default function NewProductPage() {
     router.push('/godam')
   }
 
+  const inputClass = "w-full bg-white/5 border border-white/10 rounded-xl px-4 h-12 text-white placeholder:text-gray-600 outline-none focus:ring-2 focus:ring-orange-500/50 text-base"
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-blue-600 px-4 pt-5 pb-6">
-        <div className="flex items-center gap-3">
-          <button onClick={() => router.back()} className="p-2 rounded-xl bg-white/20 text-white active:scale-95 transition-transform">
+    <div className="min-h-screen bg-[#0a0a0a] pb-10">
+      {/* Header */}
+      <div className={`bg-gradient-to-br ${accent} px-4 pt-5 pb-8`}>
+        <div className="flex items-center gap-3 mb-5">
+          <button onClick={() => router.back()} className="p-2 rounded-xl bg-white/20 text-white active:scale-95">
             <ArrowLeft size={22} />
           </button>
-          <h1 className="text-xl font-bold text-white">Add New Item</h1>
+          <h1 className="text-xl font-bold text-white">
+            {isService ? '🛠️ Add Service' : '📦 Add Product'}
+          </h1>
         </div>
-        <p className="text-blue-100 text-sm mt-3">
-          Enter item price and stock details
-        </p>
+
+        {/* Type toggle */}
+        <div className="flex bg-black/20 rounded-2xl p-1 gap-1">
+          <button
+            type="button"
+            onClick={() => handleTypeSwitch('product')}
+            className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-lg transition-all ${
+              !isService ? 'bg-white text-orange-600 shadow' : 'text-white/70'
+            }`}
+          >
+            <Package size={22} /> Product
+          </button>
+          <button
+            type="button"
+            onClick={() => handleTypeSwitch('service')}
+            className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-lg transition-all ${
+              isService ? 'bg-white text-purple-600 shadow' : 'text-white/70'
+            }`}
+          >
+            <Wrench size={22} /> Service
+          </button>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="px-4 pt-5 space-y-4 pb-10">
+      {/* Context hint */}
+      <div className="mx-4 -mt-4 bg-[#1a1a1a] border border-white/10 rounded-2xl px-4 py-3 text-sm text-gray-400 shadow-xl">
+        {isService
+          ? '✂️ Services appear in Sell → Catalog. No stock tracking — just a name & price.'
+          : '📦 Products track stock levels. You\'ll see low-stock alerts and can restock.'}
+      </div>
 
+      <form onSubmit={handleSubmit} className="px-4 pt-4 space-y-4">
         {/* Name */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm space-y-2">
-          <Label className="text-base font-semibold text-gray-700">
-            Item Name <span className="text-red-500">*</span>
-          </Label>
-          <Input
-            placeholder="e.g.: Basmati Rice, Oil, Cement..."
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3">
+          <label className="text-sm font-semibold text-gray-400 block">
+            {isService ? 'Service Name *' : 'Product Name *'}
+          </label>
+          <input
             value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="text-base h-12 rounded-xl"
+            onChange={e => setName(e.target.value)}
+            placeholder={isService ? 'e.g. Haircut, Full Body Massage, Tax Filing...' : 'e.g. Basmati Rice, Cement Bag, Oil...'}
+            className={inputClass}
             required
           />
         </div>
 
         {/* Unit */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
-          <Label className="text-base font-semibold text-gray-700 block mb-3">Unit</Label>
-          <div className="grid grid-cols-5 gap-2">
-            {UNITS.map((u) => (
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+          <label className="text-sm font-semibold text-gray-400 block mb-3">
+            {isService ? 'Pricing Unit' : 'Unit of Sale'}
+          </label>
+          <div className="grid grid-cols-4 gap-2">
+            {units.map(u => (
               <button
                 key={u.value}
                 type="button"
                 onClick={() => setUnit(u.value)}
                 className={`flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 transition-all active:scale-95 ${
-                  unit === u.value
-                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                    : 'border-gray-100 text-gray-600'
+                  unit === u.value ? accentBorder : 'border-white/10 text-gray-500'
                 }`}
               >
                 <span className="text-2xl">{u.emoji}</span>
@@ -130,105 +181,109 @@ export default function NewProductPage() {
           </div>
         </div>
 
-        {/* Prices */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
-          <h3 className="text-base font-semibold text-gray-700">Price</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-600">Buying Price</Label>
-              <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden h-12">
-                <span className="px-3 bg-gray-50 text-gray-500 text-sm border-r border-gray-200 h-full flex items-center">Rs.</span>
+        {/* Price */}
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
+          <h3 className="text-base font-bold text-white">
+            {isService ? 'Service Price' : 'Pricing'}
+          </h3>
+
+          {!isService && (
+            <div>
+              <label className="text-sm text-gray-400 font-semibold mb-2 block">Buying / Cost Price</label>
+              <div className="flex items-center bg-white/5 border border-white/10 rounded-xl overflow-hidden h-12">
+                <span className="px-3 text-gray-500 text-sm border-r border-white/10 h-full flex items-center">Rs.</span>
                 <input
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="0"
-                  value={buyingPrice}
-                  onChange={(e) => setBuyingPrice(e.target.value)}
-                  className="flex-1 px-3 text-base outline-none bg-transparent"
+                  type="number" inputMode="decimal" placeholder="0"
+                  value={buyingPrice} onChange={e => setBuyingPrice(e.target.value)}
+                  className="flex-1 px-3 text-base outline-none bg-transparent text-white"
                   min="0"
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-600">Selling Price</Label>
-              <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden h-12">
-                <span className="px-3 bg-gray-50 text-gray-500 text-sm border-r border-gray-200 h-full flex items-center">Rs.</span>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="0"
-                  value={sellingPrice}
-                  onChange={(e) => setSellingPrice(e.target.value)}
-                  className="flex-1 px-3 text-base outline-none bg-transparent"
-                  min="0"
-                />
-              </div>
+          )}
+
+          <div>
+            <label className="text-sm text-gray-400 font-semibold mb-2 block">
+              {isService ? 'Price charged to customer *' : 'Selling Price *'}
+            </label>
+            <div className="flex items-center bg-white/5 border border-white/10 rounded-xl overflow-hidden h-12">
+              <span className="px-3 text-gray-500 text-sm border-r border-white/10 h-full flex items-center">Rs.</span>
+              <input
+                type="number" inputMode="decimal" placeholder="0"
+                value={sellingPrice} onChange={e => setSellingPrice(e.target.value)}
+                className="flex-1 px-3 text-base outline-none bg-transparent text-white"
+                min="0.01" required
+              />
             </div>
           </div>
-          {buyingPrice && sellingPrice && Number(sellingPrice) > Number(buyingPrice) && (
-            <p className="text-sm text-green-600 font-medium bg-green-50 rounded-lg px-3 py-2">
-              ✓ Profit: NPR {(Number(sellingPrice) - Number(buyingPrice)).toLocaleString('ne-NP')} per{' '}
-              {UNITS.find((u) => u.value === unit)?.label}
+
+          {!isService && buyingPrice && sellingPrice && Number(sellingPrice) > Number(buyingPrice) && (
+            <p className="text-sm text-green-400 font-medium bg-green-500/10 border border-green-500/20 rounded-xl px-3 py-2">
+              ✓ Profit: NPR {(Number(sellingPrice) - Number(buyingPrice)).toLocaleString('ne-NP')} per {units.find(u2 => u2.value === unit)?.label}
             </p>
           )}
         </div>
 
-        {/* Stock */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
-          <h3 className="text-base font-semibold text-gray-700">Stock</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-600">Current Stock</Label>
-              <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden h-12">
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="0"
-                  value={currentStock}
-                  onChange={(e) => setCurrentStock(e.target.value)}
-                  className="flex-1 px-3 text-base outline-none bg-transparent"
-                  min="0"
-                />
-                <span className="px-3 bg-gray-50 text-gray-500 text-sm border-l border-gray-200 h-full flex items-center">
-                  {UNITS.find((u) => u.value === unit)?.label}
-                </span>
+        {/* Stock — products only */}
+        {!isService && (
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
+            <h3 className="text-base font-bold text-white">Opening Stock</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm text-gray-400 font-semibold mb-2 block">Current Stock</label>
+                <div className="flex items-center bg-white/5 border border-white/10 rounded-xl overflow-hidden h-12">
+                  <input
+                    type="number" inputMode="decimal" placeholder="0"
+                    value={currentStock} onChange={e => setCurrentStock(e.target.value)}
+                    className="flex-1 px-3 text-base outline-none bg-transparent text-white"
+                    min="0"
+                  />
+                  <span className="px-3 text-gray-500 text-sm border-l border-white/10 h-full flex items-center">
+                    {PRODUCT_UNITS.find(u2 => u2.value === unit)?.label ?? unit}
+                  </span>
+                </div>
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-600">Low Stock Alert</Label>
-              <div className="flex items-center border border-orange-200 rounded-xl overflow-hidden h-12 bg-orange-50">
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="5"
-                  value={lowThreshold}
-                  onChange={(e) => setLowThreshold(e.target.value)}
-                  className="flex-1 px-3 text-base outline-none bg-transparent"
-                  min="0"
-                />
-                <span className="px-3 text-orange-500 text-sm border-l border-orange-200 h-full flex items-center">
-                  {UNITS.find((u) => u.value === unit)?.label}
-                </span>
+              <div>
+                <label className="text-sm text-gray-400 font-semibold mb-2 block">Low Stock Alert</label>
+                <div className="flex items-center bg-amber-500/10 border border-amber-500/20 rounded-xl overflow-hidden h-12">
+                  <input
+                    type="number" inputMode="decimal" placeholder="5"
+                    value={lowThreshold} onChange={e => setLowThreshold(e.target.value)}
+                    className="flex-1 px-3 text-base outline-none bg-transparent text-amber-300"
+                    min="0"
+                  />
+                  <span className="px-3 text-amber-500 text-sm border-l border-amber-500/20 h-full flex items-center">
+                    {PRODUCT_UNITS.find(u2 => u2.value === unit)?.label ?? unit}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-600 mt-1">Alert below this</p>
               </div>
-              <p className="text-xs text-gray-400">Alert when stock falls below this</p>
             </div>
           </div>
-        </div>
+        )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-            <p className="text-red-700 text-base">{error}</p>
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+            <p className="text-red-400 text-base font-medium">{error}</p>
           </div>
         )}
 
         <button
           type="submit"
-          disabled={loading || !name.trim()}
-          className="w-full py-5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xl active:scale-[0.98] transition-all disabled:opacity-50"
+          disabled={loading || !name.trim() || !sellingPrice}
+          className={`w-full py-5 rounded-2xl text-white font-bold text-xl active:scale-[0.98] transition-all disabled:opacity-50 bg-gradient-to-r ${accent}`}
         >
-          {loading ? 'Adding...' : '✓ Add Item'}
+          {loading ? 'Adding...' : isService ? '✓ Add Service' : '✓ Add Product'}
         </button>
       </form>
     </div>
+  )
+}
+
+export default function NewProductPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen bg-[#0a0a0a] text-gray-400">Loading...</div>}>
+      <NewProductForm />
+    </Suspense>
   )
 }

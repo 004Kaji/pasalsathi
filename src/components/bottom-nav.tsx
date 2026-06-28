@@ -13,7 +13,7 @@ const BASE_ITEMS = [
   { href: '/report',    icon: BarChart2,        label: 'Report' },
 ]
 
-const STOCK_ITEM = { href: '/godam', icon: Package, label: 'Stock' }
+const STOCK_ITEM = { href: '/godam', icon: Package, label: 'Product' }
 
 export default function BottomNav() {
   const pathname    = usePathname()
