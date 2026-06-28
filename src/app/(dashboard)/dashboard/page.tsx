@@ -7,6 +7,8 @@ import {
   Settings, FileText, ChevronRight, AlertTriangle
 } from 'lucide-react'
 import type { Business } from '@/types/database'
+import NepaliCalendar from '@/components/nepali-calendar'
+import CalcFab from '@/components/calc-fab'
 
 function formatNPR(amount: number): string {
   return `NPR ${amount.toLocaleString('ne-NP')}`
@@ -256,6 +258,15 @@ export default async function DashboardPage() {
           <QuickAction href="/staff/attendance" label="हाजिरी भर्नुहोस्" color="purple" />
         </div>
       </div>
+
+      {/* Nepali Calendar */}
+      <div>
+        <p className="text-base font-semibold text-gray-400 mb-3">📅 नेपाली पात्रो</p>
+        <NepaliCalendar />
+      </div>
+
+      {/* Calculator FAB */}
+      <CalcFab />
     </div>
   )
 }
