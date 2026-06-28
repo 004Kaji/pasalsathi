@@ -11,15 +11,21 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
 import type { Plan } from '@/types/database'
-import { BS_MONTHS } from '@/lib/bs-date'
+import { todayBS, daysInBSMonth } from '@/lib/bs-date'
+import NepaliDate from 'nepali-date-converter'
 
-// AD month → approximate BS month (1-indexed)
-const BS_MONTH_NAMES = BS_MONTHS  // ['बैशाख',...,'चैत']
-// AD months in Nepali for picker display
-const AD_MONTHS_NP = [
-  'जनवरी', 'फेब्रुवरी', 'मार्च', 'अप्रिल', 'मे', 'जुन',
-  'जुलाई', 'अगस्त', 'सेप्टेम्बर', 'अक्टोबर', 'नोभेम्बर', 'डिसेम्बर',
+const BS_MONTH_NAMES_EN = [
+  'Baisakh', 'Jestha', 'Asar', 'Shrawan', 'Bhadra', 'Aswin',
+  'Kartik', 'Mangsir', 'Poush', 'Magh', 'Falgun', 'Chaitra',
 ]
+
+function bsMonthToAdRange(bsYear: number, bsMonth: number): { start: string; end: string } {
+  const days = daysInBSMonth(bsYear, bsMonth)
+  const startAD = new NepaliDate(bsYear, bsMonth - 1, 1).toJsDate()
+  const endAD   = new NepaliDate(bsYear, bsMonth - 1, days).toJsDate()
+  const fmt = (d: Date) => d.toISOString().split('T')[0]
+  return { start: fmt(startAD), end: fmt(endAD) }
+}
 
 function formatNPR(n: number) {
   if (n >= 100000) return `NPR ${(n / 100000).toFixed(1)}L`
@@ -32,9 +38,9 @@ function formatFull(n: number) {
 }
 
 export default function ReportPage() {
-  const now = new Date()
-  const [month, setMonth] = useState(now.getMonth() + 1)
-  const [year, setYear] = useState(now.getFullYear())
+  const todayBs = todayBS()
+  const [month, setMonth] = useState(todayBs.month)   // 1-12 BS month
+  const [year, setYear]   = useState(todayBs.year)    // BS year e.g. 2083
   const [plan, setPlan] = useState<Plan>('sano')
   const [loading, setLoading] = useState(true)
 
@@ -65,8 +71,7 @@ export default function ReportPage() {
     if (!biz) return
     setPlan(biz.plan as Plan)
 
-    const start = `${year}-${String(month).padStart(2, '0')}-01`
-    const end = `${year}-${String(month).padStart(2, '0')}-${new Date(year, month, 0).getDate()}`
+    const { start, end } = bsMonthToAdRange(year, month)
 
     const [
       { data: txs },
@@ -178,7 +183,7 @@ export default function ReportPage() {
   function handlePrintPDF() { window.print() }
   function handleExportCSV() {
     const rows = [
-      ['PasalSathi P&L Report', `${AD_MONTHS_NP[month - 1]} ${year}`],
+      ['PasalSathi P&L Report', `${BS_MONTH_NAMES_EN[month - 1]} ${year} BS`],
       [],
       ['Sales Revenue', salesRevenue],
       ['Other Income', otherIncome],
@@ -220,16 +225,16 @@ export default function ReportPage() {
           </div>
         </div>
 
-        {/* Month/Year picker */}
+        {/* BS Month/Year picker */}
         <div className="flex gap-2">
           <select value={month} onChange={e => setMonth(Number(e.target.value))} className={`flex-1 ${selectClass}`}>
-            {AD_MONTHS_NP.map((m, i) => (
+            {BS_MONTH_NAMES_EN.map((m, i) => (
               <option key={i + 1} value={i + 1} className="bg-[#111]">{m}</option>
             ))}
           </select>
           <select value={year} onChange={e => setYear(Number(e.target.value))} className={`w-28 ${selectClass}`}>
-            {[now.getFullYear() - 1, now.getFullYear()].map(y => (
-              <option key={y} value={y} className="bg-[#111]">{y}</option>
+            {[todayBs.year - 2, todayBs.year - 1, todayBs.year].map(y => (
+              <option key={y} value={y} className="bg-[#111]">{y} BS</option>
             ))}
           </select>
         </div>
@@ -244,7 +249,7 @@ export default function ReportPage() {
           <div className="bg-[#111] border border-white/10 rounded-2xl overflow-hidden">
             <div className="px-5 pt-4 pb-3 border-b border-white/10">
               <h2 className="text-base font-bold text-white">💹 Net Profit / Loss</h2>
-              <p className="text-xs text-gray-500 mt-0.5">P&L breakdown — {AD_MONTHS_NP[month - 1]} {year}</p>
+              <p className="text-xs text-gray-500 mt-0.5">P&L breakdown — {BS_MONTH_NAMES_EN[month - 1]} {year} BS</p>
             </div>
 
             <div className="px-5 py-4 space-y-2">
