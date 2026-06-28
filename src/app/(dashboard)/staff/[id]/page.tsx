@@ -3,13 +3,14 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { ArrowLeft, Phone, Calendar, Banknote, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Phone, Calendar, Banknote, CheckCircle, Tag } from 'lucide-react'
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import type { Staff, Attendance, SalaryPayment, AttendanceStatus } from '@/types/database'
+import { formatBSFull } from '@/lib/bs-date'
 
 const STATUS_COLORS: Record<AttendanceStatus, string> = {
   present:  'bg-green-500',
@@ -34,6 +35,9 @@ export default function StaffDetailPage() {
   const [attendance, setAttendance] = useState<Attendance[]>([])
   const [salaryPayments, setSalaryPayments] = useState<SalaryPayment[]>([])
   const [loading, setLoading] = useState(true)
+  const [discountLimit, setDiscountLimit] = useState('')
+  const [savingDiscount, setSavingDiscount] = useState(false)
+  const [discountSaved, setDiscountSaved] = useState(false)
 
   const now = new Date()
   const [viewYear] = useState(now.getFullYear())
@@ -52,10 +56,12 @@ export default function StaffDetailPage() {
       supabase.from('attendance').select('*').eq('staff_id', id)
         .gte('attendance_date', monthStart).lte('attendance_date', monthEnd)
         .order('attendance_date'),
-      supabase.from('salary_payments').select('*').eq('staff_id', id).order('year', { ascending: false }).order('month', { ascending: false }).limit(6),
+      supabase.from('salary_payments').select('*').eq('staff_id', id)
+        .order('year', { ascending: false }).order('month', { ascending: false }).limit(6),
     ])
 
     setStaff(s as Staff)
+    setDiscountLimit(String(Number((s as Staff)?.max_discount_percent ?? 0)))
     setAttendance((att as Attendance[]) ?? [])
     setSalaryPayments((sal as SalaryPayment[]) ?? [])
     setLoading(false)
@@ -63,23 +69,25 @@ export default function StaffDetailPage() {
 
   useEffect(() => { fetchData() }, [fetchData])
 
-  // Salary calculation
   const totalDays = daysInMonth(viewYear, viewMonth)
-  const attMap = Object.fromEntries(attendance.map((a) => [a.attendance_date, a.status]))
-  const presentDays = attendance.filter((a) => a.status === 'present').length
-  const halfDays = attendance.filter((a) => a.status === 'half_day').length
+  const attMap = Object.fromEntries(attendance.map(a => [a.attendance_date, a.status]))
+  const presentDays = attendance.filter(a => a.status === 'present').length
+  const halfDays = attendance.filter(a => a.status === 'half_day').length
   const effectiveDays = presentDays + halfDays * 0.5
   const payableAmount = staff ? Math.round((Number(staff.monthly_salary) / totalDays) * effectiveDays) : 0
 
   const thisMonthPaid = salaryPayments.find(
-    (p) => p.month === viewMonth && p.year === viewYear && p.status === 'paid'
+    p => p.month === viewMonth && p.year === viewYear && p.status === 'paid'
   )
+
+  const monthLabel = new Date(viewYear, viewMonth - 1).toLocaleDateString('ne-NP', {
+    month: 'long', year: 'numeric',
+  })
 
   async function markSalaryPaid() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-
     const { data: biz } = await supabase.from('businesses').select('id').eq('owner_id', user.id).single()
     if (!biz) return
 
@@ -106,21 +114,48 @@ export default function StaffDetailPage() {
     router.push('/staff')
   }
 
-  const monthName = new Date(viewYear, viewMonth - 1).toLocaleDateString('ne-NP', { month: 'long', year: 'numeric' })
+  async function saveDiscountLimit() {
+    const pct = parseFloat(discountLimit)
+    if (isNaN(pct) || pct < 0 || pct > 100) return
+    setSavingDiscount(true)
+    const supabase = createClient()
+    await supabase.from('staff').update({ max_discount_percent: pct }).eq('id', id)
+    setSavingDiscount(false)
+    setDiscountSaved(true)
+    setTimeout(() => setDiscountSaved(false), 2000)
+    await fetchData()
+  }
 
-  if (loading) return <div className="flex items-center justify-center min-h-screen text-gray-400 text-lg">लोड हुँदैछ...</div>
-  if (!staff) return <div className="flex items-center justify-center min-h-screen text-red-500 text-lg">स्टाफ भेटिएन</div>
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-screen bg-[#0a0a0a] text-gray-400 text-lg">
+      लोड हुँदैछ...
+    </div>
+  )
+  if (!staff) return (
+    <div className="flex items-center justify-center min-h-screen bg-[#0a0a0a] text-red-400 text-lg">
+      स्टाफ भेटिएन
+    </div>
+  )
+
+  const discPct = Number(staff.max_discount_percent ?? 0)
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-10">
+    <div className="min-h-screen bg-[#0a0a0a] pb-10">
       {/* Header */}
-      <div className="bg-purple-600 px-4 pt-5 pb-6">
+      <div className="bg-gradient-to-br from-purple-600 to-purple-900 px-4 pt-5 pb-8">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <button onClick={() => router.back()} className="p-2 rounded-xl bg-white/20 text-white active:scale-95 transition-transform">
               <ArrowLeft size={22} />
             </button>
-            <h1 className="text-xl font-bold text-white">{staff.name}</h1>
+            <div>
+              <h1 className="text-xl font-bold text-white">{staff.name}</h1>
+              {staff.phone && (
+                <div className="flex items-center gap-1 text-purple-200 text-sm mt-0.5">
+                  <Phone size={13} /> {staff.phone}
+                </div>
+              )}
+            </div>
           </div>
           <AlertDialog>
             <AlertDialogTrigger className="px-3 py-2 rounded-xl bg-white/20 text-white text-sm font-semibold active:scale-95">
@@ -128,20 +163,18 @@ export default function StaffDetailPage() {
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle className="text-xl">स्टाफ हटाउने?</AlertDialogTitle>
-                <AlertDialogDescription className="text-base">
-                  "{staff.name}" स्टाफ सूचीबाट हटाइनेछ।
-                </AlertDialogDescription>
+                <AlertDialogTitle>स्टाफ हटाउने?</AlertDialogTitle>
+                <AlertDialogDescription>"{staff.name}" स्टाफ सूचीबाट हटाइनेछ।</AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="text-base">रद्द</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDeactivate} className="bg-red-600 hover:bg-red-700 text-base">हटाउनुहोस्</AlertDialogAction>
+                <AlertDialogCancel>रद्द</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeactivate} className="bg-red-600 hover:bg-red-700">हटाउनुहोस्</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
         </div>
 
-        {/* Info row */}
+        {/* Stats row */}
         <div className="grid grid-cols-3 gap-2">
           <div className="bg-white/15 rounded-xl p-3 text-center">
             <p className="text-white/70 text-xs">पद</p>
@@ -154,56 +187,97 @@ export default function StaffDetailPage() {
           <div className="bg-white/15 rounded-xl p-3 text-center">
             <p className="text-white/70 text-xs">सुरु मिति</p>
             <p className="text-white font-bold text-sm mt-0.5">
-              {staff.join_date ? new Date(staff.join_date).toLocaleDateString('ne-NP', { month: 'short', year: 'numeric' }) : '—'}
+              {staff.join_date ? formatBSFull(new Date(staff.join_date + 'T00:00:00')) : '—'}
             </p>
           </div>
         </div>
-        {staff.phone && (
-          <div className="mt-3 flex items-center gap-2 text-purple-100 text-sm">
-            <Phone size={14} /> {staff.phone}
-          </div>
-        )}
       </div>
 
-      <div className="px-4 pt-4 space-y-4">
-        {/* Monthly salary card */}
-        <div className={`rounded-2xl p-5 border-2 ${thisMonthPaid ? 'bg-green-50 border-green-300' : 'bg-white border-purple-200'} shadow-sm`}>
+      <div className="px-4 -mt-4 space-y-4">
+
+        {/* Discount limit card */}
+        <div className="bg-[#111] border border-amber-500/20 rounded-2xl p-4">
           <div className="flex items-center gap-2 mb-3">
-            <Banknote size={20} className={thisMonthPaid ? 'text-green-600' : 'text-purple-600'} />
-            <h3 className={`text-base font-bold ${thisMonthPaid ? 'text-green-700' : 'text-purple-700'}`}>
-              {monthName} — तलब हिसाब
+            <Tag size={18} className="text-amber-400" />
+            <h3 className="text-base font-bold text-amber-400">छुट सीमा (Discount Limit)</h3>
+          </div>
+          <p className="text-xs text-gray-500 mb-3">
+            यो स्टाफले अधिकतम कति % छुट दिन पाउने भनेर तोक्नुहोस्। यसभन्दा बढी छुट दिँदा बिक्रीमा ⚠️ चेतावनी आउँछ।
+          </p>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 flex-1">
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={discountLimit}
+                onChange={e => setDiscountLimit(e.target.value)}
+                className="w-full bg-transparent text-3xl font-bold text-amber-300 text-center outline-none"
+              />
+              <span className="text-amber-400 font-bold text-2xl">%</span>
+            </div>
+            <button
+              onClick={saveDiscountLimit}
+              disabled={savingDiscount}
+              className={`px-5 py-4 rounded-xl font-bold text-base transition-all active:scale-95 disabled:opacity-50 ${
+                discountSaved
+                  ? 'bg-green-500/20 border border-green-500/40 text-green-400'
+                  : 'bg-amber-500/20 border border-amber-500/40 text-amber-400'
+              }`}
+            >
+              {discountSaved ? '✓ सेभ' : savingDiscount ? '...' : 'सेभ'}
+            </button>
+          </div>
+          {discPct === 0 && (
+            <p className="text-xs text-gray-600 mt-2">हाल: कुनै सीमा छैन (असीमित छुट)</p>
+          )}
+          {discPct > 0 && (
+            <p className="text-xs text-amber-600 mt-2">हाल सीमा: {discPct}% — यसभन्दा बढी छुटमा चेतावनी देखिन्छ</p>
+          )}
+        </div>
+
+        {/* Monthly salary card */}
+        <div className={`rounded-2xl p-5 border-2 ${
+          thisMonthPaid
+            ? 'bg-green-500/10 border-green-500/30'
+            : 'bg-purple-500/10 border-purple-500/30'
+        }`}>
+          <div className="flex items-center gap-2 mb-3">
+            <Banknote size={20} className={thisMonthPaid ? 'text-green-400' : 'text-purple-400'} />
+            <h3 className={`text-base font-bold ${thisMonthPaid ? 'text-green-400' : 'text-purple-400'}`}>
+              {monthLabel} — तलब हिसाब
             </h3>
           </div>
 
           <div className="grid grid-cols-3 gap-2 mb-4">
-            <div className="bg-gray-50 rounded-xl p-3 text-center">
-              <p className="text-xs text-gray-500">उपस्थित दिन</p>
-              <p className="text-xl font-bold text-gray-900">{presentDays}</p>
+            <div className="bg-white/5 rounded-xl p-3 text-center">
+              <p className="text-xs text-gray-500">उपस्थित</p>
+              <p className="text-xl font-bold text-white">{presentDays}</p>
             </div>
-            <div className="bg-amber-50 rounded-xl p-3 text-center">
+            <div className="bg-amber-500/10 rounded-xl p-3 text-center">
               <p className="text-xs text-gray-500">आधा दिन</p>
-              <p className="text-xl font-bold text-amber-700">{halfDays}</p>
+              <p className="text-xl font-bold text-amber-400">{halfDays}</p>
             </div>
-            <div className="bg-blue-50 rounded-xl p-3 text-center">
+            <div className="bg-blue-500/10 rounded-xl p-3 text-center">
               <p className="text-xs text-gray-500">कुल दिन</p>
-              <p className="text-xl font-bold text-blue-700">{totalDays}</p>
+              <p className="text-xl font-bold text-blue-400">{totalDays}</p>
             </div>
           </div>
 
-          <div className={`rounded-xl p-4 ${thisMonthPaid ? 'bg-green-100' : 'bg-purple-50'}`}>
+          <div className={`rounded-xl p-4 ${thisMonthPaid ? 'bg-green-500/10' : 'bg-purple-500/10'}`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">
-                  NPR {Number(staff.monthly_salary).toLocaleString()} ÷ {totalDays} दिन × {effectiveDays} दिन
+                <p className="text-xs text-gray-500">
+                  NPR {Number(staff.monthly_salary).toLocaleString()} ÷ {totalDays} × {effectiveDays} दिन
                 </p>
-                <p className={`text-3xl font-bold mt-1 ${thisMonthPaid ? 'text-green-800' : 'text-purple-900'}`}>
+                <p className={`text-3xl font-bold mt-1 ${thisMonthPaid ? 'text-green-300' : 'text-purple-200'}`}>
                   NPR {payableAmount.toLocaleString('ne-NP')}
                 </p>
               </div>
               {thisMonthPaid && (
                 <div className="flex flex-col items-center gap-1">
-                  <CheckCircle size={32} className="text-green-600" />
-                  <span className="text-xs font-semibold text-green-700">तिरियो</span>
+                  <CheckCircle size={32} className="text-green-400" />
+                  <span className="text-xs font-semibold text-green-400">तिरियो</span>
                 </div>
               )}
             </div>
@@ -212,24 +286,23 @@ export default function StaffDetailPage() {
           {!thisMonthPaid && attendance.length > 0 && (
             <button
               onClick={markSalaryPaid}
-              className="w-full mt-3 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold text-base rounded-xl active:scale-[0.98] transition-all"
+              className="w-full mt-3 py-4 bg-gradient-to-r from-purple-600 to-purple-800 text-white font-bold text-base rounded-xl active:scale-[0.98] transition-all"
             >
               ✓ तलब तिरियो (नगद)
             </button>
           )}
           {attendance.length === 0 && (
-            <p className="text-center text-sm text-gray-400 mt-3">यो महिनाको हाजिरी अझै भरिएको छैन</p>
+            <p className="text-center text-sm text-gray-500 mt-3">यो महिनाको हाजिरी अझै भरिएको छैन</p>
           )}
         </div>
 
         {/* Monthly attendance calendar */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
+        <div className="bg-[#111] border border-white/10 rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Calendar size={20} className="text-purple-600" />
-            <h3 className="text-base font-bold text-gray-800">{monthName} — हाजिरी</h3>
+            <Calendar size={20} className="text-purple-400" />
+            <h3 className="text-base font-bold text-white">{monthLabel} — हाजिरी</h3>
           </div>
 
-          {/* Legend */}
           <div className="flex flex-wrap gap-3 mb-4 text-xs font-semibold">
             {[
               { color: 'bg-green-500', label: 'उ = उपस्थित' },
@@ -237,14 +310,13 @@ export default function StaffDetailPage() {
               { color: 'bg-amber-400', label: '½ = आधा दिन' },
               { color: 'bg-blue-400',  label: 'बि = बिदा' },
             ].map(({ color, label }) => (
-              <span key={label} className="flex items-center gap-1.5 text-gray-600">
+              <span key={label} className="flex items-center gap-1.5 text-gray-500">
                 <span className={`w-3 h-3 rounded-sm ${color} inline-block`} />
                 {label}
               </span>
             ))}
           </div>
 
-          {/* Calendar grid */}
           <div className="grid grid-cols-7 gap-1.5">
             {Array.from({ length: totalDays }, (_, i) => {
               const day = i + 1
@@ -254,7 +326,7 @@ export default function StaffDetailPage() {
                 <div
                   key={day}
                   className={`aspect-square rounded-lg flex flex-col items-center justify-center text-xs font-bold ${
-                    status ? `${STATUS_COLORS[status]} text-white` : 'bg-gray-100 text-gray-400'
+                    status ? `${STATUS_COLORS[status]} text-white` : 'bg-white/5 text-gray-600'
                   }`}
                 >
                   <span className="text-[10px] leading-none opacity-75">{day}</span>
@@ -267,25 +339,29 @@ export default function StaffDetailPage() {
 
         {/* Salary history */}
         {salaryPayments.length > 0 && (
-          <div className="bg-white rounded-2xl p-5 shadow-sm">
-            <h3 className="text-base font-bold text-gray-800 mb-3">तलब इतिहास</h3>
+          <div className="bg-[#111] border border-white/10 rounded-2xl p-5">
+            <h3 className="text-base font-bold text-white mb-3">तलब इतिहास</h3>
             <div className="space-y-2">
-              {salaryPayments.map((p) => {
+              {salaryPayments.map(p => {
                 const mLabel = new Date(p.year, p.month - 1).toLocaleDateString('ne-NP', { month: 'long', year: 'numeric' })
                 return (
-                  <div key={p.id} className={`flex items-center justify-between p-3 rounded-xl ${p.status === 'paid' ? 'bg-green-50' : 'bg-gray-50'}`}>
+                  <div key={p.id} className={`flex items-center justify-between p-3 rounded-xl ${
+                    p.status === 'paid' ? 'bg-green-500/10' : 'bg-white/5'
+                  }`}>
                     <div>
-                      <p className="text-sm font-semibold text-gray-800">{mLabel}</p>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-sm font-semibold text-white">{mLabel}</p>
+                      <p className="text-xs text-gray-500">
                         {p.present_days}/{p.working_days} दिन
-                        {p.payment_date ? ` · ${new Date(p.payment_date).toLocaleDateString('ne-NP', { month: 'short', day: 'numeric' })} मा तिरियो` : ''}
+                        {p.payment_date ? ` · ${formatBSFull(new Date(p.payment_date + 'T00:00:00'))} मा तिरियो` : ''}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className={`font-bold text-base ${p.status === 'paid' ? 'text-green-700' : 'text-gray-700'}`}>
+                      <p className={`font-bold text-base ${p.status === 'paid' ? 'text-green-400' : 'text-white'}`}>
                         NPR {Number(p.payable_amount).toLocaleString('ne-NP')}
                       </p>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${p.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                        p.status === 'paid' ? 'bg-green-500/20 text-green-400' : 'bg-amber-500/20 text-amber-400'
+                      }`}>
                         {p.status === 'paid' ? '✓ तिरियो' : 'बाँकी'}
                       </span>
                     </div>

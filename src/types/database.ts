@@ -47,6 +47,7 @@ export interface Transaction {
   branch_id: string | null
   type: TransactionType
   amount: number
+  discount_percent: number
   category: TransactionCategory
   description: string | null
   payment_method: PaymentMethod
@@ -119,6 +120,7 @@ export interface Staff {
   role: string | null
   phone: string | null
   monthly_salary: number
+  max_discount_percent: number
   join_date: string | null
   is_active: boolean
   created_at: string
