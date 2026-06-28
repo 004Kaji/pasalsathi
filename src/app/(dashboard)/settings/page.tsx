@@ -43,7 +43,7 @@ export default function SettingsPage() {
     async function load() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user) { setLoading(false); return }
 
       const { data: biz } = await supabase
         .from('businesses').select('*').eq('owner_id', user.id).single()
@@ -77,14 +77,25 @@ export default function SettingsPage() {
     setSaving(true)
 
     const supabase = createClient()
-    await supabase.from('businesses').update({
+
+    // Base fields — always exist in DB
+    const { error } = await supabase.from('businesses').update({
       name:       name.trim(),
       type,
       phone:      phone.trim() || null,
       address:    address.trim() || null,
       pan_number: panNumber.trim() || null,
-      track_stock: trackStock,
     }).eq('id', business.id)
+
+    if (error) {
+      setSaving(false)
+      alert('Save failed: ' + error.message)
+      return
+    }
+
+    // track_stock — column may not exist until SQL migration is run
+    // Try silently; won't break anything if it fails
+    await supabase.from('businesses').update({ track_stock: trackStock }).eq('id', business.id)
 
     // Persist to localStorage so bottom nav can read it immediately
     localStorage.setItem('ps_track_stock', trackStock ? '1' : '0')

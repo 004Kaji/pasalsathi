@@ -73,12 +73,12 @@ export default function SellPage() {
   const fetchData = useCallback(async () => {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) { setLoading(false); return }
     setUserId(user.id)
 
     const { data: biz } = await supabase
       .from('businesses').select('id').eq('owner_id', user.id).single()
-    if (!biz) return
+    if (!biz) { setLoading(false); return }
     setBizId(biz.id)
 
     const [{ data: prods }, { data: custs }] = await Promise.all([
@@ -368,7 +368,7 @@ export default function SellPage() {
                   placeholder="0"
                   value={quickPrice}
                   onChange={e => setQuickPrice(e.target.value)}
-                  className="flex-1 bg-transparent text-white font-bold text-xl outline-none w-0"
+                  className="flex-1 bg-transparent text-white font-bold text-xl outline-none min-w-0"
                 />
               </div>
 

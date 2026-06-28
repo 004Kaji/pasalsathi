@@ -56,7 +56,7 @@ export default function StaffDetailPage() {
   const fetchData = useCallback(async () => {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) { setLoading(false); return }
 
     const monthStart = `${viewYear}-${String(viewMonth).padStart(2, '0')}-01`
     const monthEnd   = `${viewYear}-${String(viewMonth).padStart(2, '0')}-${daysInMonth(viewYear, viewMonth)}`
