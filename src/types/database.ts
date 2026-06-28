@@ -3,8 +3,9 @@ export type BillingCycle = 'monthly' | 'annual'
 export type SubscriptionStatus = 'trial' | 'active' | 'grace' | 'expired'
 export type TransactionType = 'in' | 'out'
 export type TransactionCategory = 'sales' | 'purchase' | 'expense' | 'salary' | 'other'
-export type PaymentMethod = 'cash' | 'bank' | 'esewa' | 'khalti'
+export type PaymentMethod = 'cash' | 'bank' | 'esewa' | 'khalti' | 'fonepay' | 'credit'
 export type KhataEntryType = 'credit' | 'payment'
+export type SupplierEntryType = 'credit_taken' | 'payment_made'
 export type StockMovementType = 'in' | 'out'
 export type AttendanceStatus = 'present' | 'absent' | 'half_day' | 'holiday'
 export type SalaryStatus = 'pending' | 'paid'
@@ -171,5 +172,35 @@ export interface PaymentHistory {
   paid_at: string | null
   period_start: string | null
   period_end: string | null
+  created_at: string
+}
+
+export interface Supplier {
+  id: string
+  business_id: string
+  name: string
+  phone: string | null
+  address: string | null
+  product_categories: string | null
+  notes: string | null
+  total_credit_taken: number
+  total_paid: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface SupplierEntry {
+  id: string
+  business_id: string
+  supplier_id: string
+  type: SupplierEntryType
+  amount: number
+  description: string | null
+  due_date: string | null
+  bs_date: string
+  entry_date: string
+  sms_sent: boolean
+  created_by: string | null
   created_at: string
 }
