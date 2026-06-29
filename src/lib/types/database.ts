@@ -12,8 +12,8 @@
 /** Valid units for a product */
 export type ProductUnit = 'piece' | 'kg' | 'litre' | 'box' | 'dozen'
 
-/** Whether an item is a physical product or a service */
-export type ProductType = 'product' | 'service'
+/** Whether an item is a physical product, a service, or a menu/food item */
+export type ProductType = 'product' | 'service' | 'menu'
 
 /** Direction of a transaction */
 export type TransactionType = 'income' | 'expense'

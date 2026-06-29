@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import Papa from 'papaparse'
 import { createClient } from '@/lib/db/supabase'
-import { Plus, Search, Package, ChevronRight, TrendingUp, Upload, FileDown, Wrench, X, CheckCircle, XCircle } from 'lucide-react'
+import { Plus, Search, Package, ChevronRight, TrendingUp, Upload, FileDown, Wrench, UtensilsCrossed, X, CheckCircle, XCircle } from 'lucide-react'
 import type { Product, ProductUnit, ProductType } from '@/lib/types/database'
 
 const UNIT_LABELS: Record<string, string> = {
@@ -12,7 +12,7 @@ const UNIT_LABELS: Record<string, string> = {
 }
 
 const VALID_UNITS: ProductUnit[] = ['piece', 'kg', 'litre', 'box', 'dozen']
-const VALID_TYPES: ProductType[] = ['product', 'service']
+const VALID_TYPES: ProductType[] = ['product', 'service', 'menu']
 
 interface ImportRow {
   rowNum:  number
@@ -27,7 +27,7 @@ interface ImportRow {
 export default function ProductsPage() {
   const [products,    setProducts]    = useState<Product[]>([])
   const [search,      setSearch]      = useState('')
-  const [tab,         setTab]         = useState<'product' | 'service'>('product')
+  const [tab,         setTab]         = useState<'product' | 'service' | 'menu'>('product')
   const [loading,     setLoading]     = useState(true)
   const [businessId,  setBusinessId]  = useState('')
 
@@ -57,9 +57,10 @@ export default function ProductsPage() {
 
   useEffect(() => { fetchProducts() }, [fetchProducts])
 
-  const physical  = products.filter(p => p.type !== 'service')
-  const services  = products.filter(p => p.type === 'service')
-  const activeList = tab === 'product' ? physical : services
+  const physical   = products.filter(p => p.type === 'product')
+  const services   = products.filter(p => p.type === 'service')
+  const menuItems  = products.filter(p => p.type === 'menu')
+  const activeList = tab === 'product' ? physical : tab === 'service' ? services : menuItems
 
   const filtered = activeList.filter(p =>
     p.name.toLowerCase().includes(search.toLowerCase())
@@ -93,7 +94,7 @@ export default function ProductsPage() {
     if (!price || isNaN(Number(price)) || Number(price) < 0)
                                       return { rowNum, name, price, unit, type, stock, error: 'Price must be a positive number' }
     if (!VALID_UNITS.includes(unit))  return { rowNum, name, price, unit, type, stock, error: `Unit must be one of: ${VALID_UNITS.join(', ')}` }
-    if (!VALID_TYPES.includes(type))  return { rowNum, name, price, unit, type, stock, error: 'Type must be "product" or "service"' }
+    if (!VALID_TYPES.includes(type))  return { rowNum, name, price, unit, type, stock, error: 'Type must be "product", "service" or "menu"' }
     if (isNaN(Number(stock)) || Number(stock) < 0)
                                       return { rowNum, name, price, unit, type, stock, error: 'Stock must be 0 or more' }
 
@@ -156,27 +157,28 @@ export default function ProductsPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#1C1917]">🏷️ Products</h1>
           <Link
-            href="/products/new"
+            href={`/products/new?type=${tab}`}
             className="flex items-center gap-1.5 bg-[#C84B2F] text-white px-3 py-2.5 rounded-xl font-semibold text-sm active:scale-95 transition-transform"
           >
             <Plus size={17} /> Add New
           </Link>
         </div>
 
-        {/* Product / Service tab */}
+        {/* Product / Service / Menu tabs */}
         <div className="flex bg-[#EDE8DF] rounded-2xl p-1 gap-1">
-          {(['product', 'service'] as const).map(t => (
+          {([
+            { key: 'product', label: 'Products', icon: <Package size={14} />,         activeColor: 'bg-[#C84B2F] text-white' },
+            { key: 'service', label: 'Services', icon: <Wrench size={14} />,          activeColor: 'bg-purple-600 text-white' },
+            { key: 'menu',    label: 'Menu',     icon: <UtensilsCrossed size={14} />, activeColor: 'bg-[#C9933A] text-white' },
+          ] as const).map(t => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-all active:scale-[0.98] ${
-                tab === t
-                  ? t === 'product' ? 'bg-[#C84B2F] text-white' : 'bg-purple-600 text-white'
-                  : 'text-[#6B6560]'
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-semibold text-sm transition-all active:scale-[0.98] ${
+                tab === t.key ? t.activeColor : 'text-[#6B6560]'
               }`}
             >
-              {t === 'product' ? <Package size={16} /> : <Wrench size={16} />}
-              {t === 'product' ? 'Products' : 'Services'}
+              {t.icon}{t.label}
             </button>
           ))}
         </div>
@@ -186,7 +188,7 @@ export default function ProductsPage() {
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9B948E]" />
           <input
             type="text"
-            placeholder={tab === 'product' ? 'Search products...' : 'Search services...'}
+            placeholder={tab === 'product' ? 'Search products...' : tab === 'service' ? 'Search services...' : 'Search menu items...'}
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-3 bg-white border border-[#D5CFC6] rounded-xl text-base text-[#1C1917] placeholder:text-[#9B948E] outline-none focus:ring-2 focus:ring-[#C84B2F]/30"
@@ -216,13 +218,21 @@ export default function ProductsPage() {
               </p>
             </div>
           </div>
-        ) : (
+        ) : tab === 'service' ? (
           <div className="bg-purple-500/10 border border-purple-500/20 rounded-2xl p-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Wrench size={18} className="text-purple-500" />
               <p className="text-sm font-medium text-purple-600">Services offered</p>
             </div>
             <p className="text-2xl font-bold text-purple-700">{services.length}</p>
+          </div>
+        ) : (
+          <div className="bg-[#C9933A]/10 border border-[#C9933A]/20 rounded-2xl p-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <UtensilsCrossed size={18} className="text-[#C9933A]" />
+              <p className="text-sm font-medium text-[#C9933A]">Menu items</p>
+            </div>
+            <p className="text-2xl font-bold text-[#C9933A]">{menuItems.length}</p>
           </div>
         )}
 
@@ -244,9 +254,9 @@ export default function ProductsPage() {
           <div className="text-center py-12 text-[#6B6560]">Loading...</div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-5xl mb-4">{tab === 'product' ? '📦' : '🛠️'}</p>
+            <p className="text-5xl mb-4">{tab === 'product' ? '📦' : tab === 'service' ? '🛠️' : '🍽️'}</p>
             <p className="text-xl font-semibold text-[#6B6560]">
-              {search ? 'No results found' : tab === 'product' ? 'No products yet' : 'No services yet'}
+              {search ? 'No results found' : tab === 'product' ? 'No products yet' : tab === 'service' ? 'No services yet' : 'No menu items yet'}
             </p>
             {!search && (
               <p className="text-sm text-[#9B948E] mt-2">Tap "+ Add New" above</p>
@@ -259,6 +269,7 @@ export default function ProductsPage() {
                 ? <ProductCard key={p.id} product={p} />
                 : <ServiceCard key={p.id} product={p} />
             )}
+
           </div>
         )}
 
