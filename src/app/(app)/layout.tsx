@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createServerClient } from '@/lib/db/supabase-server'
 import BottomNav from '@/components/shared/bottom-nav'
+import TopNav from '@/components/shared/top-nav'
 import SubscriptionBanner from '@/components/shared/subscription-banner'
 import OfflineIndicator from '@/components/pwa/offline-indicator'
 import InstallPrompt from '@/components/pwa/install-prompt'
@@ -33,14 +34,19 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen bg-[#F5F0E8] text-[#1C1917] flex flex-col">
+      <TopNav />
       <OfflineIndicator />
       <SubscriptionBanner status={subStatus} />
-      <main className="flex-1 pb-24 max-w-2xl mx-auto w-full">
+      {/* pt-14 clears fixed TopNav; pb-24 clears BottomNav on mobile, removed on desktop */}
+      <main className="flex-1 pt-14 pb-24 md:pb-6 max-w-2xl md:max-w-5xl mx-auto w-full">
         <ErrorBoundary>
           {children}
         </ErrorBoundary>
       </main>
-      <BottomNav />
+      {/* BottomNav visible only on mobile; desktop uses TopNav */}
+      <div className="md:hidden">
+        <BottomNav />
+      </div>
       <InstallPrompt />
     </div>
   )
