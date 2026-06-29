@@ -17,6 +17,7 @@ import type { Product, Customer, PaymentMethod } from '@/lib/types/database'
 
 interface SellState {
   bizId:            string
+  vatNumber:        string
   products:         Product[]
   customers:        Customer[]
   cart:             CartItem[]
@@ -94,9 +95,10 @@ async function submitPendingToDB(sale: PendingSale): Promise<void> {
 // ── hook ──────────────────────────────────────────────────────────────────────
 
 export function useSell(): SellState {
-  const [bizId,     setBizId]     = useState('')
-  const [products,  setProducts]  = useState<Product[]>([])
-  const [customers, setCustomers] = useState<Customer[]>([])
+  const [bizId,      setBizId]      = useState('')
+  const [vatNumber,  setVatNumber]  = useState('')
+  const [products,   setProducts]   = useState<Product[]>([])
+  const [customers,  setCustomers]  = useState<Customer[]>([])
   const [cart,      setCart]      = useState<CartItem[]>([])
 
   const [paymentMethod,    setPaymentMethod]    = useState<PaymentMethod>('cash')
@@ -119,9 +121,10 @@ export function useSell(): SellState {
     if (!user) { setLoading(false); return }
 
     const { data: business } = await supabase
-      .from('businesses').select('id').eq('owner_id', user.id).single()
+      .from('businesses').select('id, vat_number').eq('owner_id', user.id).single()
     if (!business) { setLoading(false); return }
     setBizId(business.id)
+    setVatNumber((business as { id: string; vat_number: string | null }).vat_number ?? '')
 
     const [{ data: prods }, { data: custs }] = await Promise.all([
       supabase.from('products').select('*').eq('business_id', business.id).order('name'),
@@ -255,13 +258,15 @@ export function useSell(): SellState {
   // ── checkout ───────────────────────────────────────────────────────────────
 
   async function handleSell(split?: { method: PaymentMethod; amount: number }): Promise<SaleResult | null> {
-    const discountAmt = parseFloat(discountPercent) || 0
-    const subtotal    = cart.reduce((sum, i) => sum + i.qty * i.unitPrice, 0)
-    const total       = discountType === 'amount'
+    const discountAmt      = parseFloat(discountPercent) || 0
+    const subtotal         = cart.reduce((sum, i) => sum + i.qty * i.unitPrice, 0)
+    const subtotalAfterDiscount = discountType === 'amount'
       ? subtotal - discountAmt
       : subtotal - subtotal * (discountAmt / 100)
-    const isKhata     = paymentMethod === 'khata'
-    const itemSummary = cart.map(i => `${i.name} x${i.qty}`).join(', ')
+    const vatAmount        = vatNumber ? Math.round(subtotalAfterDiscount * 0.13) : 0
+    const total            = subtotalAfterDiscount + vatAmount
+    const isKhata          = paymentMethod === 'khata'
+    const itemSummary      = cart.map(i => `${i.name} x${i.qty}`).join(', ')
 
     if (cart.length === 0)            { setError('Add at least one item'); return null }
     if (isKhata && !selectedCustomer) { setError('Select a customer for khata sale'); return null }
@@ -288,7 +293,8 @@ export function useSell(): SellState {
       setPendingCount(c => c + 1)
       setSubmitting(false)
       return {
-        total, items: cart, discountPercent: discountAmt, discountType,
+        total, subtotalBeforeVat: subtotalAfterDiscount, vatAmount, vatNumber,
+        items: cart, discountPercent: discountAmt, discountType,
         paymentMethod, customer: selectedCustomer,
         splitMethod: split?.method, splitAmount: split?.amount,
         offline: true,
@@ -336,7 +342,8 @@ export function useSell(): SellState {
 
       setSubmitting(false)
       return {
-        total, items: cart, discountPercent: discountAmt, discountType,
+        total, subtotalBeforeVat: subtotalAfterDiscount, vatAmount, vatNumber,
+        items: cart, discountPercent: discountAmt, discountType,
         paymentMethod, customer: selectedCustomer,
         splitMethod: split?.method, splitAmount: split?.amount,
       }
@@ -348,7 +355,7 @@ export function useSell(): SellState {
   }
 
   return {
-    bizId, products, customers, cart, paymentMethod, discountPercent, discountType,
+    bizId, vatNumber, products, customers, cart, paymentMethod, discountPercent, discountType,
     customerName, selectedCustomer, pendingCount, loading, submitting, syncing, error,
     addToCart, addCustomItem, updateQty, updatePrice, removeItem, clearCart, loadCart,
     setPaymentMethod, setDiscountPercent, setDiscountType, setCustomerName, setSelectedCustomer,

@@ -40,6 +40,9 @@ export interface PaymentMethodOption {
 /** Data returned after a successful checkout — used on the success screen */
 export interface SaleResult {
   total: number
+  subtotalBeforeVat: number
+  vatAmount: number
+  vatNumber: string
   discountPercent: number
   discountType: 'percent' | 'amount'
   items: CartItem[]

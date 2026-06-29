@@ -15,6 +15,7 @@ const PAYMENT_METHODS: PaymentMethodOption[] = [
 
 interface Props {
   cart: CartItem[]
+  vatNumber: string
   discountPercent: string
   discountType: 'percent' | 'amount'
   paymentMethod: PaymentMethod
@@ -35,7 +36,7 @@ interface Props {
 }
 
 export default function CheckoutBar({
-  cart, discountPercent, discountType, paymentMethod, customerName, cashGiven,
+  cart, vatNumber, discountPercent, discountType, paymentMethod, customerName, cashGiven,
   submitting, selectedCustomer, customers,
   onPaymentMethodChange, onCustomerNameChange, onCashGivenChange,
   onDiscountChange, onDiscountTypeChange,
@@ -51,7 +52,9 @@ export default function CheckoutBar({
   const subtotal        = cart.reduce((sum, item) => sum + item.qty * item.unitPrice, 0)
   const discountVal     = parseFloat(discountPercent) || 0
   const discountAmount  = discountType === 'amount' ? discountVal : subtotal * (discountVal / 100)
-  const total           = subtotal - discountAmount
+  const subtotalAfterDiscount = subtotal - discountAmount
+  const vatAmount       = vatNumber ? Math.round(subtotalAfterDiscount * 0.13) : 0
+  const total           = subtotalAfterDiscount + vatAmount
   const isCash          = paymentMethod === 'cash'
   const isKhata         = paymentMethod === 'khata'
   const cashGivenAmount = parseFloat(cashGiven) || 0
@@ -339,6 +342,11 @@ export default function CheckoutBar({
             {discountVal > 0 && (
               <p className="text-xs text-amber-400 leading-none">
                 {discountType === 'amount' ? `NPR ${discountVal} off` : `${discountVal}% off`}
+              </p>
+            )}
+            {vatAmount > 0 && (
+              <p className="text-xs text-blue-300 leading-none mt-0.5">
+                Incl. VAT 13%: NPR {vatAmount.toLocaleString('en-IN')}
               </p>
             )}
             {splitEnabled && splitAmt > 0 && (

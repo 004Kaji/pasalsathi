@@ -199,6 +199,7 @@ export default function SellClient() {
       {sell.cart.length > 0 && (
         <CheckoutBar
           cart={sell.cart}
+          vatNumber={sell.vatNumber}
           discountPercent={sell.discountPercent}
           discountType={sell.discountType}
           paymentMethod={sell.paymentMethod}

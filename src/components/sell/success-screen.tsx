@@ -15,23 +15,27 @@ interface Props {
 
 export default function SuccessScreen({ result, onNewSale }: Props) {
   const router = useRouter()
-  const { total, items, discountPercent, discountType, paymentMethod, customer, offline, splitMethod, splitAmount } = result
+  const { total, subtotalBeforeVat, vatAmount, vatNumber, items, discountPercent, discountType, paymentMethod, customer, offline, splitMethod, splitAmount } = result
   const hadCatalog = items.some(i => !i.isQuick)
 
   function shareWhatsApp() {
+    const fmt = (n: number) => `NPR ${n.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
     const lines = [
-      '🧾 Receipt',
+      vatNumber ? `🧾 VAT Invoice — ${vatNumber}` : '🧾 Receipt',
       '',
-      ...items.map(i => `${i.name} ×${i.qty}  NPR ${(i.qty * i.unitPrice).toLocaleString()}`),
+      ...items.map(i => `${i.name} ×${i.qty}  ${fmt(i.qty * i.unitPrice)}`),
       '',
       discountPercent > 0
         ? `Discount: ${discountType === 'amount' ? `NPR ${discountPercent} off` : `${discountPercent}%`}`
         : '',
-      `Total: NPR ${total.toLocaleString()}`,
+      vatAmount > 0
+        ? `Subtotal: ${fmt(subtotalBeforeVat)}\nVAT 13%: ${fmt(vatAmount)}`
+        : '',
+      `Total: ${fmt(total)}`,
       splitMethod && splitAmount
-        ? `(${METHOD_LABELS[paymentMethod]} NPR ${(total - splitAmount).toLocaleString()} + ${METHOD_LABELS[splitMethod]} NPR ${splitAmount.toLocaleString()})`
+        ? `(${METHOD_LABELS[paymentMethod]} ${fmt(total - splitAmount)} + ${METHOD_LABELS[splitMethod]} ${fmt(splitAmount)})`
         : `Payment: ${METHOD_LABELS[paymentMethod]}`,
-    ].filter(l => l !== undefined && l !== null && (l !== '')).join('\n')
+    ].filter(l => l !== undefined && l !== null && l !== '').join('\n')
 
     window.open(`https://wa.me/?text=${encodeURIComponent(lines)}`, '_blank')
   }
@@ -60,8 +64,16 @@ export default function SuccessScreen({ result, onNewSale }: Props) {
       )}
 
       <p className={`text-5xl font-bold mb-3 ${offline ? 'text-amber-600' : 'text-[#4A7055]'}`}>
-        NPR {total.toLocaleString('ne-NP', { maximumFractionDigits: 2 })}
+        NPR {total.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
       </p>
+      {vatAmount > 0 && (
+        <div className="mb-2 text-sm text-blue-700 bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-2 text-left">
+          <p className="font-semibold">VAT Invoice — {vatNumber}</p>
+          <p>Subtotal: NPR {subtotalBeforeVat.toLocaleString('en-IN')}</p>
+          <p>VAT 13%: NPR {vatAmount.toLocaleString('en-IN')}</p>
+          <p className="font-bold">Total incl. VAT: NPR {total.toLocaleString('en-IN')}</p>
+        </div>
+      )}
 
       {/* Split info */}
       {splitMethod && splitAmount && (
@@ -72,7 +84,7 @@ export default function SuccessScreen({ result, onNewSale }: Props) {
 
       <div className="space-y-1 text-sm text-[#6B6560] mb-3">
         {items.map(i => (
-          <p key={i.id}>{i.name} × {i.qty} — NPR {(i.qty * i.unitPrice).toLocaleString('ne-NP')}</p>
+          <p key={i.id}>{i.name} × {i.qty} — NPR {(i.qty * i.unitPrice).toLocaleString('en-IN', { maximumFractionDigits: 0 })}</p>
         ))}
       </div>
 
