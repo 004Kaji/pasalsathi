@@ -21,25 +21,21 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .single()
 
   if (!business) {
-    // Business should have been auto-created at auth/callback — create fallback here just in case
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      const defaultName = (user.email ?? 'My Business').split('@')[0].replace(/[._]/g, ' ')
-      await supabase.from('businesses').insert({
-        owner_id: user.id,
-        name: defaultName.charAt(0).toUpperCase() + defaultName.slice(1),
-      })
-    }
+    const defaultName = (user.email ?? 'My Business').split('@')[0].replace(/[._]/g, ' ')
+    await supabase.from('businesses').insert({
+      owner_id: user.id,
+      name: defaultName.charAt(0).toUpperCase() + defaultName.slice(1),
+    })
     redirect('/home')
   }
 
   const subStatus = getSubscriptionStatus(business as Business)
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
+    <div className="min-h-screen bg-[#F5F0E8] text-[#1C1917] flex flex-col">
       <OfflineIndicator />
       <SubscriptionBanner status={subStatus} />
-      <main className="flex-1 pb-20 max-w-2xl mx-auto w-full">
+      <main className="flex-1 pb-24 max-w-2xl mx-auto w-full">
         <ErrorBoundary>
           {children}
         </ErrorBoundary>

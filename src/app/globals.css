@@ -9,7 +9,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-display);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -18,11 +18,6 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -43,88 +38,208 @@
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
 }
+
+/* ── PasalSathi Design System — modelled on SAB Account AI ─────
+   Warm cream light theme with ember accent and charcoal text.
+   ─────────────────────────────────────────────────────────── */
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  /* ── Backgrounds ── */
+  --cream:  #F5F0E8;
+  --cream2: #EDE8DF;
+  --cream3: #E0D9CE;
+
+  /* ── Dark tones (nav, headings) ── */
+  --char:  #1C1917;
+  --char2: #292524;
+
+  /* ── Brand: Ember ── */
+  --ember:   #C84B2F;
+  --ember-l: #E05A3A;
+  --ember-p: rgba(200, 75, 47, 0.10);
+
+  /* ── Accent ── */
+  --sage:   #4A7055;
+  --sage-l: #5D8A69;
+  --gold:   #C9933A;
+
+  /* ── Text ── */
+  --text:  #1C1917;
+  --text2: #6B6560;
+  --text3: #9B948E;
+
+  /* ── Border ── */
+  --border-color: #D5CFC6;
+
+  /* ── Radius ── */
+  --r:  10px;
+  --r2: 16px;
+  --r3: 22px;
+
+  /* Shadcn overrides — map to cream palette */
+  --background: #F5F0E8;
+  --foreground: #1C1917;
+  --card: #ffffff;
+  --card-foreground: #1C1917;
+  --popover: #ffffff;
+  --popover-foreground: #1C1917;
+  --primary: #C84B2F;
+  --primary-foreground: #ffffff;
+  --secondary: #EDE8DF;
+  --secondary-foreground: #1C1917;
+  --muted: #EDE8DF;
+  --muted-foreground: #6B6560;
+  --accent: #EDE8DF;
+  --accent-foreground: #1C1917;
+  --destructive: #dc2626;
+  --border: #D5CFC6;
+  --input: #D5CFC6;
+  --ring: #C84B2F;
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1C1917;
+  --sidebar-primary: #C84B2F;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #EDE8DF;
+  --sidebar-accent-foreground: #1C1917;
+  --sidebar-border: #D5CFC6;
+  --sidebar-ring: #C84B2F;
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+/* ── Base ────────────────────────────────────────────────────── */
+html { scroll-behavior: smooth; }
+
+body {
+  background-color: var(--cream);
+  color: var(--text);
+  font-family: var(--font-sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Typography ─────────────────────────────────────────────── */
+.font-display, h1, h2 {
+  font-family: var(--font-display, 'Fraunces', Georgia, serif);
+}
+.font-mono, code, pre {
+  font-family: var(--font-mono, 'JetBrains Mono', 'Courier New', monospace);
+}
+
+/* ── Focus ring ─────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Text selection ─────────────────────────────────────────── */
+::selection {
+  background-color: var(--ember-p);
+  color: var(--char);
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────── */
+::-webkit-scrollbar          { width: 6px; height: 6px; }
+::-webkit-scrollbar-track    { background: var(--cream2); }
+::-webkit-scrollbar-thumb    { background: var(--cream3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+/* ── Card helpers ───────────────────────────────────────────── */
+.ps-card {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--r2);
+  padding: 1.25rem;
+}
+
+.ps-card-cream {
+  background: var(--cream2);
+  border: 1px solid var(--cream3);
+  border-radius: var(--r2);
+  padding: 1.25rem;
+}
+
+.ps-card-dark {
+  background: var(--char);
+  color: #ffffff;
+  border-radius: var(--r2);
+  padding: 1.25rem;
+}
+
+/* ── Input ──────────────────────────────────────────────────── */
+.ps-input {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--r);
+  padding: 0.625rem 0.875rem;
+  font-size: 1rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.ps-input::placeholder { color: var(--text3); }
+.ps-input:focus {
+  border-color: var(--ember);
+  box-shadow: 0 0 0 3px var(--ember-p);
+}
+
+/* ── Button base ────────────────────────────────────────────── */
+.ps-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  border-radius: var(--r);
+  padding: 0.75rem 1.25rem;
+  cursor: pointer;
+  border: none;
+  transition: background-color 150ms ease, opacity 150ms ease;
+  white-space: nowrap;
+  min-height: 48px;
+  touch-action: manipulation;
+}
+.ps-btn:active { transform: scale(0.98); }
+.ps-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.ps-btn-ember  { background: var(--ember); color: #ffffff; }
+.ps-btn-ember:hover { background: var(--ember-l); }
+
+.ps-btn-char   { background: var(--char); color: #ffffff; }
+.ps-btn-char:hover { background: var(--char2); }
+
+.ps-btn-outline {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border-color);
+}
+.ps-btn-outline:hover { background: var(--cream2); }
+
+/* ── Badges ─────────────────────────────────────────────────── */
+.ps-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.ps-badge-paid    { background: rgba(74,112,85,0.12); color: var(--sage); }
+.ps-badge-pending { background: rgba(201,147,58,0.12); color: var(--gold); }
+.ps-badge-due     { background: rgba(200,75,47,0.12);  color: var(--ember); }
+
+/* ── iOS input zoom fix ─────────────────────────────────────── */
+@media (max-width: 768px) {
+  input, select, textarea { font-size: 16px !important; }
+  button, a { touch-action: manipulation; }
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-  html {
-    @apply font-sans;
-  }
+  * { @apply border-border outline-ring/50; }
+  body { @apply bg-background text-foreground; }
+  html { @apply font-sans; }
 }

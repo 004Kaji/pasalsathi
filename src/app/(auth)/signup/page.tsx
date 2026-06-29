@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/db/supabase'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Eye, EyeOff } from 'lucide-react'
 
 function getPasswordError(pwd: string): string {
@@ -25,18 +24,17 @@ const GoogleIcon = () => (
 export default function SignupPage() {
   const router = useRouter()
 
-  // Phone OTP state
-  const [phone, setPhone] = useState('')
-  const [otp, setOtp] = useState('')
-  const [otpSent, setOtpSent] = useState(false)
+  const [tab, setTab] = useState<'phone' | 'email'>('phone')
+  const [phone, setPhone]           = useState('')
+  const [otp, setOtp]               = useState('')
+  const [otpSent, setOtpSent]       = useState(false)
   const [phoneLoading, setPhoneLoading] = useState(false)
   const [phoneError, setPhoneError] = useState('')
 
-  // Email state
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirm, setConfirm] = useState('')
-  const [showPwd, setShowPwd] = useState(false)
+  const [email, setEmail]           = useState('')
+  const [password, setPassword]     = useState('')
+  const [confirm, setConfirm]       = useState('')
+  const [showPwd, setShowPwd]       = useState(false)
   const [emailLoading, setEmailLoading] = useState(false)
   const [emailError, setEmailError] = useState('')
 
@@ -49,55 +47,37 @@ export default function SignupPage() {
   }
 
   async function handleSendOtp() {
-    setPhoneError('')
-    setPhoneLoading(true)
+    setPhoneError(''); setPhoneLoading(true)
     const res = await fetch('/api/auth/send-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone }),
     })
     const data = await res.json() as { error?: string }
-    if (!res.ok) {
-      setPhoneError(data.error ?? 'Could not send OTP. Try again.')
-      setPhoneLoading(false)
-      return
-    }
-    setOtpSent(true)
-    setPhoneLoading(false)
+    if (!res.ok) { setPhoneError(data.error ?? 'Could not send OTP.'); setPhoneLoading(false); return }
+    setOtpSent(true); setPhoneLoading(false)
   }
 
   async function handleVerifyOtp() {
-    setPhoneError('')
-    setPhoneLoading(true)
+    setPhoneError(''); setPhoneLoading(true)
     const res = await fetch('/api/auth/verify-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone, otp }),
     })
     const data = await res.json() as { hashed_token?: string; error?: string }
-    if (!res.ok || !data.hashed_token) {
-      setPhoneError(data.error ?? 'Incorrect OTP. Try again.')
-      setPhoneLoading(false)
-      return
-    }
+    if (!res.ok || !data.hashed_token) { setPhoneError(data.error ?? 'Incorrect OTP.'); setPhoneLoading(false); return }
     const supabase = createClient()
     const { error } = await supabase.auth.verifyOtp({ token_hash: data.hashed_token, type: 'magiclink' })
-    if (error) {
-      setPhoneError('Login failed. Please try again.')
-      setPhoneLoading(false)
-      return
-    }
-    router.push('/onboarding')
+    if (error) { setPhoneError('Login failed. Please try again.'); setPhoneLoading(false); return }
+    router.push('/home')
   }
 
   async function handleEmailSignup(e: React.FormEvent) {
-    e.preventDefault()
-    setEmailError('')
-
+    e.preventDefault(); setEmailError('')
     const pwdError = getPasswordError(password)
     if (pwdError) { setEmailError(pwdError); return }
     if (password !== confirm) { setEmailError('Passwords do not match'); return }
-
     setEmailLoading(true)
     const res = await fetch('/api/auth/email-signup', {
       method: 'POST',
@@ -105,201 +85,146 @@ export default function SignupPage() {
       body: JSON.stringify({ email, password }),
     })
     const data = await res.json() as { hashed_token?: string; error?: string }
-    if (!res.ok || !data.hashed_token) {
-      setEmailError(data.error ?? 'Could not create account. Try again.')
-      setEmailLoading(false)
-      return
-    }
+    if (!res.ok || !data.hashed_token) { setEmailError(data.error ?? 'Could not create account.'); setEmailLoading(false); return }
     const supabase = createClient()
     const { error: sessionError } = await supabase.auth.verifyOtp({ token_hash: data.hashed_token, type: 'magiclink' })
-    if (sessionError) {
-      setEmailError('Login failed after signup. Please sign in manually.')
-      setEmailLoading(false)
-      return
-    }
-    router.push('/onboarding')
+    if (sessionError) { setEmailError('Signup done — please sign in.'); setEmailLoading(false); return }
+    router.push('/home')
   }
 
-  const inputClass = 'w-full bg-white/5 border border-white/10 rounded-xl px-4 h-12 text-white placeholder:text-gray-600 outline-none focus:ring-2 focus:ring-orange-500/50 text-base'
+  const inp = 'w-full bg-white border border-[#D5CFC6] rounded-xl px-4 h-12 text-[#1C1917] placeholder:text-[#9B948E] outline-none focus:border-[#C84B2F] focus:ring-2 focus:ring-[#C84B2F]/20 text-base transition-all'
+  const btn = 'w-full py-3.5 bg-[#C84B2F] hover:bg-[#E05A3A] active:scale-[0.98] disabled:opacity-50 rounded-xl text-white font-semibold transition-all'
   const hint = (ok: boolean, label: string) => (
-    <span className={ok ? 'text-green-400' : 'text-gray-600'}>{ok ? '✓' : '○'} {label}</span>
+    <span className={ok ? 'text-[#4A7055]' : 'text-[#9B948E]'}>{ok ? '✓' : '○'} {label}</span>
   )
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] px-4 py-8">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-orange-600/10 rounded-full blur-[100px] pointer-events-none" />
+    <div className="min-h-screen flex items-center justify-center bg-[#F5F0E8] px-4 py-8">
+      <div className="w-full max-w-sm">
 
-      <div className="w-full max-w-sm bg-white/[0.04] border border-white/10 rounded-2xl shadow-2xl relative">
-        <div className="text-center pt-6 pb-4 px-6">
-          <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
-            <span className="text-2xl">🏪</span>
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="w-14 h-14 bg-[#C84B2F] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <span className="text-2xl font-bold text-white font-display">PS</span>
           </div>
-          <h1 className="text-2xl font-bold text-white">PasalSathi</h1>
-          <p className="text-sm text-gray-500 mt-1">Create your free account</p>
+          <h1 className="text-3xl font-bold text-[#1C1917] font-display">PasalSathi</h1>
+          <p className="text-sm text-[#6B6560] mt-1">Create your free account</p>
         </div>
 
-        <div className="px-6 pb-6">
-          {/* Google OAuth */}
+        <div className="bg-white border border-[#D5CFC6] rounded-2xl p-6 shadow-sm space-y-5">
+
+          {/* Google */}
           <button
             type="button"
             onClick={handleGoogleSignup}
-            className="w-full flex items-center justify-center gap-3 border border-white/10 bg-white/5 rounded-xl py-3 px-4 text-sm font-medium text-gray-300 hover:bg-white/10 active:scale-[0.98] transition-all mb-4"
+            className="w-full flex items-center justify-center gap-3 border border-[#D5CFC6] bg-white rounded-xl py-3 px-4 text-sm font-medium text-[#1C1917] hover:bg-[#F5F0E8] active:scale-[0.98] transition-all"
           >
             <GoogleIcon />
             Continue with Google
           </button>
 
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex-1 h-px bg-white/10" />
-            <span className="text-xs text-gray-600">or</span>
-            <div className="flex-1 h-px bg-white/10" />
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-[#E0D9CE]" />
+            <span className="text-xs text-[#9B948E]">or</span>
+            <div className="flex-1 h-px bg-[#E0D9CE]" />
           </div>
 
-          <Tabs defaultValue="phone">
-            <TabsList className="w-full mb-4 bg-white/5 border border-white/10">
-              <TabsTrigger value="phone" className="flex-1 data-[state=active]:bg-white/10 data-[state=active]:text-white text-gray-500">📱 Phone</TabsTrigger>
-              <TabsTrigger value="email" className="flex-1 data-[state=active]:bg-white/10 data-[state=active]:text-white text-gray-500">✉️ Email</TabsTrigger>
-            </TabsList>
+          {/* Tab switcher */}
+          <div className="flex bg-[#F5F0E8] rounded-xl p-1">
+            {(['phone', 'email'] as const).map(t => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
+                  tab === t ? 'bg-white shadow-sm text-[#1C1917]' : 'text-[#6B6560]'
+                }`}
+              >
+                {t === 'phone' ? '📱 Phone' : '✉️ Email'}
+              </button>
+            ))}
+          </div>
 
-            {/* Phone OTP Tab */}
-            <TabsContent value="phone" className="space-y-4">
+          {/* Phone tab */}
+          {tab === 'phone' && (
+            <div className="space-y-3">
               {!otpSent ? (
                 <>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-gray-400">Phone Number</label>
+                  <div>
+                    <label className="text-xs font-semibold text-[#6B6560] block mb-1.5">Phone Number</label>
                     <div className="flex gap-2">
-                      <span className="flex items-center px-3 bg-white/5 border border-white/10 rounded-xl text-sm text-gray-500 whitespace-nowrap">
-                        +977
-                      </span>
-                      <input
-                        type="tel"
-                        placeholder="98XXXXXXXX"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        maxLength={10}
-                        className={inputClass}
-                      />
+                      <span className="flex items-center px-3 bg-[#EDE8DF] border border-[#D5CFC6] rounded-xl text-sm text-[#6B6560] whitespace-nowrap font-mono">+977</span>
+                      <input type="tel" placeholder="98XXXXXXXX" value={phone}
+                        onChange={e => setPhone(e.target.value)} maxLength={10} className={inp} />
                     </div>
                   </div>
-                  {phoneError && <p className="text-sm text-red-400">{phoneError}</p>}
-                  <button
-                    type="button"
-                    onClick={handleSendOtp}
-                    disabled={phoneLoading || phone.length < 10}
-                    className="w-full py-3 bg-orange-600 hover:bg-orange-700 active:scale-[0.98] disabled:opacity-50 rounded-xl text-white font-semibold transition-all"
-                  >
+                  {phoneError && <p className="text-sm text-[#C84B2F]">{phoneError}</p>}
+                  <button onClick={handleSendOtp} disabled={phoneLoading || phone.length < 10} className={btn}>
                     {phoneLoading ? 'Sending...' : 'Send OTP'}
                   </button>
                 </>
               ) : (
                 <>
-                  <p className="text-sm text-gray-500 text-center">
-                    OTP sent to <span className="text-gray-300 font-medium">+977 {phone}</span>
-                  </p>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-gray-400">OTP Code</label>
-                    <input
-                      type="number"
-                      placeholder="6-digit code"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
-                      className={inputClass + ' text-center text-xl tracking-widest'}
-                    />
+                  <p className="text-sm text-[#6B6560] text-center">OTP sent to <span className="font-semibold text-[#1C1917]">+977 {phone}</span></p>
+                  <div>
+                    <label className="text-xs font-semibold text-[#6B6560] block mb-1.5">OTP Code</label>
+                    <input type="number" placeholder="6-digit code" value={otp}
+                      onChange={e => setOtp(e.target.value)} className={inp + ' text-center text-xl tracking-widest font-mono'} />
                   </div>
-                  {phoneError && <p className="text-sm text-red-400">{phoneError}</p>}
-                  <button
-                    type="button"
-                    onClick={handleVerifyOtp}
-                    disabled={phoneLoading || otp.length < 6}
-                    className="w-full py-3 bg-orange-600 hover:bg-orange-700 active:scale-[0.98] disabled:opacity-50 rounded-xl text-white font-semibold transition-all"
-                  >
-                    {phoneLoading ? 'Verifying...' : 'Verify & Create Account'}
+                  {phoneError && <p className="text-sm text-[#C84B2F]">{phoneError}</p>}
+                  <button onClick={handleVerifyOtp} disabled={phoneLoading || otp.length < 6} className={btn}>
+                    {phoneLoading ? 'Verifying...' : 'Create Account'}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => { setOtpSent(false); setOtp(''); setPhoneError('') }}
-                    className="w-full text-sm text-gray-500 hover:text-gray-300 transition-colors"
-                  >
+                  <button type="button" onClick={() => { setOtpSent(false); setOtp(''); setPhoneError('') }}
+                    className="w-full text-sm text-[#6B6560] hover:text-[#1C1917]">
                     Change number
                   </button>
                 </>
               )}
-            </TabsContent>
+            </div>
+          )}
 
-            {/* Email Tab */}
-            <TabsContent value="email">
-              <form onSubmit={handleEmailSignup} className="space-y-4">
-                <div className="space-y-1.5">
-                  <label htmlFor="email" className="text-sm font-medium text-gray-400">Email</label>
-                  <input
-                    id="email"
-                    type="email"
-                    placeholder="your@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className={inputClass}
-                  />
+          {/* Email tab */}
+          {tab === 'email' && (
+            <form onSubmit={handleEmailSignup} className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-[#6B6560] block mb-1.5">Email</label>
+                <input type="email" placeholder="your@email.com" value={email}
+                  onChange={e => setEmail(e.target.value)} required className={inp} />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-[#6B6560] block mb-1.5">Password</label>
+                <div className="relative">
+                  <input type={showPwd ? 'text' : 'password'} placeholder="Min 8 chars, 1 number"
+                    value={password} onChange={e => setPassword(e.target.value)} required className={inp + ' pr-12'} />
+                  <button type="button" onClick={() => setShowPwd(!showPwd)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B948E] hover:text-[#6B6560]">
+                    {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="password" className="text-sm font-medium text-gray-400">Password</label>
-                  <div className="relative">
-                    <input
-                      id="password"
-                      type={showPwd ? 'text' : 'password'}
-                      placeholder="Min 8 chars, 1 number"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      className={inputClass + ' pr-12'}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPwd(!showPwd)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
-                    >
-                      {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="confirm" className="text-sm font-medium text-gray-400">Confirm password</label>
-                  <input
-                    id="confirm"
-                    type={showPwd ? 'text' : 'password'}
-                    placeholder="Repeat password"
-                    value={confirm}
-                    onChange={(e) => setConfirm(e.target.value)}
-                    required
-                    className={inputClass}
-                  />
-                </div>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-[#6B6560] block mb-1.5">Confirm password</label>
+                <input type={showPwd ? 'text' : 'password'} placeholder="Repeat password"
+                  value={confirm} onChange={e => setConfirm(e.target.value)} required className={inp} />
+              </div>
+              <div className="flex gap-4 text-xs">
+                {hint(password.length >= 8, '8+ chars')}
+                {hint(/\d/.test(password), '1 number')}
+                {hint(Boolean(confirm) && password === confirm, 'match')}
+              </div>
+              {emailError && <p className="text-sm text-[#C84B2F]">{emailError}</p>}
+              <button type="submit" disabled={emailLoading} className={btn}>
+                {emailLoading ? 'Creating account...' : 'Create Account'}
+              </button>
+            </form>
+          )}
 
-                <div className="flex gap-4 text-xs">
-                  {hint(password.length >= 8, '8+ chars')}
-                  {hint(/\d/.test(password), '1 number')}
-                  {hint(Boolean(confirm) && password === confirm, 'match')}
-                </div>
-
-                {emailError && <p className="text-sm text-red-400">{emailError}</p>}
-                <button
-                  type="submit"
-                  disabled={emailLoading}
-                  className="w-full py-3 bg-orange-600 hover:bg-orange-700 active:scale-[0.98] disabled:opacity-50 rounded-xl text-white font-semibold transition-all"
-                >
-                  {emailLoading ? 'Creating account...' : 'Create account'}
-                </button>
-              </form>
-            </TabsContent>
-          </Tabs>
-
-          <p className="mt-4 text-center text-sm text-gray-500">
-            Already have an account?{' '}
-            <Link href="/login" className="text-orange-400 font-medium hover:text-orange-300">
-              Sign in
-            </Link>
-          </p>
         </div>
+
+        <p className="mt-5 text-center text-sm text-[#6B6560]">
+          Already have an account?{' '}
+          <Link href="/login" className="text-[#C84B2F] font-semibold hover:underline">Sign in</Link>
+        </p>
       </div>
     </div>
   )

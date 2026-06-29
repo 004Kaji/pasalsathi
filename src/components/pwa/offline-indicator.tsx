@@ -17,9 +17,9 @@ export default function OfflineIndicator() {
   if (!offline) return null
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-2 bg-amber-600 text-white text-sm font-semibold py-2 px-4">
-      <WifiOff size={14} />
-      No internet — sales will queue and sync when back online
+    <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-2 bg-[#C84B2F] text-white text-xs font-semibold py-2 px-4">
+      <WifiOff size={13} />
+      You&apos;re offline — sales will sync when reconnected
     </div>
   )
 }

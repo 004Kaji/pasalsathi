@@ -4,27 +4,22 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/db/supabase'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export default function LoginPage() {
   const router = useRouter()
 
-  // Phone OTP state
-  const [phone, setPhone] = useState('')
-  const [otp, setOtp] = useState('')
-  const [otpSent, setOtpSent] = useState(false)
+  const [phone, setPhone]           = useState('')
+  const [otp, setOtp]               = useState('')
+  const [otpSent, setOtpSent]       = useState(false)
   const [phoneLoading, setPhoneLoading] = useState(false)
   const [phoneError, setPhoneError] = useState('')
 
-  // Email state
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail]           = useState('')
+  const [password, setPassword]     = useState('')
   const [emailLoading, setEmailLoading] = useState(false)
   const [emailError, setEmailError] = useState('')
+
+  const [tab, setTab] = useState<'phone' | 'email'>('phone')
 
   async function handleGoogleLogin() {
     const supabase = createClient()
@@ -35,91 +30,63 @@ export default function LoginPage() {
   }
 
   async function handleSendOtp() {
-    setPhoneError('')
-    setPhoneLoading(true)
-
+    setPhoneError(''); setPhoneLoading(true)
     const res = await fetch('/api/auth/send-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone }),
     })
     const data = await res.json() as { error?: string }
-
-    if (!res.ok) {
-      setPhoneError(data.error ?? 'Error sending OTP')
-      setPhoneLoading(false)
-      return
-    }
-
-    setOtpSent(true)
-    setPhoneLoading(false)
+    if (!res.ok) { setPhoneError(data.error ?? 'Error sending OTP'); setPhoneLoading(false); return }
+    setOtpSent(true); setPhoneLoading(false)
   }
 
   async function handleVerifyOtp() {
-    setPhoneError('')
-    setPhoneLoading(true)
-
+    setPhoneError(''); setPhoneLoading(true)
     const res = await fetch('/api/auth/verify-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone, otp }),
     })
     const data = await res.json() as { hashed_token?: string; error?: string }
-
-    if (!res.ok || !data.hashed_token) {
-      setPhoneError(data.error ?? 'Incorrect OTP')
-      setPhoneLoading(false)
-      return
-    }
-
+    if (!res.ok || !data.hashed_token) { setPhoneError(data.error ?? 'Incorrect OTP'); setPhoneLoading(false); return }
     const supabase = createClient()
-    const { error } = await supabase.auth.verifyOtp({
-      token_hash: data.hashed_token,
-      type: 'magiclink',
-    })
-
-    if (error) {
-      setPhoneError('Login failed. Please try again.')
-      setPhoneLoading(false)
-      return
-    }
-
-    router.push('/home')
-    router.refresh()
+    const { error } = await supabase.auth.verifyOtp({ token_hash: data.hashed_token, type: 'magiclink' })
+    if (error) { setPhoneError('Login failed. Try again.'); setPhoneLoading(false); return }
+    router.push('/home'); router.refresh()
   }
 
   async function handleEmailLogin(e: React.FormEvent) {
-    e.preventDefault()
-    setEmailError('')
-    setEmailLoading(true)
+    e.preventDefault(); setEmailError(''); setEmailLoading(true)
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
-      setEmailError('Incorrect email or password')
-      setEmailLoading(false)
-      return
-    }
-    router.push('/home')
-    router.refresh()
+    if (error) { setEmailError('Incorrect email or password'); setEmailLoading(false); return }
+    router.push('/home'); router.refresh()
   }
 
+  const inp = 'w-full bg-white border border-[#D5CFC6] rounded-xl px-4 h-12 text-[#1C1917] placeholder:text-[#9B948E] outline-none focus:border-[#C84B2F] focus:ring-2 focus:ring-[#C84B2F]/20 text-base transition-all'
+  const btn = 'w-full py-3.5 bg-[#C84B2F] hover:bg-[#E05A3A] active:scale-[0.98] disabled:opacity-50 rounded-xl text-white font-semibold transition-all'
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] px-4">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-orange-600/10 rounded-full blur-[100px] pointer-events-none" />
-      <Card className="w-full max-w-sm bg-white/[0.04] border border-white/10 shadow-2xl relative">
-        <CardHeader className="text-center pb-2">
-          <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
-            <span className="text-2xl">🏪</span>
+    <div className="min-h-screen flex items-center justify-center bg-[#F5F0E8] px-4 py-8">
+      <div className="w-full max-w-sm">
+
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="w-14 h-14 bg-[#C84B2F] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <span className="text-2xl font-bold text-white font-display">PS</span>
           </div>
-          <CardTitle className="text-2xl font-bold text-white">PasalSathi</CardTitle>
-          <p className="text-sm text-gray-500">Login to your account</p>
-        </CardHeader>
-        <CardContent>
-          {/* Google OAuth */}
+          <h1 className="text-3xl font-bold text-[#1C1917] font-display">PasalSathi</h1>
+          <p className="text-sm text-[#6B6560] mt-1">Sign in to your account</p>
+        </div>
+
+        <div className="bg-white border border-[#D5CFC6] rounded-2xl p-6 shadow-sm space-y-5">
+
+          {/* Google */}
           <button
             type="button"
             onClick={handleGoogleLogin}
-            className="w-full flex items-center justify-center gap-3 border border-white/10 bg-white/5 rounded-xl py-3 px-4 text-sm font-medium text-gray-300 hover:bg-white/10 active:scale-[0.98] transition-all mb-4"
+            className="w-full flex items-center justify-center gap-3 border border-[#D5CFC6] bg-white rounded-xl py-3 px-4 text-sm font-medium text-[#1C1917] hover:bg-[#F5F0E8] active:scale-[0.98] transition-all"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
@@ -127,133 +94,101 @@ export default function LoginPage() {
               <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
               <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
             </svg>
-            Login with Google
+            Continue with Google
           </button>
 
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex-1 h-px bg-white/10" />
-            <span className="text-xs text-gray-600">or</span>
-            <div className="flex-1 h-px bg-white/10" />
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-[#E0D9CE]" />
+            <span className="text-xs text-[#9B948E]">or</span>
+            <div className="flex-1 h-px bg-[#E0D9CE]" />
           </div>
 
-          <Tabs defaultValue="phone">
-            <TabsList className="w-full mb-4 bg-white/5 border border-white/10">
-              <TabsTrigger value="phone" className="flex-1 data-[state=active]:bg-white/10 data-[state=active]:text-white text-gray-500">📱 Phone Number</TabsTrigger>
-              <TabsTrigger value="email" className="flex-1 data-[state=active]:bg-white/10 data-[state=active]:text-white text-gray-500">✉️ Email</TabsTrigger>
-            </TabsList>
+          {/* Tab switcher */}
+          <div className="flex bg-[#F5F0E8] rounded-xl p-1">
+            {(['phone', 'email'] as const).map(t => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
+                  tab === t ? 'bg-white shadow-sm text-[#1C1917]' : 'text-[#6B6560]'
+                }`}
+              >
+                {t === 'phone' ? '📱 Phone' : '✉️ Email'}
+              </button>
+            ))}
+          </div>
 
-            {/* Phone OTP Tab */}
-            <TabsContent value="phone" className="space-y-4">
+          {/* Phone tab */}
+          {tab === 'phone' && (
+            <div className="space-y-3">
               {!otpSent ? (
                 <>
-                  <div className="space-y-2">
-                    <Label>Phone Number</Label>
+                  <div>
+                    <label className="text-xs font-semibold text-[#6B6560] block mb-1.5">Phone Number</label>
                     <div className="flex gap-2">
-                      <span className="flex items-center px-3 bg-gray-100 border rounded-md text-sm text-gray-600 whitespace-nowrap">
+                      <span className="flex items-center px-3 bg-[#EDE8DF] border border-[#D5CFC6] rounded-xl text-sm text-[#6B6560] whitespace-nowrap font-mono">
                         +977
                       </span>
-                      <Input
-                        type="tel"
-                        placeholder="98XXXXXXXX"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        maxLength={10}
-                      />
+                      <input type="tel" placeholder="98XXXXXXXX" value={phone}
+                        onChange={e => setPhone(e.target.value)} maxLength={10} className={inp} />
                     </div>
                   </div>
-                  {phoneError && <p className="text-sm text-red-500">{phoneError}</p>}
-                  <Button
-                    className="w-full bg-orange-600 hover:bg-orange-700"
-                    onClick={handleSendOtp}
-                    disabled={phoneLoading || phone.length < 10}
-                  >
+                  {phoneError && <p className="text-sm text-[#C84B2F]">{phoneError}</p>}
+                  <button onClick={handleSendOtp} disabled={phoneLoading || phone.length < 10} className={btn}>
                     {phoneLoading ? 'Sending...' : 'Send OTP'}
-                  </Button>
+                  </button>
                 </>
               ) : (
                 <>
-                  <p className="text-sm text-gray-600 text-center">
-                    OTP sent to <span className="font-medium">+977 {phone}</span>
-                  </p>
-                  <div className="space-y-2">
-                    <Label>OTP Code</Label>
-                    <Input
-                      type="number"
-                      placeholder="6-digit code"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
-                      className="text-center text-xl tracking-widest"
-                    />
+                  <p className="text-sm text-[#6B6560] text-center">OTP sent to <span className="font-semibold text-[#1C1917]">+977 {phone}</span></p>
+                  <div>
+                    <label className="text-xs font-semibold text-[#6B6560] block mb-1.5">OTP Code</label>
+                    <input type="number" placeholder="6-digit code" value={otp}
+                      onChange={e => setOtp(e.target.value)} className={inp + ' text-center text-xl tracking-widest font-mono'} />
                   </div>
-                  {phoneError && <p className="text-sm text-red-500">{phoneError}</p>}
-                  <Button
-                    className="w-full bg-orange-600 hover:bg-orange-700"
-                    onClick={handleVerifyOtp}
-                    disabled={phoneLoading || otp.length < 6}
-                  >
+                  {phoneError && <p className="text-sm text-[#C84B2F]">{phoneError}</p>}
+                  <button onClick={handleVerifyOtp} disabled={phoneLoading || otp.length < 6} className={btn}>
                     {phoneLoading ? 'Verifying...' : 'Login'}
-                  </Button>
-                  <button
-                    type="button"
-                    onClick={() => { setOtpSent(false); setOtp(''); setPhoneError('') }}
-                    className="w-full text-sm text-gray-500 hover:text-gray-700"
-                  >
+                  </button>
+                  <button type="button" onClick={() => { setOtpSent(false); setOtp(''); setPhoneError('') }}
+                    className="w-full text-sm text-[#6B6560] hover:text-[#1C1917]">
                     Change number
                   </button>
                 </>
               )}
-            </TabsContent>
+            </div>
+          )}
 
-            {/* Email Tab */}
-            <TabsContent value="email">
-              <form onSubmit={handleEmailLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="your@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
+          {/* Email tab */}
+          {tab === 'email' && (
+            <form onSubmit={handleEmailLogin} className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-[#6B6560] block mb-1.5">Email</label>
+                <input type="email" placeholder="your@email.com" value={email}
+                  onChange={e => setEmail(e.target.value)} required className={inp} />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-semibold text-[#6B6560]">Password</label>
+                  <Link href="/forgot-password" className="text-xs text-[#C84B2F] hover:underline">Forgot?</Link>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Password</Label>
-                    <Link href="/forgot-password" className="text-xs text-gray-500 hover:text-orange-400 transition-colors">
-                      Forgot password?
-                    </Link>
-                  </div>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                {emailError && <p className="text-sm text-red-500">{emailError}</p>}
-                <Button
-                  type="submit"
-                  className="w-full bg-orange-600 hover:bg-orange-700"
-                  disabled={emailLoading}
-                >
-                  {emailLoading ? 'Logging in...' : 'Login'}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+                <input type="password" placeholder="Password" value={password}
+                  onChange={e => setPassword(e.target.value)} required className={inp} />
+              </div>
+              {emailError && <p className="text-sm text-[#C84B2F]">{emailError}</p>}
+              <button type="submit" disabled={emailLoading} className={btn}>
+                {emailLoading ? 'Signing in...' : 'Sign In'}
+              </button>
+            </form>
+          )}
 
-          <p className="mt-4 text-center text-sm text-gray-500">
-            Don&apos;t have an account?{' '}
-            <Link href="/signup" className="text-orange-400 font-medium hover:text-orange-300">
-              Sign up
-            </Link>
-          </p>
-        </CardContent>
-      </Card>
+        </div>
+
+        <p className="mt-5 text-center text-sm text-[#6B6560]">
+          Don&apos;t have an account?{' '}
+          <Link href="/signup" className="text-[#C84B2F] font-semibold hover:underline">Sign up free</Link>
+        </p>
+      </div>
     </div>
   )
 }
