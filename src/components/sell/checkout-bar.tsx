@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { User, Calculator, X, Split } from 'lucide-react'
+import { User, Calculator, X, Split, Tag, Search, UserPlus } from 'lucide-react'
 import type { PaymentMethod, Customer } from '@/lib/types/database'
 import type { CartItem, PaymentMethodOption } from '@/lib/types/app'
 
@@ -22,20 +22,31 @@ interface Props {
   cashGiven: string
   submitting: boolean
   selectedCustomer: Customer | null
+  customers: Customer[]
   onPaymentMethodChange: (method: PaymentMethod) => void
   onCustomerNameChange: (value: string) => void
   onCashGivenChange: (value: string) => void
+  onDiscountChange: (v: string) => void
+  onDiscountTypeChange: (t: 'percent' | 'amount') => void
+  onSelectCustomer: (c: Customer) => void
+  onDeselectCustomer: () => void
+  onCreateNewCustomer: (name: string) => Promise<void>
   onCharge: (split?: { method: PaymentMethod; amount: number }) => void
 }
 
 export default function CheckoutBar({
   cart, discountPercent, discountType, paymentMethod, customerName, cashGiven,
-  submitting, selectedCustomer,
-  onPaymentMethodChange, onCustomerNameChange, onCashGivenChange, onCharge,
+  submitting, selectedCustomer, customers,
+  onPaymentMethodChange, onCustomerNameChange, onCashGivenChange,
+  onDiscountChange, onDiscountTypeChange,
+  onSelectCustomer, onDeselectCustomer, onCreateNewCustomer,
+  onCharge,
 }: Props) {
-  const [splitEnabled, setSplitEnabled] = useState(false)
-  const [splitMethod,  setSplitMethod]  = useState<PaymentMethod>('esewa')
-  const [splitAmount,  setSplitAmount]  = useState('')
+  const [splitEnabled,   setSplitEnabled]   = useState(false)
+  const [splitMethod,    setSplitMethod]    = useState<PaymentMethod>('esewa')
+  const [splitAmount,    setSplitAmount]    = useState('')
+  const [showKhataList,  setShowKhataList]  = useState(false)
+  const [creating,       setCreating]       = useState(false)
 
   const subtotal        = cart.reduce((sum, item) => sum + item.qty * item.unitPrice, 0)
   const discountVal     = parseFloat(discountPercent) || 0
@@ -48,6 +59,11 @@ export default function CheckoutBar({
   const splitAmt        = parseFloat(splitAmount) || 0
   const primaryAmt      = splitEnabled ? total - splitAmt : total
 
+  const filteredCustomers = customers.filter(c =>
+    c.name.toLowerCase().includes(customerName.toLowerCase()) ||
+    (c.phone ?? '').includes(customerName)
+  )
+
   const isChargeDisabled =
     submitting || total <= 0 || (isKhata && !selectedCustomer) ||
     (splitEnabled && (splitAmt <= 0 || splitAmt >= total))
@@ -58,6 +74,14 @@ export default function CheckoutBar({
     } else {
       onCharge()
     }
+  }
+
+  async function handleCreateKhata() {
+    if (!customerName.trim()) return
+    setCreating(true)
+    await onCreateNewCustomer(customerName.trim())
+    setCreating(false)
+    setShowKhataList(false)
   }
 
   const SPLIT_METHODS = PAYMENT_METHODS.filter(p => p.value !== 'khata' && p.value !== paymentMethod)
@@ -79,7 +103,7 @@ export default function CheckoutBar({
                     ? pm.value === 'khata'
                       ? 'bg-[#C9933A] border-[#C9933A] text-white'
                       : 'bg-white border-white text-[#1C1917]'
-                    : 'bg-white/10 border-white/10 text-white/50 hover:bg-white/15'
+                    : 'bg-white/10 border-white/10 text-white/50'
                 }`}
               >
                 <span className="text-2xl leading-none">{pm.emoji}</span>
@@ -95,7 +119,7 @@ export default function CheckoutBar({
               className={`rounded-2xl py-3.5 flex flex-col items-center gap-1.5 border transition-all active:scale-[0.96] ${
                 splitEnabled
                   ? 'bg-purple-500 border-purple-500 text-white'
-                  : 'bg-white/10 border-white/10 text-white/50 hover:bg-white/15'
+                  : 'bg-white/10 border-white/10 text-white/50'
               }`}
             >
               <Split size={22} />
@@ -104,9 +128,110 @@ export default function CheckoutBar({
           )}
         </div>
 
+        {/* Khata customer picker — inline in dark bar */}
+        {isKhata && (
+          <div className="relative">
+            {selectedCustomer ? (
+              <div className="flex items-center justify-between bg-[#C9933A]/20 border border-[#C9933A]/35 rounded-xl px-3 py-2.5">
+                <div>
+                  <p className="text-sm font-bold text-amber-300">{selectedCustomer.name}</p>
+                  {Number(selectedCustomer.balance) > 0 && (
+                    <p className="text-xs text-amber-400/70">
+                      Outstanding: NPR {Number(selectedCustomer.balance).toLocaleString('ne-NP')}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={onDeselectCustomer}
+                  className="text-white/50 bg-white/10 px-2.5 py-1 rounded-lg text-xs font-medium"
+                >
+                  Change
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 bg-white/10 border border-[#C9933A]/40 rounded-xl px-3 py-2.5">
+                  <Search size={15} className="text-amber-400/60 shrink-0" />
+                  <input
+                    type="text"
+                    placeholder="Search khata customer..."
+                    value={customerName}
+                    onChange={e => { onCustomerNameChange(e.target.value); setShowKhataList(true) }}
+                    onFocus={() => setShowKhataList(true)}
+                    className="flex-1 bg-transparent text-white placeholder:text-white/35 outline-none text-sm"
+                  />
+                  {customerName && (
+                    <button onClick={() => { onCustomerNameChange(''); setShowKhataList(false) }}>
+                      <X size={14} className="text-white/40" />
+                    </button>
+                  )}
+                </div>
+
+                {showKhataList && customerName && (
+                  <div className="absolute bottom-full left-0 right-0 mb-1 bg-[#28231F] border border-white/20 rounded-xl shadow-2xl z-50 overflow-hidden max-h-48 overflow-y-auto">
+                    {filteredCustomers.map(c => (
+                      <button
+                        key={c.id}
+                        onClick={() => { onSelectCustomer(c); onCustomerNameChange(''); setShowKhataList(false) }}
+                        className="w-full flex items-center justify-between px-4 py-3 border-b border-white/8 last:border-0 text-left active:bg-white/10"
+                      >
+                        <span className="text-sm font-semibold text-white">{c.name}</span>
+                        {Number(c.balance) > 0 && (
+                          <span className="text-xs text-amber-400 ml-2 shrink-0">
+                            NPR {Number(c.balance).toLocaleString('ne-NP')}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                    {customerName.trim() && (
+                      <button
+                        onClick={handleCreateKhata}
+                        disabled={creating}
+                        className="w-full flex items-center gap-2 px-4 py-3 text-left border-t border-white/10 active:bg-white/10"
+                      >
+                        <UserPlus size={14} className="text-green-400 shrink-0" />
+                        <span className="text-sm text-green-400 font-medium">
+                          {creating ? 'Creating...' : `Create "${customerName.trim()}"`}
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Discount row */}
+        <div className="flex items-center gap-3 bg-white/10 border border-white/15 rounded-xl px-3 py-2.5">
+          <Tag size={15} className="text-amber-400 shrink-0" />
+          <span className="text-sm font-semibold text-white/70 shrink-0">Discount</span>
+          <div className="flex items-center bg-white/15 rounded-xl overflow-hidden">
+            <input
+              type="number"
+              min="0"
+              placeholder="0"
+              value={discountPercent}
+              onChange={e => onDiscountChange(e.target.value)}
+              className="w-14 bg-transparent text-white font-bold text-base text-center outline-none px-2 py-1.5"
+            />
+            <button
+              onClick={() => onDiscountTypeChange(discountType === 'percent' ? 'amount' : 'percent')}
+              className="bg-[#C84B2F] text-white text-xs font-bold px-3 py-2.5 shrink-0"
+            >
+              {discountType === 'percent' ? '%' : '₨'}
+            </button>
+          </div>
+          {discountVal > 0 && (
+            <p className="flex-1 text-right text-sm font-bold text-amber-400">
+              − NPR {discountAmount.toLocaleString('ne-NP', { maximumFractionDigits: 0 })}
+            </p>
+          )}
+        </div>
+
         {/* Split row */}
         {splitEnabled && (
-          <div className="bg-white/10 border border-white/15 rounded-2xl px-3 py-3 space-y-2">
+          <div className="bg-white/10 border border-white/15 rounded-xl px-3 py-3 space-y-2">
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-purple-400 shrink-0">Split with</span>
               <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
@@ -114,7 +239,7 @@ export default function CheckoutBar({
                   <button
                     key={pm.value}
                     onClick={() => setSplitMethod(pm.value)}
-                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-xs font-semibold shrink-0 transition-all ${
+                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-xs font-semibold shrink-0 ${
                       splitMethod === pm.value
                         ? 'bg-purple-500 border-purple-500 text-white'
                         : 'bg-white/10 border-white/15 text-white/60'
@@ -147,7 +272,7 @@ export default function CheckoutBar({
           </div>
         )}
 
-        {/* Customer name */}
+        {/* Customer name — non-khata optional */}
         {!isKhata && (
           <div className="flex items-center gap-2 bg-white/10 border border-white/15 rounded-xl px-3 py-2.5">
             <User size={15} className="text-white/40 shrink-0" />
@@ -218,7 +343,7 @@ export default function CheckoutBar({
             )}
             {splitEnabled && splitAmt > 0 && (
               <p className="text-[10px] text-purple-400 leading-none mt-0.5">
-                {PAYMENT_METHODS.find(p => p.value === paymentMethod)?.label} {(primaryAmt).toLocaleString('ne-NP', { maximumFractionDigits: 0 })} + {SPLIT_METHODS.find(p => p.value === splitMethod)?.label} {splitAmt.toLocaleString('ne-NP', { maximumFractionDigits: 0 })}
+                {PAYMENT_METHODS.find(p => p.value === paymentMethod)?.label} {primaryAmt.toLocaleString('ne-NP', { maximumFractionDigits: 0 })} + {SPLIT_METHODS.find(p => p.value === splitMethod)?.label} {splitAmt.toLocaleString('ne-NP', { maximumFractionDigits: 0 })}
               </p>
             )}
           </div>

@@ -13,7 +13,6 @@ import ProductGrid     from '@/components/sell/product-grid'
 import CartList        from '@/components/sell/cart-list'
 import CheckoutBar     from '@/components/sell/checkout-bar'
 import CustomItemSheet from '@/components/sell/custom-item-sheet'
-import CustomerPicker  from '@/components/sell/customer-picker'
 import SuccessScreen   from '@/components/sell/success-screen'
 
 const HELD_CART_KEY = 'ps_held_cart'
@@ -21,14 +20,13 @@ const HELD_CART_KEY = 'ps_held_cart'
 export default function SellClient() {
   const sell = useSell()
 
-  const [search,           setSearch]           = useState('')
-  const [showDropdown,     setShowDropdown]      = useState(false)
-  const [showCustom,       setShowCustom]        = useState(false)
-  const [customPrefill,    setCustomPrefill]     = useState('')
-  const [showCustomerList, setShowCustomerList]  = useState(false)
-  const [cashGiven,        setCashGiven]         = useState('')
-  const [saleResult,       setSaleResult]        = useState<SaleResult | null>(null)
-  const [hasHeld,          setHasHeld]           = useState(false)
+  const [search,        setSearch]        = useState('')
+  const [showDropdown,  setShowDropdown]  = useState(false)
+  const [showCustom,    setShowCustom]    = useState(false)
+  const [customPrefill, setCustomPrefill] = useState('')
+  const [cashGiven,     setCashGiven]     = useState('')
+  const [saleResult,    setSaleResult]    = useState<SaleResult | null>(null)
+  const [hasHeld,       setHasHeld]       = useState(false)
 
   const bsDate = formatBSFull(new Date())
 
@@ -83,8 +81,6 @@ export default function SellClient() {
       </div>
     )
   }
-
-  const isCredit = sell.paymentMethod === 'khata'
 
   return (
     <div className={sell.cart.length > 0 ? 'pb-[400px]' : 'pb-0'}>
@@ -187,27 +183,9 @@ export default function SellClient() {
         {sell.cart.length > 0 && (
           <CartList
             cart={sell.cart}
-            discountPercent={sell.discountPercent}
-            discountType={sell.discountType}
             onUpdateQty={sell.updateQty}
             onUpdatePrice={sell.updatePrice}
             onRemoveItem={sell.removeItem}
-            onDiscountChange={sell.setDiscountPercent}
-            onDiscountTypeChange={sell.setDiscountType}
-          />
-        )}
-
-        {sell.cart.length > 0 && isCredit && (
-          <CustomerPicker
-            customers={sell.customers}
-            customerSearch={sell.customerName}
-            selectedCustomer={sell.selectedCustomer}
-            showList={showCustomerList}
-            onSearchChange={sell.setCustomerName}
-            onShowList={setShowCustomerList}
-            onSelect={sell.setSelectedCustomer}
-            onDeselect={() => sell.setSelectedCustomer(null)}
-            onCreateNew={sell.createAndSelectCustomer}
           />
         )}
 
@@ -228,6 +206,7 @@ export default function SellClient() {
           cashGiven={cashGiven}
           submitting={sell.submitting}
           selectedCustomer={sell.selectedCustomer}
+          customers={sell.customers}
           onPaymentMethodChange={m => {
             sell.setPaymentMethod(m)
             if (m !== 'khata') sell.setSelectedCustomer(null)
@@ -235,6 +214,11 @@ export default function SellClient() {
           }}
           onCustomerNameChange={sell.setCustomerName}
           onCashGivenChange={setCashGiven}
+          onDiscountChange={sell.setDiscountPercent}
+          onDiscountTypeChange={sell.setDiscountType}
+          onSelectCustomer={sell.setSelectedCustomer}
+          onDeselectCustomer={() => sell.setSelectedCustomer(null)}
+          onCreateNewCustomer={sell.createAndSelectCustomer}
           onCharge={onCharge}
         />
       )}

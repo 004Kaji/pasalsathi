@@ -1,30 +1,21 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Minus, X, Tag } from 'lucide-react'
+import { Plus, Minus, X } from 'lucide-react'
 import type { CartItem } from '@/lib/types/app'
 
 interface Props {
   cart: CartItem[]
-  discountPercent: string
-  discountType: 'percent' | 'amount'
   onUpdateQty: (id: string, delta: number) => void
   onUpdatePrice: (id: string, price: string) => void
   onRemoveItem: (id: string) => void
-  onDiscountChange: (v: string) => void
-  onDiscountTypeChange: (t: 'percent' | 'amount') => void
 }
 
 export default function CartList({
-  cart, discountPercent, discountType,
-  onUpdateQty, onUpdatePrice, onRemoveItem, onDiscountChange, onDiscountTypeChange,
+  cart, onUpdateQty, onUpdatePrice, onRemoveItem,
 }: Props) {
   const [editingQty, setEditingQty] = useState<string | null>(null)
   const [qtyInput,   setQtyInput]   = useState('')
-
-  const subtotal    = cart.reduce((s, i) => s + i.qty * i.unitPrice, 0)
-  const discVal     = parseFloat(discountPercent) || 0
-  const discountAmt = discountType === 'amount' ? discVal : subtotal * (discVal / 100)
 
   function startEditQty(itemId: string, currentQty: number) {
     setEditingQty(itemId)
@@ -132,35 +123,6 @@ export default function CartList({
         </div>
       </div>
 
-      {/* Discount row */}
-      <div className="flex items-center gap-3 bg-white border border-[#D5CFC6] rounded-2xl px-4 py-3 shadow-sm">
-        <Tag size={15} className="text-amber-500 shrink-0" />
-        <span className="text-sm font-semibold text-[#1C1917] shrink-0">Discount</span>
-
-        {/* Input + unit toggle as one pill */}
-        <div className="flex items-center bg-[#EDE8DF] rounded-xl overflow-hidden">
-          <input
-            type="number"
-            min="0"
-            placeholder="0"
-            value={discountPercent}
-            onChange={e => onDiscountChange(e.target.value)}
-            className="w-16 bg-transparent text-[#1C1917] font-bold text-base text-center outline-none px-2 py-1.5"
-          />
-          <button
-            onClick={() => onDiscountTypeChange(discountType === 'percent' ? 'amount' : 'percent')}
-            className="bg-[#C84B2F] text-white text-xs font-bold px-3 py-2.5 shrink-0 transition-colors"
-          >
-            {discountType === 'percent' ? '%' : '₨'}
-          </button>
-        </div>
-
-        {discVal > 0 && (
-          <p className="flex-1 text-right text-sm font-bold text-amber-600">
-            − NPR {discountAmt.toLocaleString('ne-NP', { maximumFractionDigits: 0 })}
-          </p>
-        )}
-      </div>
     </>
   )
 }
