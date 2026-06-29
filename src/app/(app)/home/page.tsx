@@ -18,14 +18,14 @@ export default async function HomePage() {
   if (!user) redirect('/login')
 
   const { data: business } = await supabase
-    .from('businesses').select('id, name').eq('owner_id', user.id).single()
+    .from('businesses').select('id, name, phone, address').eq('owner_id', user.id).single()
 
   if (!business) redirect('/home')
 
   const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
   const todayEnd   = new Date(); todayEnd.setHours(23, 59, 59, 999)
 
-  const [{ data: todayTx }, { data: khataCustomers }] = await Promise.all([
+  const [{ data: todayTx }, { data: khataCustomers }, { count: productCount }, { count: khataCount }] = await Promise.all([
     supabase.from('transactions').select('type, amount')
       .eq('business_id', business.id)
       .gte('created_at', todayStart.toISOString())
@@ -35,7 +35,17 @@ export default async function HomePage() {
       .gt('balance', 0)
       .order('balance', { ascending: false })
       .limit(4),
+    supabase.from('products').select('id', { count: 'exact', head: true })
+      .eq('business_id', business.id),
+    supabase.from('customers').select('id', { count: 'exact', head: true })
+      .eq('business_id', business.id),
   ])
+
+  // Onboarding checklist
+  const profileDone  = !!(business.phone || business.address)
+  const productsDone = (productCount ?? 0) > 0
+  const khataDone    = (khataCount ?? 0) > 0
+  const allDone      = profileDone && productsDone && khataDone
 
   const todaySales = (todayTx ?? [])
     .filter(t => t.type === 'income')
@@ -71,6 +81,72 @@ export default async function HomePage() {
         </p>
         <h1 className="text-3xl font-bold text-[#1C1917] mt-0.5 font-display">{business.name}</h1>
       </div>
+
+      {/* Onboarding checklist — hidden once all done */}
+      {!allDone && (
+        <div className="bg-white border border-[#D5CFC6] rounded-2xl overflow-hidden shadow-sm">
+          <div className="px-5 py-3.5 border-b border-[#E0D9CE] flex items-center justify-between">
+            <div>
+              <p className="text-sm font-bold text-[#1C1917]">Get started 🚀</p>
+              <p className="text-xs text-[#9B948E] mt-0.5">
+                {[profileDone, productsDone, khataDone].filter(Boolean).length} of 3 done
+              </p>
+            </div>
+            <div className="flex gap-1">
+              {[profileDone, productsDone, khataDone].map((done, i) => (
+                <div key={i} className={`w-2 h-2 rounded-full ${done ? 'bg-[#4A7055]' : 'bg-[#E0D9CE]'}`} />
+              ))}
+            </div>
+          </div>
+          <div className="divide-y divide-[#E0D9CE]">
+            {[
+              {
+                done: profileDone,
+                emoji: '🏪',
+                title: 'Complete business profile',
+                sub: 'Add your address and phone number',
+                href: '/settings',
+              },
+              {
+                done: productsDone,
+                emoji: '📦',
+                title: 'Add your first product',
+                sub: 'Add items you sell to use the POS',
+                href: '/products/new',
+              },
+              {
+                done: khataDone,
+                emoji: '📒',
+                title: 'Add first khata customer',
+                sub: 'Track who owes you money',
+                href: '/khata/new',
+              },
+            ].map(item => (
+              <Link
+                key={item.title}
+                href={item.done ? '#' : item.href}
+                className={`flex items-center gap-4 px-5 py-4 transition-colors ${item.done ? 'pointer-events-none' : 'active:bg-[#F5F0E8]'}`}
+              >
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
+                  item.done ? 'bg-[#4A7055]/10' : 'bg-[#F5F0E8]'
+                }`}>
+                  {item.done
+                    ? <span className="text-[#4A7055] font-bold text-lg">✓</span>
+                    : <span className="text-lg">{item.emoji}</span>
+                  }
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-semibold ${item.done ? 'line-through text-[#9B948E]' : 'text-[#1C1917]'}`}>
+                    {item.title}
+                  </p>
+                  {!item.done && <p className="text-xs text-[#9B948E] mt-0.5">{item.sub}</p>}
+                </div>
+                {!item.done && <span className="text-[#C84B2F] text-xs font-bold shrink-0">→</span>}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Quick actions */}
       <div className="grid grid-cols-2 gap-3">
