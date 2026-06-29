@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { BarChart3 } from 'lucide-react'
+import { BarChart3, Settings } from 'lucide-react'
 
 const BASE_ITEMS = [
   { href: '/home',     label: 'Home'     },
@@ -61,8 +61,16 @@ export default function TopNav() {
           })}
         </nav>
 
-        {/* Mobile: spacer so logo stays left */}
+        {/* Mobile: spacer + settings icon */}
         <div className="flex-1 md:hidden" />
+        <Link
+          href="/settings"
+          className={`md:hidden p-2 rounded-lg transition-colors ${
+            pathname.startsWith('/settings') ? 'text-white' : 'text-white/55'
+          }`}
+        >
+          <Settings size={20} />
+        </Link>
       </div>
     </header>
   )
