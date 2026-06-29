@@ -10,8 +10,9 @@ import type { PaymentMethod, TransactionType } from '@/lib/types/database'
 const PAYMENT_METHODS: { value: PaymentMethod; label: string; emoji: string }[] = [
   { value: 'cash',   label: 'Cash',   emoji: '💵' },
   { value: 'khata',  label: 'Khata',  emoji: '📒' },
-  { value: 'esewa',  label: 'eSewa',  emoji: '🟢' },
-  { value: 'khalti', label: 'Khalti', emoji: '🟣' },
+  { value: 'esewa',   label: 'eSewa',   emoji: '🟢' },
+  { value: 'khalti',  label: 'Khalti',  emoji: '🟣' },
+  { value: 'fonepay', label: 'FonePay', emoji: '📱' },
 ]
 
 /** Quick-tap amount shortcuts */
