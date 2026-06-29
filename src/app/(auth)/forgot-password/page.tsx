@@ -13,87 +13,58 @@ export default function ForgotPasswordPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-
     const supabase = createClient()
-    // Always show success — don't reveal if email exists
     await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/callback?next=/update-password`,
     })
-
     setLoading(false)
     setSent(true)
   }
 
-  const inputClass =
-    'w-full bg-white/5 border border-white/10 rounded-xl px-4 h-12 text-white placeholder:text-gray-600 outline-none focus:ring-2 focus:ring-orange-500/50 text-base'
+  const inputClass = 'w-full bg-white border border-[#D5CFC6] rounded-xl px-4 h-12 text-[#1C1917] placeholder:text-[#9B948E] outline-none focus:ring-2 focus:ring-[#C84B2F]/30 focus:border-[#C84B2F] text-base transition-all'
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] px-4">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-orange-600/10 rounded-full blur-[100px] pointer-events-none" />
-
-      <div className="w-full max-w-sm relative">
-        <Link
-          href="/login"
-          className="flex items-center gap-2 text-gray-500 hover:text-gray-300 text-sm mb-6 w-fit"
-        >
+    <div className="min-h-screen flex items-center justify-center bg-[#F5F0E8] px-4">
+      <div className="w-full max-w-sm">
+        <Link href="/login" className="flex items-center gap-2 text-[#6B6560] hover:text-[#1C1917] text-sm mb-6 w-fit transition-colors">
           <ArrowLeft size={16} /> Back to login
         </Link>
 
-        <div className="bg-white/[0.04] border border-white/10 rounded-2xl shadow-2xl p-6">
+        <div className="bg-white border border-[#D5CFC6] rounded-2xl shadow-sm p-6">
           <div className="text-center mb-6">
-            <div className="w-12 h-12 bg-orange-500/20 rounded-2xl flex items-center justify-center mx-auto mb-3">
+            <div className="w-12 h-12 bg-[#C84B2F]/10 rounded-2xl flex items-center justify-center mx-auto mb-3">
               <span className="text-2xl">🔑</span>
             </div>
-            <h1 className="text-xl font-bold text-white">Forgot password?</h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Enter your email and we&apos;ll send a reset link
-            </p>
+            <h1 className="text-xl font-bold text-[#1C1917]">Forgot password?</h1>
+            <p className="text-sm text-[#6B6560] mt-1">Enter your email and we&apos;ll send a reset link</p>
           </div>
 
           {sent ? (
             <div className="text-center space-y-4">
               <div className="text-5xl">📧</div>
               <div>
-                <p className="text-white font-semibold">Check your email</p>
-                <p className="text-sm text-gray-500 mt-1">
-                  If <span className="text-gray-300">{email}</span> is registered, you&apos;ll
-                  receive a reset link shortly.
+                <p className="text-[#1C1917] font-semibold">Check your email</p>
+                <p className="text-sm text-[#6B6560] mt-1">
+                  If <span className="text-[#1C1917] font-medium">{email}</span> is registered, you&apos;ll receive a reset link shortly.
                 </p>
               </div>
-              <Link
-                href="/login"
-                className="block w-full py-3 text-center bg-white/5 border border-white/10 rounded-xl text-gray-300 font-medium hover:bg-white/10 transition-colors"
-              >
+              <Link href="/login" className="block w-full py-3 text-center bg-[#F5F0E8] border border-[#D5CFC6] rounded-xl text-[#6B6560] font-medium hover:bg-[#EDE8DF] transition-colors">
                 Back to login
               </Link>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-gray-400">Email address</label>
-                <input
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className={inputClass}
-                />
+                <label className="text-sm font-medium text-[#6B6560]">Email address</label>
+                <input type="email" placeholder="your@email.com" value={email} onChange={e => setEmail(e.target.value)} required className={inputClass} />
               </div>
-
-              <button
-                type="submit"
-                disabled={loading || !email}
-                className="w-full py-3 bg-orange-600 hover:bg-orange-700 active:scale-[0.98] disabled:opacity-50 rounded-xl text-white font-semibold transition-all"
-              >
+              <button type="submit" disabled={loading || !email}
+                className="w-full py-3 bg-[#C84B2F] hover:bg-[#E05A3A] active:scale-[0.98] disabled:opacity-50 rounded-xl text-white font-semibold transition-all">
                 {loading ? 'Sending...' : 'Send reset link'}
               </button>
-
-              <p className="text-center text-sm text-gray-600">
+              <p className="text-center text-sm text-[#6B6560]">
                 Remember your password?{' '}
-                <Link href="/login" className="text-orange-400 hover:text-orange-300">
-                  Sign in
-                </Link>
+                <Link href="/login" className="text-[#C84B2F] hover:underline font-medium">Sign in</Link>
               </p>
             </form>
           )}

@@ -1,9 +1,4 @@
 'use client'
-/**
- * product-card.tsx
- * Displays a single physical product in the inventory list.
- * Column names match 004_clean_schema.sql: stock, price (not current_stock, selling_price).
- */
 
 import Link from 'next/link'
 import { Package } from 'lucide-react'
@@ -22,26 +17,25 @@ export default function ProductCard({ product }: Props) {
 
   return (
     <Link href={`/products/${product.id}`}>
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between active:scale-[0.98] transition-transform">
+      <div className="bg-white border border-[#D5CFC6] rounded-2xl p-4 flex items-center justify-between active:scale-[0.98] transition-transform shadow-sm">
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="rounded-xl p-2.5 shrink-0 bg-blue-500/20">
-            <Package size={22} className="text-blue-400" />
+          <div className="rounded-xl p-2.5 shrink-0 bg-blue-500/15">
+            <Package size={22} className="text-blue-600" />
           </div>
           <div className="min-w-0">
-            <p className="text-base font-bold text-white truncate">{product.name}</p>
-            <p className="text-sm text-gray-500">
+            <p className="text-base font-bold text-[#1C1917] truncate">{product.name}</p>
+            <p className="text-sm text-[#6B6560]">
               💰 NPR {Number(product.price).toLocaleString('ne-NP')}
             </p>
           </div>
         </div>
 
-        {/* Stock count — only shown when track_stock is enabled */}
         {product.track_stock && (
           <div className="text-right ml-3 shrink-0">
-            <p className="text-xl font-bold text-white">
+            <p className="text-xl font-bold text-[#1C1917]">
               {Number(product.stock).toLocaleString('ne-NP')}
             </p>
-            <p className="text-xs text-gray-500">{unitLabel}</p>
+            <p className="text-xs text-[#9B948E]">{unitLabel}</p>
           </div>
         )}
       </div>

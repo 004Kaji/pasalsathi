@@ -1,9 +1,4 @@
 'use client'
-/**
- * hisab/[id]/page.tsx
- * Edit or void a single transaction.
- * Columns match 004_clean_schema.sql: type, amount, item_name, payment_method.
- */
 
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
@@ -15,7 +10,6 @@ import {
 } from '@/components/ui/alert-dialog'
 import type { Transaction, PaymentMethod, TransactionType } from '@/lib/types/database'
 
-/** Payment methods that match the DB check constraint */
 const PAYMENT_METHODS: { value: PaymentMethod; label: string; emoji: string }[] = [
   { value: 'cash',   label: 'Cash',   emoji: '💵' },
   { value: 'khata',  label: 'Khata',  emoji: '📒' },
@@ -39,15 +33,11 @@ export default function EditTransactionPage() {
   const [voiding, setVoiding] = useState(false)
   const [error,   setError]   = useState('')
 
-  /** Load the transaction from DB and populate form fields */
   useEffect(() => {
     async function loadTransaction() {
       const supabase = createClient()
       const { data } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('id', transactionId)
-        .single()
+        .from('transactions').select('*').eq('id', transactionId).single()
 
       if (!data) { router.push('/hisab'); return }
 
@@ -62,7 +52,6 @@ export default function EditTransactionPage() {
     loadTransaction()
   }, [transactionId, router])
 
-  /** Update the transaction in the DB */
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     setError('')
@@ -76,46 +65,28 @@ export default function EditTransactionPage() {
 
     const { error: updateError } = await supabase
       .from('transactions')
-      .update({
-        type,
-        amount:         parsedAmt,
-        item_name:      itemName.trim(),
-        payment_method: paymentMethod,
-      })
+      .update({ type, amount: parsedAmt, item_name: itemName.trim(), payment_method: paymentMethod })
       .eq('id', transactionId)
 
     if (updateError) { setError('Failed to save. Try again.'); setSaving(false); return }
     router.push('/hisab')
   }
 
-  /**
-   * Void: mark item_name as [VOIDED] and create an equal reversing entry.
-   * This preserves the audit trail without deleting any records.
-   */
   async function handleVoid() {
     if (!originalTx) return
     setVoiding(true)
 
     const supabase = createClient()
-
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const { data: business } = await supabase
-      .from('businesses')
-      .select('id')
-      .eq('owner_id', user.id)
-      .single()
-
+    const { data: business } = await supabase.from('businesses').select('id').eq('owner_id', user.id).single()
     if (!business) return
 
     const reverseType: TransactionType = originalTx.type === 'income' ? 'expense' : 'income'
 
     await Promise.all([
-      supabase.from('transactions')
-        .update({ item_name: `[VOIDED] ${originalTx.item_name}` })
-        .eq('id', transactionId),
-
+      supabase.from('transactions').update({ item_name: `[VOIDED] ${originalTx.item_name}` }).eq('id', transactionId),
       supabase.from('transactions').insert({
         business_id:    business.id,
         type:           reverseType,
@@ -130,20 +101,20 @@ export default function EditTransactionPage() {
 
   const isIncome     = type === 'income'
   const isVoided     = itemName.startsWith('[VOIDED]')
-  const accentGrad   = isIncome ? 'from-green-600 to-emerald-700' : 'from-red-600 to-rose-700'
-  const accentBorder = isIncome ? 'border-green-500 bg-green-500/10 text-green-400' : 'border-red-500 bg-red-500/10 text-red-400'
-  const inputClass   = 'w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-600 outline-none focus:ring-2 focus:ring-orange-500/50 text-base'
+  const accentGrad   = isIncome ? 'from-[#4A7055] to-[#3D5C47]' : 'from-red-600 to-rose-700'
+  const accentBorder = isIncome ? 'border-[#4A7055] bg-[#4A7055]/10 text-[#4A7055]' : 'border-red-500 bg-red-500/10 text-red-500'
+  const inputClass   = 'w-full bg-white border border-[#D5CFC6] rounded-xl px-4 py-3 text-[#1C1917] placeholder:text-[#9B948E] outline-none focus:ring-2 focus:ring-[#C84B2F]/30 text-base'
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#0a0a0a] text-gray-400 text-lg">
+      <div className="flex items-center justify-center min-h-screen bg-[#F5F0E8] text-[#6B6560] text-lg">
         Loading...
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] pb-10">
+    <div className="min-h-screen bg-[#F5F0E8] pb-10">
       <div className={`bg-gradient-to-br ${accentGrad} px-4 pt-5 pb-8`}>
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
@@ -155,7 +126,6 @@ export default function EditTransactionPage() {
             </h1>
           </div>
 
-          {/* Void button — hidden if already voided */}
           {!isVoided && (
             <AlertDialog>
               <AlertDialogTrigger className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/20 text-white text-sm font-semibold active:scale-95">
@@ -171,11 +141,7 @@ export default function EditTransactionPage() {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleVoid}
-                    disabled={voiding}
-                    className="bg-red-600 hover:bg-red-700"
-                  >
+                  <AlertDialogAction onClick={handleVoid} disabled={voiding} className="bg-red-600 hover:bg-red-700">
                     {voiding ? 'Voiding...' : 'Yes, Void It'}
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -184,14 +150,13 @@ export default function EditTransactionPage() {
           )}
         </div>
 
-        {/* Type toggle — hidden when voided */}
         {!isVoided && (
           <div className="flex bg-black/20 rounded-2xl p-1 gap-1">
             <button
               type="button"
               onClick={() => setType('income')}
               className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-lg transition-all ${
-                isIncome ? 'bg-white text-green-700 shadow' : 'text-white/70'
+                isIncome ? 'bg-white text-[#4A7055] shadow' : 'text-white/70'
               }`}
             >
               <TrendingUp size={22} /> Income
@@ -200,7 +165,7 @@ export default function EditTransactionPage() {
               type="button"
               onClick={() => setType('expense')}
               className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-lg transition-all ${
-                !isIncome ? 'bg-white text-red-700 shadow' : 'text-white/70'
+                !isIncome ? 'bg-white text-red-600 shadow' : 'text-white/70'
               }`}
             >
               <TrendingDown size={22} /> Expense
@@ -212,11 +177,11 @@ export default function EditTransactionPage() {
       {isVoided ? (
         <div className="px-4 pt-6 text-center">
           <p className="text-5xl mb-4">🚫</p>
-          <p className="text-lg font-semibold text-gray-400">This transaction has been voided</p>
-          <p className="text-sm text-gray-600 mt-2">A reversing entry was created in the ledger</p>
+          <p className="text-lg font-semibold text-[#6B6560]">This transaction has been voided</p>
+          <p className="text-sm text-[#9B948E] mt-2">A reversing entry was created in the ledger</p>
           <button
             onClick={() => router.push('/hisab')}
-            className="mt-6 w-full py-4 bg-white/10 border border-white/10 text-white rounded-2xl font-bold active:scale-95"
+            className="mt-6 w-full py-4 bg-[#EDE8DF] border border-[#D5CFC6] text-[#1C1917] rounded-2xl font-bold active:scale-95"
           >
             Back to Ledger
           </button>
@@ -225,10 +190,10 @@ export default function EditTransactionPage() {
         <form onSubmit={handleSave} className="px-4 -mt-4 space-y-4">
 
           {/* Amount */}
-          <div className="bg-[#111] border border-white/10 rounded-2xl p-5 shadow-xl">
-            <p className="text-sm font-semibold text-gray-400 mb-3">Amount (NPR) *</p>
+          <div className="bg-white border border-[#D5CFC6] rounded-2xl p-5 shadow-sm">
+            <p className="text-sm font-semibold text-[#6B6560] mb-3">Amount (NPR) *</p>
             <div className="flex items-center gap-3">
-              <span className="text-3xl font-bold text-gray-600">Rs.</span>
+              <span className="text-3xl font-bold text-[#9B948E]">Rs.</span>
               <input
                 type="number"
                 inputMode="decimal"
@@ -236,8 +201,8 @@ export default function EditTransactionPage() {
                 value={amount}
                 onChange={e => setAmount(e.target.value)}
                 className={`flex-1 text-5xl font-bold outline-none bg-transparent w-full ${
-                  isIncome ? 'text-green-400' : 'text-red-400'
-                } placeholder:text-gray-800`}
+                  isIncome ? 'text-[#4A7055]' : 'text-red-500'
+                } placeholder:text-[#D5CFC6]`}
                 required
                 min="0"
                 step="any"
@@ -246,8 +211,8 @@ export default function EditTransactionPage() {
           </div>
 
           {/* Description */}
-          <div className="bg-[#111] border border-white/10 rounded-2xl p-4">
-            <p className="text-sm font-semibold text-gray-400 mb-3">Description *</p>
+          <div className="bg-white border border-[#D5CFC6] rounded-2xl p-4 shadow-sm">
+            <p className="text-sm font-semibold text-[#6B6560] mb-3">Description *</p>
             <input
               type="text"
               placeholder="e.g. Rice sold, electricity bill..."
@@ -259,8 +224,8 @@ export default function EditTransactionPage() {
           </div>
 
           {/* Payment method */}
-          <div className="bg-[#111] border border-white/10 rounded-2xl p-4">
-            <p className="text-sm font-semibold text-gray-400 mb-3">Payment Method</p>
+          <div className="bg-white border border-[#D5CFC6] rounded-2xl p-4 shadow-sm">
+            <p className="text-sm font-semibold text-[#6B6560] mb-3">Payment Method</p>
             <div className="grid grid-cols-2 gap-2">
               {PAYMENT_METHODS.map(pm => (
                 <button
@@ -268,9 +233,7 @@ export default function EditTransactionPage() {
                   type="button"
                   onClick={() => setPaymentMethod(pm.value)}
                   className={`flex items-center gap-2 px-3 py-3 rounded-xl border-2 transition-all active:scale-95 ${
-                    paymentMethod === pm.value
-                      ? accentBorder
-                      : 'border-white/10 text-gray-500'
+                    paymentMethod === pm.value ? accentBorder : 'border-[#D5CFC6] text-[#9B948E]'
                   }`}
                 >
                   <span className="text-xl">{pm.emoji}</span>
@@ -282,7 +245,7 @@ export default function EditTransactionPage() {
 
           {error && (
             <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
-              <p className="text-red-400 text-base font-medium">{error}</p>
+              <p className="text-red-500 text-base font-medium">{error}</p>
             </div>
           )}
 

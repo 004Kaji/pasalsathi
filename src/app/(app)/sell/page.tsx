@@ -1,5 +1,5 @@
 'use client'
-// POS sell page — thin orchestrator that wires useSell hook into sub-components
+
 import { useState } from 'react'
 import { Trash2, WifiOff, RefreshCw } from 'lucide-react'
 import { formatBSFull } from '@/lib/utils/date'
@@ -46,8 +46,8 @@ export default function SellPage() {
 
   if (sell.loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#0a0a0a]">
-        <p className="text-gray-500 text-lg">Loading POS...</p>
+      <div className="flex items-center justify-center min-h-screen bg-[#F5F0E8]">
+        <p className="text-[#9B948E] text-lg">Loading POS...</p>
       </div>
     )
   }
@@ -59,38 +59,38 @@ export default function SellPage() {
   const isCredit = sell.paymentMethod === 'khata'
 
   return (
-    <div className={`min-h-screen bg-[#0a0a0a] ${sell.cart.length > 0 ? 'pb-[380px]' : 'pb-24'}`}>
+    <div className={`min-h-screen bg-[#F5F0E8] ${sell.cart.length > 0 ? 'pb-[380px]' : 'pb-24'}`}>
 
       {/* Sticky header */}
-      <div className="sticky top-0 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/10 z-20 px-4 pt-4 pb-3">
+      <div className="sticky top-0 bg-[#F5F0E8]/90 backdrop-blur-xl border-b border-[#D5CFC6] z-20 px-4 pt-4 pb-3">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-white">🏪 POS</h1>
-            <p className="text-xs text-gray-600 mt-0.5">{bsDate}</p>
+            <h1 className="text-xl font-bold text-[#1C1917]">🏪 POS</h1>
+            <p className="text-xs text-[#9B948E] mt-0.5">{bsDate}</p>
           </div>
           <div className="flex items-center gap-2">
             {/* Pending offline sync badge */}
             {sell.pendingCount > 0 && (
               <div className="flex items-center gap-1.5 bg-amber-500/15 border border-amber-500/30 rounded-xl px-2.5 py-1.5">
                 {sell.syncing
-                  ? <RefreshCw size={13} className="text-amber-400 animate-spin" />
-                  : <WifiOff size={13} className="text-amber-400" />
+                  ? <RefreshCw size={13} className="text-amber-500 animate-spin" />
+                  : <WifiOff size={13} className="text-amber-500" />
                 }
-                <span className="text-amber-400 font-bold text-xs">
+                <span className="text-amber-600 font-bold text-xs">
                   {sell.syncing ? 'Syncing...' : `${sell.pendingCount} offline`}
                 </span>
               </div>
             )}
             {sell.cart.length > 0 && (
               <>
-                <div className="bg-orange-500/20 border border-orange-500/30 rounded-xl px-3 py-1.5">
-                  <span className="text-orange-400 font-bold text-sm">
+                <div className="bg-[#C84B2F]/10 border border-[#C84B2F]/20 rounded-xl px-3 py-1.5">
+                  <span className="text-[#C84B2F] font-bold text-sm">
                     {sell.cart.reduce((s, i) => s + i.qty, 0)} items
                   </span>
                 </div>
                 <button
                   onClick={sell.clearCart}
-                  className="p-2.5 rounded-xl bg-red-500/10 text-red-400 active:scale-95 transition-transform"
+                  className="p-2.5 rounded-xl bg-red-500/10 text-red-500 active:scale-95 transition-transform"
                 >
                   <Trash2 size={18} />
                 </button>
@@ -124,7 +124,7 @@ export default function SellPage() {
         )}
 
         {!search && sell.products.length === 0 && (
-          <p className="text-center py-8 text-gray-600 text-sm">
+          <p className="text-center py-8 text-[#9B948E] text-sm">
             No products yet — go to Products tab to add items.
           </p>
         )}
@@ -158,7 +158,7 @@ export default function SellPage() {
 
         {sell.error && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
-            <p className="text-red-400 text-sm font-medium">{sell.error}</p>
+            <p className="text-red-500 text-sm font-medium">{sell.error}</p>
           </div>
         )}
       </div>

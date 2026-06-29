@@ -35,8 +35,8 @@ function NewProductForm() {
 
   const isService = itemType === 'service'
   const units     = isService ? SERVICE_UNITS : PRODUCT_UNITS
-  const accent    = isService ? 'from-purple-600 to-violet-700' : 'from-orange-600 to-red-600'
-  const accentBorder = isService ? 'border-purple-500 bg-purple-500/10 text-purple-400' : 'border-orange-500 bg-orange-500/10 text-orange-400'
+  const accent    = isService ? 'from-purple-600 to-violet-700' : 'from-[#C84B2F] to-red-600'
+  const accentBorder = isService ? 'border-purple-500 bg-purple-500/10 text-purple-600' : 'border-[#C84B2F] bg-[#C84B2F]/10 text-[#C84B2F]'
 
   function handleTypeSwitch(t: ProductType) {
     setItemType(t)
@@ -59,7 +59,7 @@ function NewProductForm() {
       .select('id')
       .eq('owner_id', user.id)
       .single()
-    if (!biz) { router.push('/onboarding'); return }
+    if (!biz) { router.push('/home'); return }
 
     const { error: insertError } = await supabase.from('products').insert({
       business_id:  biz.id,
@@ -80,10 +80,10 @@ function NewProductForm() {
     router.push('/products')
   }
 
-  const inputClass = "w-full bg-white/5 border border-white/10 rounded-xl px-4 h-12 text-white placeholder:text-gray-600 outline-none focus:ring-2 focus:ring-orange-500/50 text-base"
+  const inputClass = "w-full bg-white border border-[#D5CFC6] rounded-xl px-4 h-12 text-[#1C1917] placeholder:text-[#9B948E] outline-none focus:ring-2 focus:ring-[#C84B2F]/30 text-base"
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] pb-10">
+    <div className="min-h-screen bg-[#F5F0E8] pb-10">
       {/* Header */}
       <div className={`bg-gradient-to-br ${accent} px-4 pt-5 pb-8`}>
         <div className="flex items-center gap-3 mb-5">
@@ -101,7 +101,7 @@ function NewProductForm() {
             type="button"
             onClick={() => handleTypeSwitch('product')}
             className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-lg transition-all ${
-              !isService ? 'bg-white text-orange-600 shadow' : 'text-white/70'
+              !isService ? 'bg-white text-[#C84B2F] shadow' : 'text-white/70'
             }`}
           >
             <Package size={22} /> Product
@@ -119,7 +119,7 @@ function NewProductForm() {
       </div>
 
       {/* Context hint */}
-      <div className="mx-4 -mt-4 bg-[#1a1a1a] border border-white/10 rounded-2xl px-4 py-3 text-sm text-gray-400 shadow-xl">
+      <div className="mx-4 -mt-4 bg-white border border-[#D5CFC6] rounded-2xl px-4 py-3 text-sm text-[#6B6560] shadow-sm">
         {isService
           ? '✂️ Services appear in Sell → Catalog. No stock tracking — just a name & price.'
           : '📦 Products track stock levels. You\'ll see low-stock alerts and can restock.'}
@@ -127,8 +127,8 @@ function NewProductForm() {
 
       <form onSubmit={handleSubmit} className="px-4 pt-4 space-y-4">
         {/* Name */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3">
-          <label className="text-sm font-semibold text-gray-400 block">
+        <div className="bg-white border border-[#D5CFC6] rounded-2xl p-5 space-y-3 shadow-sm">
+          <label className="text-sm font-semibold text-[#6B6560] block">
             {isService ? 'Service Name *' : 'Product Name *'}
           </label>
           <input
@@ -141,8 +141,8 @@ function NewProductForm() {
         </div>
 
         {/* Unit */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-          <label className="text-sm font-semibold text-gray-400 block mb-3">
+        <div className="bg-white border border-[#D5CFC6] rounded-2xl p-5 shadow-sm">
+          <label className="text-sm font-semibold text-[#6B6560] block mb-3">
             {isService ? 'Pricing Unit' : 'Unit of Sale'}
           </label>
           <div className="grid grid-cols-4 gap-2">
@@ -152,7 +152,7 @@ function NewProductForm() {
                 type="button"
                 onClick={() => setUnit(u.value)}
                 className={`flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 transition-all active:scale-95 ${
-                  unit === u.value ? accentBorder : 'border-white/10 text-gray-500'
+                  unit === u.value ? accentBorder : 'border-[#D5CFC6] text-[#9B948E]'
                 }`}
               >
                 <span className="text-2xl">{u.emoji}</span>
@@ -163,21 +163,21 @@ function NewProductForm() {
         </div>
 
         {/* Price */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
-          <h3 className="text-base font-bold text-white">
+        <div className="bg-white border border-[#D5CFC6] rounded-2xl p-5 space-y-4 shadow-sm">
+          <h3 className="text-base font-bold text-[#1C1917]">
             {isService ? 'Service Price' : 'Pricing'}
           </h3>
 
           <div>
-            <label className="text-sm text-gray-400 font-semibold mb-2 block">
+            <label className="text-sm text-[#6B6560] font-semibold mb-2 block">
               {isService ? 'Price charged to customer *' : 'Selling Price *'}
             </label>
-            <div className="flex items-center bg-white/5 border border-white/10 rounded-xl overflow-hidden h-12">
-              <span className="px-3 text-gray-500 text-sm border-r border-white/10 h-full flex items-center">Rs.</span>
+            <div className="flex items-center bg-white border border-[#D5CFC6] rounded-xl overflow-hidden h-12">
+              <span className="px-3 text-[#9B948E] text-sm border-r border-[#D5CFC6] h-full flex items-center">Rs.</span>
               <input
                 type="number" inputMode="decimal" placeholder="0"
                 value={sellingPrice} onChange={e => setSellingPrice(e.target.value)}
-                className="flex-1 px-3 text-base outline-none bg-transparent text-white"
+                className="flex-1 px-3 text-base outline-none bg-transparent text-[#1C1917]"
                 min="0" step="any" required
               />
             </div>
@@ -186,37 +186,37 @@ function NewProductForm() {
 
         {/* Stock — products only */}
         {!isService && (
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
-            <h3 className="text-base font-bold text-white">Opening Stock <span className="text-sm font-normal text-gray-600">(optional)</span></h3>
+          <div className="bg-white border border-[#D5CFC6] rounded-2xl p-5 space-y-4 shadow-sm">
+            <h3 className="text-base font-bold text-[#1C1917]">Opening Stock <span className="text-sm font-normal text-[#9B948E]">(optional)</span></h3>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-sm text-gray-400 font-semibold mb-2 block">Current Stock</label>
-                <div className="flex items-center bg-white/5 border border-white/10 rounded-xl overflow-hidden h-12">
+                <label className="text-sm text-[#6B6560] font-semibold mb-2 block">Current Stock</label>
+                <div className="flex items-center bg-white border border-[#D5CFC6] rounded-xl overflow-hidden h-12">
                   <input
                     type="number" inputMode="decimal" placeholder="0"
                     value={currentStock} onChange={e => setCurrentStock(e.target.value)}
-                    className="flex-1 px-3 text-base outline-none bg-transparent text-white"
+                    className="flex-1 px-3 text-base outline-none bg-transparent text-[#1C1917]"
                     min="0"
                   />
-                  <span className="px-3 text-gray-500 text-sm border-l border-white/10 h-full flex items-center">
+                  <span className="px-3 text-[#9B948E] text-sm border-l border-[#D5CFC6] h-full flex items-center">
                     {PRODUCT_UNITS.find(u2 => u2.value === unit)?.label ?? unit}
                   </span>
                 </div>
               </div>
               <div>
-                <label className="text-sm text-gray-400 font-semibold mb-2 block">Low Stock Alert</label>
+                <label className="text-sm text-[#6B6560] font-semibold mb-2 block">Low Stock Alert</label>
                 <div className="flex items-center bg-amber-500/10 border border-amber-500/20 rounded-xl overflow-hidden h-12">
                   <input
                     type="number" inputMode="decimal" placeholder="5"
                     value={lowThreshold} onChange={e => setLowThreshold(e.target.value)}
-                    className="flex-1 px-3 text-base outline-none bg-transparent text-amber-300"
+                    className="flex-1 px-3 text-base outline-none bg-transparent text-amber-700"
                     min="0"
                   />
-                  <span className="px-3 text-amber-500 text-sm border-l border-amber-500/20 h-full flex items-center">
+                  <span className="px-3 text-amber-600 text-sm border-l border-amber-500/20 h-full flex items-center">
                     {PRODUCT_UNITS.find(u2 => u2.value === unit)?.label ?? unit}
                   </span>
                 </div>
-                <p className="text-xs text-gray-600 mt-1">Alert below this</p>
+                <p className="text-xs text-[#9B948E] mt-1">Alert below this</p>
               </div>
             </div>
           </div>
@@ -224,7 +224,7 @@ function NewProductForm() {
 
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
-            <p className="text-red-400 text-base font-medium">{error}</p>
+            <p className="text-red-500 text-base font-medium">{error}</p>
           </div>
         )}
 
@@ -242,7 +242,7 @@ function NewProductForm() {
 
 export default function NewProductPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-screen bg-[#0a0a0a] text-gray-400">Loading...</div>}>
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen bg-[#F5F0E8] text-[#6B6560]">Loading...</div>}>
       <NewProductForm />
     </Suspense>
   )

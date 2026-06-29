@@ -1,10 +1,4 @@
 'use client'
-/**
- * products/[id]/page.tsx
- * Product/service detail — view, edit, and delete an item.
- * Uses simplified schema: price, stock, track_stock.
- * No stock_movements table — stock is updated directly via +/- adjustment.
- */
 
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
@@ -32,7 +26,6 @@ export default function ProductDetailPage() {
   const [showEdit,   setShowEdit]   = useState(false)
   const [editName,   setEditName]   = useState('')
   const [editPrice,  setEditPrice]  = useState('')
-  const [editStock,  setEditStock]  = useState('')
   const [editSaving, setEditSaving] = useState(false)
 
   const [adjQty,     setAdjQty]     = useState('')
@@ -40,7 +33,6 @@ export default function ProductDetailPage() {
   const [showAdj,    setShowAdj]    = useState(false)
   const [adjSaving,  setAdjSaving]  = useState(false)
 
-  /** Load the product by id */
   const fetchProduct = useCallback(async () => {
     const supabase = createClient()
     const { data } = await supabase.from('products').select('*').eq('id', productId).single()
@@ -49,13 +41,11 @@ export default function ProductDetailPage() {
     setProduct(p)
     setEditName(p.name)
     setEditPrice(String(p.price))
-    setEditStock(String(p.stock ?? 0))
     setLoading(false)
   }, [productId, router])
 
   useEffect(() => { fetchProduct() }, [fetchProduct])
 
-  /** Save edited name and price */
   async function handleSaveEdit() {
     setEditSaving(true)
     const supabase = createClient()
@@ -68,7 +58,6 @@ export default function ProductDetailPage() {
     await fetchProduct()
   }
 
-  /** Apply a +/- stock adjustment directly to the stock column */
   async function handleAdjustStock() {
     const qty = parseFloat(adjQty)
     if (!qty || qty <= 0) return
@@ -87,14 +76,13 @@ export default function ProductDetailPage() {
     await fetchProduct()
   }
 
-  /** Hard-delete the product and return to the list */
   async function handleDelete() {
     const supabase = createClient()
     await supabase.from('products').delete().eq('id', productId)
     router.push('/products')
   }
 
-  if (loading) return <div className="flex items-center justify-center min-h-screen text-gray-400 text-lg">Loading...</div>
+  if (loading) return <div className="flex items-center justify-center min-h-screen bg-[#F5F0E8] text-[#6B6560] text-lg">Loading...</div>
   if (!product) return null
 
   const isService = product.type === 'service'
@@ -102,8 +90,8 @@ export default function ProductDetailPage() {
   const stock     = Number(product.stock ?? 0)
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] pb-24">
-      {/* Header */}
+    <div className="min-h-screen bg-[#F5F0E8] pb-24">
+      {/* Header — colored by type (kept) */}
       <div className={`px-4 pt-5 pb-6 ${isService ? 'bg-purple-700' : 'bg-blue-700'}`}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
@@ -126,7 +114,7 @@ export default function ProductDetailPage() {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete "{product.name}"?</AlertDialogTitle>
+                  <AlertDialogTitle>Delete &quot;{product.name}&quot;?</AlertDialogTitle>
                   <AlertDialogDescription>
                     This will permanently remove the item from your inventory.
                   </AlertDialogDescription>
@@ -167,31 +155,31 @@ export default function ProductDetailPage() {
       <div className="px-4 pt-4 space-y-4">
         {/* Edit form */}
         {showEdit && (
-          <div className="bg-[#111] rounded-2xl p-5 space-y-3 border border-white/10">
-            <h3 className="text-base font-bold text-white">Edit Item</h3>
+          <div className="bg-white rounded-2xl p-5 space-y-3 border border-[#D5CFC6] shadow-sm">
+            <h3 className="text-base font-bold text-[#1C1917]">Edit Item</h3>
             <div>
-              <label className="text-xs font-semibold text-gray-400 block mb-1">Name</label>
+              <label className="text-xs font-semibold text-[#6B6560] block mb-1">Name</label>
               <input
                 value={editName}
                 onChange={e => setEditName(e.target.value)}
-                className="w-full text-base bg-white/5 border border-white/10 rounded-xl px-4 h-12 text-white outline-none focus:ring-2 focus:ring-orange-500/50"
+                className="w-full text-base bg-[#F5F0E8] border border-[#D5CFC6] rounded-xl px-4 h-12 text-[#1C1917] outline-none focus:ring-2 focus:ring-[#C84B2F]/30"
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-400 block mb-1">Price (NPR)</label>
+              <label className="text-xs font-semibold text-[#6B6560] block mb-1">Price (NPR)</label>
               <input
                 type="number"
                 step="any"
                 value={editPrice}
                 onChange={e => setEditPrice(e.target.value)}
-                className="w-full text-base bg-white/5 border border-white/10 rounded-xl px-4 h-12 text-white outline-none focus:ring-2 focus:ring-orange-500/50"
+                className="w-full text-base bg-[#F5F0E8] border border-[#D5CFC6] rounded-xl px-4 h-12 text-[#1C1917] outline-none focus:ring-2 focus:ring-[#C84B2F]/30"
               />
             </div>
             <div className="flex gap-3">
-              <button onClick={() => setShowEdit(false)} className="flex-1 py-3 rounded-xl border border-white/10 text-gray-400 font-semibold active:scale-[0.98]">
+              <button onClick={() => setShowEdit(false)} className="flex-1 py-3 rounded-xl border border-[#D5CFC6] text-[#6B6560] font-semibold active:scale-[0.98]">
                 Cancel
               </button>
-              <button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 py-3 rounded-xl bg-orange-600 text-white font-bold active:scale-[0.98] disabled:opacity-50">
+              <button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 py-3 rounded-xl bg-[#C84B2F] text-white font-bold active:scale-[0.98] disabled:opacity-50">
                 {editSaving ? 'Saving...' : '✓ Save'}
               </button>
             </div>
@@ -204,7 +192,7 @@ export default function ProductDetailPage() {
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => { setAdjType('add'); setShowAdj(true) }}
-                className="flex items-center justify-center gap-2 py-4 bg-green-600 text-white rounded-2xl font-bold text-base active:scale-[0.98]"
+                className="flex items-center justify-center gap-2 py-4 bg-[#4A7055] text-white rounded-2xl font-bold text-base active:scale-[0.98]"
               >
                 <Plus size={20} /> Add Stock
               </button>
@@ -217,27 +205,27 @@ export default function ProductDetailPage() {
             </div>
 
             {showAdj && (
-              <div className={`rounded-2xl p-5 border ${adjType === 'add' ? 'bg-green-500/10 border-green-500/30' : 'bg-red-500/10 border-red-500/30'}`}>
-                <h3 className={`text-lg font-bold mb-4 ${adjType === 'add' ? 'text-green-400' : 'text-red-400'}`}>
+              <div className={`rounded-2xl p-5 border ${adjType === 'add' ? 'bg-[#4A7055]/10 border-[#4A7055]/30' : 'bg-red-500/10 border-red-500/30'}`}>
+                <h3 className={`text-lg font-bold mb-4 ${adjType === 'add' ? 'text-[#4A7055]' : 'text-red-500'}`}>
                   {adjType === 'add' ? '🟢 Add Stock' : '🔴 Remove Stock'}
                 </h3>
-                <label className="text-sm font-semibold text-gray-400 block mb-2">Quantity ({unit}) *</label>
-                <div className="flex items-center bg-white/5 border border-white/10 rounded-xl px-4 py-3 mb-4">
+                <label className="text-sm font-semibold text-[#6B6560] block mb-2">Quantity ({unit}) *</label>
+                <div className="flex items-center bg-white border border-[#D5CFC6] rounded-xl px-4 py-3 mb-4">
                   <input
                     type="number"
                     inputMode="decimal"
                     placeholder="0"
                     value={adjQty}
                     onChange={e => setAdjQty(e.target.value)}
-                    className="flex-1 text-3xl font-bold text-white border-0 outline-none bg-transparent placeholder:text-gray-700"
+                    className="flex-1 text-3xl font-bold text-[#1C1917] border-0 outline-none bg-transparent placeholder:text-[#D5CFC6]"
                   />
-                  <span className="text-gray-500 font-medium">{unit}</span>
+                  <span className="text-[#6B6560] font-medium">{unit}</span>
                 </div>
                 <div className="flex gap-3">
                   <button
                     type="button"
                     onClick={() => { setShowAdj(false); setAdjQty('') }}
-                    className="flex-1 py-4 rounded-xl border border-white/10 text-gray-400 font-semibold active:scale-[0.98]"
+                    className="flex-1 py-4 rounded-xl border border-[#D5CFC6] text-[#6B6560] font-semibold active:scale-[0.98]"
                   >
                     Cancel
                   </button>
@@ -245,7 +233,7 @@ export default function ProductDetailPage() {
                     type="button"
                     onClick={handleAdjustStock}
                     disabled={adjSaving || !adjQty}
-                    className={`flex-1 py-4 rounded-xl text-white font-bold active:scale-[0.98] disabled:opacity-50 ${adjType === 'add' ? 'bg-green-600' : 'bg-red-600'}`}
+                    className={`flex-1 py-4 rounded-xl text-white font-bold active:scale-[0.98] disabled:opacity-50 ${adjType === 'add' ? 'bg-[#4A7055]' : 'bg-red-600'}`}
                   >
                     {adjSaving ? 'Saving...' : '✓ Adjust'}
                   </button>

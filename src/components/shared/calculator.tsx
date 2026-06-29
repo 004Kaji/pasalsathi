@@ -80,28 +80,28 @@ export default function Calculator({ onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
       <div
-        className="relative w-full max-w-sm bg-[#111] border border-white/10 rounded-t-3xl p-4 pb-8"
+        className="relative w-full max-w-sm bg-white border border-[#D5CFC6] rounded-t-3xl p-4 pb-8 shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
         {/* Handle */}
-        <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-4" />
+        <div className="w-10 h-1 bg-[#D5CFC6] rounded-full mx-auto mb-4" />
 
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <p className="text-white font-bold text-lg">🧮 क्याल्कुलेटर</p>
-          <button onClick={onClose} className="p-2 rounded-xl bg-white/10 text-gray-400">
+          <p className="text-[#1C1917] font-bold text-lg">🧮 क्याल्कुलेटर</p>
+          <button onClick={onClose} className="p-2 rounded-xl bg-[#EDE8DF] text-[#6B6560]">
             <X size={18} />
           </button>
         </div>
 
         {/* Display */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-4 text-right">
-          <p className="text-gray-500 text-sm h-5">
+        <div className="bg-[#F5F0E8] border border-[#D5CFC6] rounded-2xl p-4 mb-4 text-right">
+          <p className="text-[#9B948E] text-sm h-5">
             {prev ? `${prev} ${op}` : ''}
           </p>
-          <p className="text-white text-4xl font-bold mt-1 truncate">
+          <p className="text-[#1C1917] text-4xl font-bold mt-1 truncate">
             {parseFloat(display).toLocaleString('ne-NP', { maximumFractionDigits: 10 })}
           </p>
         </div>
@@ -109,39 +109,39 @@ export default function Calculator({ onClose }: Props) {
         {/* Buttons */}
         <div className="grid grid-cols-4 gap-2">
           {/* Row 1 */}
-          <button onClick={clear} className={`${btnBase} bg-red-500/20 text-red-400`}>AC</button>
-          <button onClick={toggleSign} className={`${btnBase} bg-white/10 text-gray-300`}>+/-</button>
-          <button onClick={percent} className={`${btnBase} bg-white/10 text-gray-300`}>%</button>
-          <button onClick={() => operator('÷')} className={`${btnBase} ${op === '÷' ? 'bg-orange-500 text-white' : 'bg-orange-600/30 text-orange-400'}`}>÷</button>
+          <button onClick={clear} className={`${btnBase} bg-red-500/15 text-red-500`}>AC</button>
+          <button onClick={toggleSign} className={`${btnBase} bg-[#EDE8DF] text-[#6B6560]`}>+/-</button>
+          <button onClick={percent} className={`${btnBase} bg-[#EDE8DF] text-[#6B6560]`}>%</button>
+          <button onClick={() => operator('÷')} className={`${btnBase} ${op === '÷' ? 'bg-[#C84B2F] text-white' : 'bg-[#C84B2F]/15 text-[#C84B2F]'}`}>÷</button>
 
           {/* Row 2 */}
           {['7','8','9'].map(n => (
-            <button key={n} onClick={() => input(n)} className={`${btnBase} bg-white/5 text-white`}>{n}</button>
+            <button key={n} onClick={() => input(n)} className={`${btnBase} bg-[#EDE8DF] text-[#1C1917]`}>{n}</button>
           ))}
-          <button onClick={() => operator('×')} className={`${btnBase} ${op === '×' ? 'bg-orange-500 text-white' : 'bg-orange-600/30 text-orange-400'}`}>×</button>
+          <button onClick={() => operator('×')} className={`${btnBase} ${op === '×' ? 'bg-[#C84B2F] text-white' : 'bg-[#C84B2F]/15 text-[#C84B2F]'}`}>×</button>
 
           {/* Row 3 */}
           {['4','5','6'].map(n => (
-            <button key={n} onClick={() => input(n)} className={`${btnBase} bg-white/5 text-white`}>{n}</button>
+            <button key={n} onClick={() => input(n)} className={`${btnBase} bg-[#EDE8DF] text-[#1C1917]`}>{n}</button>
           ))}
-          <button onClick={() => operator('-')} className={`${btnBase} ${op === '-' ? 'bg-orange-500 text-white' : 'bg-orange-600/30 text-orange-400'}`}>−</button>
+          <button onClick={() => operator('-')} className={`${btnBase} ${op === '-' ? 'bg-[#C84B2F] text-white' : 'bg-[#C84B2F]/15 text-[#C84B2F]'}`}>−</button>
 
           {/* Row 4 */}
           {['1','2','3'].map(n => (
-            <button key={n} onClick={() => input(n)} className={`${btnBase} bg-white/5 text-white`}>{n}</button>
+            <button key={n} onClick={() => input(n)} className={`${btnBase} bg-[#EDE8DF] text-[#1C1917]`}>{n}</button>
           ))}
-          <button onClick={() => operator('+')} className={`${btnBase} ${op === '+' ? 'bg-orange-500 text-white' : 'bg-orange-600/30 text-orange-400'}`}>+</button>
+          <button onClick={() => operator('+')} className={`${btnBase} ${op === '+' ? 'bg-[#C84B2F] text-white' : 'bg-[#C84B2F]/15 text-[#C84B2F]'}`}>+</button>
 
           {/* Row 5 */}
-          <button onClick={() => input('0')} className={`${btnBase} bg-white/5 text-white col-span-2`}>0</button>
-          <button onClick={() => input('.')} className={`${btnBase} bg-white/5 text-white`}>.</button>
-          <button onClick={equals} className={`${btnBase} bg-gradient-to-br from-orange-600 to-red-600 text-white`}>=</button>
+          <button onClick={() => input('0')} className={`${btnBase} bg-[#EDE8DF] text-[#1C1917] col-span-2`}>0</button>
+          <button onClick={() => input('.')} className={`${btnBase} bg-[#EDE8DF] text-[#1C1917]`}>.</button>
+          <button onClick={equals} className={`${btnBase} bg-[#C84B2F] text-white`}>=</button>
         </div>
 
         {/* Backspace */}
         <button
           onClick={backspace}
-          className="mt-2 w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-white/5 text-gray-400 active:scale-95 transition-transform"
+          className="mt-2 w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-[#EDE8DF] text-[#6B6560] active:scale-95 transition-transform"
         >
           <Delete size={18} /> मेट्नुहोस्
         </button>

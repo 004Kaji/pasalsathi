@@ -4,10 +4,8 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import Papa from 'papaparse'
 import { createClient } from '@/lib/db/supabase'
-import { Plus, Search, AlertTriangle, Package, ChevronRight, TrendingUp, Download, Upload, FileDown, Wrench, X, CheckCircle, XCircle } from 'lucide-react'
+import { Plus, Search, Package, ChevronRight, TrendingUp, Upload, FileDown, Wrench, X, CheckCircle, XCircle } from 'lucide-react'
 import type { Product, ProductUnit, ProductType } from '@/lib/types/database'
-
-// ── constants ─────────────────────────────────────────────────────────────────
 
 const UNIT_LABELS: Record<string, string> = {
   piece: 'Piece', kg: 'Kg', litre: 'Litre', box: 'Box', dozen: 'Dozen',
@@ -16,8 +14,6 @@ const UNIT_LABELS: Record<string, string> = {
 const VALID_UNITS: ProductUnit[] = ['piece', 'kg', 'litre', 'box', 'dozen']
 const VALID_TYPES: ProductType[] = ['product', 'service']
 
-// ── CSV import types ──────────────────────────────────────────────────────────
-
 interface ImportRow {
   rowNum:  number
   name:    string
@@ -25,10 +21,8 @@ interface ImportRow {
   unit:    string
   type:    string
   stock:   string
-  error:   string | null   // null = valid
+  error:   string | null
 }
-
-// ── main component ────────────────────────────────────────────────────────────
 
 export default function ProductsPage() {
   const [products,    setProducts]    = useState<Product[]>([])
@@ -37,7 +31,6 @@ export default function ProductsPage() {
   const [loading,     setLoading]     = useState(true)
   const [businessId,  setBusinessId]  = useState('')
 
-  // CSV import state
   const [importRows,     setImportRows]     = useState<ImportRow[] | null>(null)
   const [importing,      setImporting]      = useState(false)
   const [importDone,     setImportDone]     = useState<{ ok: number; fail: number } | null>(null)
@@ -64,8 +57,6 @@ export default function ProductsPage() {
 
   useEffect(() => { fetchProducts() }, [fetchProducts])
 
-  // ── derived lists ──────────────────────────────────────────────────────────
-
   const physical  = products.filter(p => p.type !== 'service')
   const services  = products.filter(p => p.type === 'service')
   const activeList = tab === 'product' ? physical : services
@@ -78,30 +69,18 @@ export default function ProductsPage() {
     (sum, p) => sum + Number(p.stock) * Number(p.price), 0
   )
 
-  // ── CSV export ─────────────────────────────────────────────────────────────
-
   function handleExportCSV() {
     const rows = [
       ['name', 'price', 'unit', 'type', 'stock'],
-      ...products.map(p => [
-        p.name,
-        Number(p.price).toString(),
-        p.unit,
-        p.type,
-        Number(p.stock).toString(),
-      ]),
+      ...products.map(p => [p.name, Number(p.price).toString(), p.unit, p.type, Number(p.stock).toString()]),
     ]
     const csv  = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url  = URL.createObjectURL(blob)
     const a    = document.createElement('a')
-    a.href     = url
-    a.download = 'PasalSathi-Products.csv'
-    a.click()
+    a.href = url; a.download = 'PasalSathi-Products.csv'; a.click()
     URL.revokeObjectURL(url)
   }
-
-  // ── CSV import ─────────────────────────────────────────────────────────────
 
   function validateRow(raw: Record<string, string>, rowNum: number): ImportRow {
     const name  = (raw['name']  ?? '').trim()
@@ -126,7 +105,7 @@ export default function ProductsPage() {
     if (!file) return
 
     Papa.parse<Record<string, string>>(file, {
-      header:       true,
+      header: true,
       skipEmptyLines: true,
       complete: (result) => {
         const rows = result.data.map((raw, i) => validateRow(raw, i + 2))
@@ -134,8 +113,6 @@ export default function ProductsPage() {
         setImportDone(null)
       },
     })
-
-    // Reset so same file can be re-selected
     e.target.value = ''
   }
 
@@ -159,7 +136,6 @@ export default function ProductsPage() {
     }))
 
     const { error } = await supabase.from('products').insert(inserts)
-
     setImporting(false)
 
     if (!error) {
@@ -172,33 +148,31 @@ export default function ProductsPage() {
   const validCount   = importRows?.filter(r => !r.error).length ?? 0
   const invalidCount = importRows?.filter(r =>  r.error).length ?? 0
 
-  // ── render ─────────────────────────────────────────────────────────────────
-
   return (
     <div className="pb-10">
 
       {/* Sticky header */}
-      <div className="sticky top-0 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/10 z-10 px-4 pt-5 pb-3 space-y-3">
+      <div className="sticky top-0 bg-[#F5F0E8]/90 backdrop-blur-xl border-b border-[#D5CFC6] z-10 px-4 pt-5 pb-3 space-y-3">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-white">🏷️ Products</h1>
+          <h1 className="text-2xl font-bold text-[#1C1917]">🏷️ Products</h1>
           <Link
             href="/products/new"
-            className="flex items-center gap-1.5 bg-gradient-to-r from-orange-600 to-red-600 text-white px-3 py-2.5 rounded-xl font-semibold text-sm active:scale-95 transition-transform"
+            className="flex items-center gap-1.5 bg-[#C84B2F] text-white px-3 py-2.5 rounded-xl font-semibold text-sm active:scale-95 transition-transform"
           >
             <Plus size={17} /> Add New
           </Link>
         </div>
 
         {/* Product / Service tab */}
-        <div className="flex bg-white/5 rounded-2xl p-1 gap-1">
+        <div className="flex bg-[#EDE8DF] rounded-2xl p-1 gap-1">
           {(['product', 'service'] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-all active:scale-[0.98] ${
                 tab === t
-                  ? t === 'product' ? 'bg-orange-600 text-white' : 'bg-purple-600 text-white'
-                  : 'text-gray-500'
+                  ? t === 'product' ? 'bg-[#C84B2F] text-white' : 'bg-purple-600 text-white'
+                  : 'text-[#6B6560]'
               }`}
             >
               {t === 'product' ? <Package size={16} /> : <Wrench size={16} />}
@@ -209,13 +183,13 @@ export default function ProductsPage() {
 
         {/* Search */}
         <div className="relative">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9B948E]" />
           <input
             type="text"
             placeholder={tab === 'product' ? 'Search products...' : 'Search services...'}
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-base text-white placeholder:text-gray-600 outline-none focus:ring-2 focus:ring-orange-500/50"
+            className="w-full pl-10 pr-4 py-3 bg-white border border-[#D5CFC6] rounded-xl text-base text-[#1C1917] placeholder:text-[#9B948E] outline-none focus:ring-2 focus:ring-[#C84B2F]/30"
           />
         </div>
       </div>
@@ -227,17 +201,17 @@ export default function ProductsPage() {
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
               <div className="flex items-center gap-2 mb-1">
-                <Package size={16} className="text-blue-400" />
-                <p className="text-sm font-medium text-blue-400">Products</p>
+                <Package size={16} className="text-blue-500" />
+                <p className="text-sm font-medium text-blue-600">Products</p>
               </div>
-              <p className="text-2xl font-bold text-blue-300">{physical.length}</p>
+              <p className="text-2xl font-bold text-blue-700">{physical.length}</p>
             </div>
-            <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-4">
+            <div className="bg-[#4A7055]/10 border border-[#4A7055]/20 rounded-2xl p-4">
               <div className="flex items-center gap-2 mb-1">
-                <TrendingUp size={16} className="text-green-400" />
-                <p className="text-sm font-medium text-green-400">Stock Value</p>
+                <TrendingUp size={16} className="text-[#4A7055]" />
+                <p className="text-sm font-medium text-[#4A7055]">Stock Value</p>
               </div>
-              <p className="text-xl font-bold text-green-300">
+              <p className="text-xl font-bold text-[#4A7055]">
                 NPR {totalValue.toLocaleString('ne-NP')}
               </p>
             </div>
@@ -245,21 +219,21 @@ export default function ProductsPage() {
         ) : (
           <div className="bg-purple-500/10 border border-purple-500/20 rounded-2xl p-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Wrench size={18} className="text-purple-400" />
-              <p className="text-sm font-medium text-purple-400">Services offered</p>
+              <Wrench size={18} className="text-purple-500" />
+              <p className="text-sm font-medium text-purple-600">Services offered</p>
             </div>
-            <p className="text-2xl font-bold text-purple-300">{services.length}</p>
+            <p className="text-2xl font-bold text-purple-700">{services.length}</p>
           </div>
         )}
 
         {/* Import success banner */}
         {importDone && (
-          <div className="bg-green-500/10 border border-green-500/20 rounded-2xl px-4 py-3 flex items-center justify-between">
-            <p className="text-sm text-green-400 font-medium">
+          <div className="bg-[#4A7055]/10 border border-[#4A7055]/20 rounded-2xl px-4 py-3 flex items-center justify-between">
+            <p className="text-sm text-[#4A7055] font-medium">
               ✓ Imported {importDone.ok} products
               {importDone.fail > 0 && ` · ${importDone.fail} rows skipped`}
             </p>
-            <button onClick={() => setImportDone(null)} className="text-green-600 hover:text-green-400">
+            <button onClick={() => setImportDone(null)} className="text-[#4A7055]/60 hover:text-[#4A7055]">
               <X size={16} />
             </button>
           </div>
@@ -267,15 +241,15 @@ export default function ProductsPage() {
 
         {/* Product list */}
         {loading ? (
-          <div className="text-center py-12 text-gray-500">Loading...</div>
+          <div className="text-center py-12 text-[#6B6560]">Loading...</div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-5xl mb-4">{tab === 'product' ? '📦' : '🛠️'}</p>
-            <p className="text-xl font-semibold text-gray-500">
+            <p className="text-xl font-semibold text-[#6B6560]">
               {search ? 'No results found' : tab === 'product' ? 'No products yet' : 'No services yet'}
             </p>
             {!search && (
-              <p className="text-sm text-gray-600 mt-2">Tap "+ Add New" above</p>
+              <p className="text-sm text-[#9B948E] mt-2">Tap "+ Add New" above</p>
             )}
           </div>
         ) : (
@@ -292,25 +266,23 @@ export default function ProductsPage() {
         <div className="pt-2 grid grid-cols-2 gap-3">
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center justify-center gap-2 py-3.5 rounded-2xl border border-white/10 bg-white/5 text-gray-300 font-semibold text-sm active:scale-[0.98] transition-transform hover:bg-white/10"
+            className="flex items-center justify-center gap-2 py-3.5 rounded-2xl border border-[#D5CFC6] bg-white text-[#6B6560] font-semibold text-sm active:scale-[0.98] transition-transform hover:bg-[#F5F0E8]"
           >
             <Upload size={17} /> Import CSV
           </button>
           <button
             onClick={handleExportCSV}
             disabled={products.length === 0}
-            className="flex items-center justify-center gap-2 py-3.5 rounded-2xl border border-white/10 bg-white/5 text-gray-300 font-semibold text-sm active:scale-[0.98] transition-transform hover:bg-white/10 disabled:opacity-40"
+            className="flex items-center justify-center gap-2 py-3.5 rounded-2xl border border-[#D5CFC6] bg-white text-[#6B6560] font-semibold text-sm active:scale-[0.98] transition-transform hover:bg-[#F5F0E8] disabled:opacity-40"
           >
             <FileDown size={17} /> Export CSV
           </button>
         </div>
 
-        {/* CSV format hint */}
-        <p className="text-xs text-gray-600 text-center">
-          CSV format: <span className="font-mono text-gray-500">name, price, unit, type, stock</span>
+        <p className="text-xs text-[#9B948E] text-center">
+          CSV format: <span className="font-mono text-[#6B6560]">name, price, unit, type, stock</span>
         </p>
 
-        {/* Hidden file input */}
         <input
           ref={fileInputRef}
           type="file"
@@ -323,28 +295,23 @@ export default function ProductsPage() {
       {/* Import preview modal */}
       {importRows && (
         <div className="fixed inset-0 z-50 flex items-end bg-black/60 backdrop-blur-sm">
-          <div className="w-full bg-[#111] border-t border-white/10 rounded-t-3xl max-h-[80vh] flex flex-col">
+          <div className="w-full bg-white border-t border-[#D5CFC6] rounded-t-3xl max-h-[80vh] flex flex-col">
 
-            {/* Modal header */}
-            <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-white/10 shrink-0">
+            <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-[#D5CFC6] shrink-0">
               <div>
-                <h2 className="text-lg font-bold text-white">Import Preview</h2>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  <span className="text-green-400 font-semibold">{validCount} valid</span>
+                <h2 className="text-lg font-bold text-[#1C1917]">Import Preview</h2>
+                <p className="text-sm text-[#6B6560] mt-0.5">
+                  <span className="text-[#4A7055] font-semibold">{validCount} valid</span>
                   {invalidCount > 0 && (
-                    <span> · <span className="text-red-400 font-semibold">{invalidCount} errors</span></span>
+                    <span> · <span className="text-red-500 font-semibold">{invalidCount} errors</span></span>
                   )}
                 </p>
               </div>
-              <button
-                onClick={() => setImportRows(null)}
-                className="p-2 rounded-xl bg-white/10 text-gray-400 hover:bg-white/20"
-              >
+              <button onClick={() => setImportRows(null)} className="p-2 rounded-xl bg-[#EDE8DF] text-[#6B6560] hover:bg-[#D5CFC6]">
                 <X size={20} />
               </button>
             </div>
 
-            {/* Row list */}
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
               {importRows.map(row => (
                 <div
@@ -352,28 +319,28 @@ export default function ProductsPage() {
                   className={`rounded-xl px-4 py-3 border text-sm ${
                     row.error
                       ? 'bg-red-500/10 border-red-500/20'
-                      : 'bg-green-500/10 border-green-500/20'
+                      : 'bg-[#4A7055]/10 border-[#4A7055]/20'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         {row.error
-                          ? <XCircle size={14} className="text-red-400 shrink-0" />
-                          : <CheckCircle size={14} className="text-green-400 shrink-0" />
+                          ? <XCircle size={14} className="text-red-500 shrink-0" />
+                          : <CheckCircle size={14} className="text-[#4A7055] shrink-0" />
                         }
-                        <p className={`font-semibold truncate ${row.error ? 'text-red-300' : 'text-white'}`}>
-                          {row.name || <span className="italic text-gray-500">(no name)</span>}
+                        <p className={`font-semibold truncate ${row.error ? 'text-red-600' : 'text-[#1C1917]'}`}>
+                          {row.name || <span className="italic text-[#9B948E]">(no name)</span>}
                         </p>
                       </div>
                       {!row.error && (
-                        <p className="text-xs text-gray-500 mt-1 ml-5">
+                        <p className="text-xs text-[#6B6560] mt-1 ml-5">
                           NPR {row.price} · {row.unit} · {row.type}
                           {row.type === 'product' && ` · stock: ${row.stock}`}
                         </p>
                       )}
                       {row.error && (
-                        <p className="text-xs text-red-400 mt-1 ml-5">Row {row.rowNum}: {row.error}</p>
+                        <p className="text-xs text-red-500 mt-1 ml-5">Row {row.rowNum}: {row.error}</p>
                       )}
                     </div>
                   </div>
@@ -381,20 +348,19 @@ export default function ProductsPage() {
               ))}
             </div>
 
-            {/* Actions */}
-            <div className="px-4 pb-6 pt-3 border-t border-white/10 shrink-0 space-y-2">
+            <div className="px-4 pb-6 pt-3 border-t border-[#D5CFC6] shrink-0 space-y-2">
               {validCount > 0 && (
                 <button
                   onClick={handleConfirmImport}
                   disabled={importing}
-                  className="w-full py-4 bg-gradient-to-r from-orange-600 to-red-600 rounded-2xl text-white font-bold text-base active:scale-[0.98] transition-all disabled:opacity-50"
+                  className="w-full py-4 bg-[#C84B2F] rounded-2xl text-white font-bold text-base active:scale-[0.98] transition-all disabled:opacity-50"
                 >
                   {importing ? 'Importing...' : `Import ${validCount} Product${validCount !== 1 ? 's' : ''}`}
                 </button>
               )}
               <button
                 onClick={() => setImportRows(null)}
-                className="w-full py-3.5 rounded-2xl border border-white/10 text-gray-400 font-semibold text-sm"
+                className="w-full py-3.5 rounded-2xl border border-[#D5CFC6] text-[#6B6560] font-semibold text-sm"
               >
                 Cancel
               </button>
@@ -407,29 +373,27 @@ export default function ProductsPage() {
   )
 }
 
-// ── sub-components ────────────────────────────────────────────────────────────
-
 function ProductCard({ product }: { product: Product }) {
   const unit = UNIT_LABELS[product.unit] ?? product.unit
 
   return (
     <Link href={`/products/${product.id}`}>
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between active:scale-[0.98] transition-transform">
+      <div className="bg-white border border-[#D5CFC6] rounded-2xl p-4 flex items-center justify-between active:scale-[0.98] transition-transform shadow-sm">
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="rounded-xl p-2.5 shrink-0 bg-blue-500/20">
-            <Package size={22} className="text-blue-400" />
+          <div className="rounded-xl p-2.5 shrink-0 bg-blue-500/15">
+            <Package size={22} className="text-blue-600" />
           </div>
           <div className="min-w-0">
-            <p className="text-base font-bold text-white truncate">{product.name}</p>
-            <p className="text-sm text-gray-500">NPR {Number(product.price).toLocaleString('ne-NP')} / {unit}</p>
+            <p className="text-base font-bold text-[#1C1917] truncate">{product.name}</p>
+            <p className="text-sm text-[#6B6560]">NPR {Number(product.price).toLocaleString('ne-NP')} / {unit}</p>
           </div>
         </div>
         <div className="text-right ml-3 shrink-0 flex items-center gap-2">
           <div>
-            <p className="text-xl font-bold text-white">{Number(product.stock).toLocaleString('ne-NP')}</p>
-            <p className="text-xs text-gray-500">{unit}</p>
+            <p className="text-xl font-bold text-[#1C1917]">{Number(product.stock).toLocaleString('ne-NP')}</p>
+            <p className="text-xs text-[#9B948E]">{unit}</p>
           </div>
-          <ChevronRight size={18} className="text-gray-600" />
+          <ChevronRight size={18} className="text-[#9B948E]" />
         </div>
       </div>
     </Link>
@@ -439,23 +403,23 @@ function ProductCard({ product }: { product: Product }) {
 function ServiceCard({ product }: { product: Product }) {
   return (
     <Link href={`/products/${product.id}`}>
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between active:scale-[0.98] transition-transform">
+      <div className="bg-white border border-[#D5CFC6] rounded-2xl p-4 flex items-center justify-between active:scale-[0.98] transition-transform shadow-sm">
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="rounded-xl p-2.5 shrink-0 bg-purple-500/20">
-            <Wrench size={22} className="text-purple-400" />
+          <div className="rounded-xl p-2.5 shrink-0 bg-purple-500/15">
+            <Wrench size={22} className="text-purple-600" />
           </div>
           <div className="min-w-0">
-            <p className="text-base font-bold text-white truncate">{product.name}</p>
-            <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full font-semibold">
+            <p className="text-base font-bold text-[#1C1917] truncate">{product.name}</p>
+            <span className="text-xs bg-purple-500/15 text-purple-600 px-2 py-0.5 rounded-full font-semibold">
               SERVICE
             </span>
           </div>
         </div>
         <div className="text-right ml-3 shrink-0 flex items-center gap-2">
-          <p className="text-xl font-bold text-purple-300">
+          <p className="text-xl font-bold text-purple-600">
             NPR {Number(product.price).toLocaleString('ne-NP')}
           </p>
-          <ChevronRight size={18} className="text-gray-600" />
+          <ChevronRight size={18} className="text-[#9B948E]" />
         </div>
       </div>
     </Link>
