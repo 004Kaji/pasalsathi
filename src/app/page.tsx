@@ -277,7 +277,7 @@ export default function LandingPage() {
                 )}
                 <div className="mb-4">
                   <span className={`text-xs font-bold px-3 py-1 rounded-full ${
-                    plan.popular ? 'bg-[#C84B2F]/10 text-[#C84B2F]' : 'bg-[#4A7055]/10 text-[#4A7055]'
+                    plan.popular ? 'bg-[#C84B2F]/10 text-[#A83D26]' : 'bg-[#4A7055]/10 text-[#4A7055]'
                   }`}>
                     {plan.nameNp}
                   </span>
