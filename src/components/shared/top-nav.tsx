@@ -3,20 +3,21 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, ShoppingCart, Users, Package, UserCheck, BarChart2, BarChart3 } from 'lucide-react'
+import { BarChart3 } from 'lucide-react'
 
 const BASE_ITEMS = [
-  { href: '/home',    icon: LayoutDashboard, label: 'Home'    },
-  { href: '/sell',    icon: ShoppingCart,    label: 'Sell'    },
-  { href: '/khata',   icon: Users,           label: 'Khata'   },
-  { href: '/staff',   icon: UserCheck,       label: 'Staff'   },
-  { href: '/reports', icon: BarChart2,       label: 'Reports' },
+  { href: '/home',     label: 'Home'     },
+  { href: '/sell',     label: 'Sell'     },
+  { href: '/khata',    label: 'Khata'    },
+  { href: '/staff',    label: 'Staff'    },
+  { href: '/reports',  label: 'Reports'  },
+  { href: '/settings', label: 'Settings' },
 ]
 
-const STOCK_ITEM = { href: '/products', icon: Package, label: 'Products' }
+const STOCK_ITEM = { href: '/products', label: 'Products' }
 
 export default function TopNav() {
-  const pathname = usePathname()
+  const pathname   = usePathname()
   const [trackStock, setTrackStock] = useState(true)
 
   useEffect(() => {
@@ -25,47 +26,43 @@ export default function TopNav() {
   }, [pathname])
 
   const NAV_ITEMS = trackStock
-    ? [BASE_ITEMS[0], BASE_ITEMS[1], BASE_ITEMS[2], STOCK_ITEM, BASE_ITEMS[3], BASE_ITEMS[4]]
+    ? [BASE_ITEMS[0], BASE_ITEMS[1], BASE_ITEMS[2], STOCK_ITEM, BASE_ITEMS[3], BASE_ITEMS[4], BASE_ITEMS[5]]
     : BASE_ITEMS
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-[#F5F0E8]/95 backdrop-blur-xl border-b border-[#D5CFC6]">
-      <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-[#1C1917]">
+      <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-6">
 
         {/* Logo */}
-        <Link href="/home" className="flex items-center gap-2 shrink-0">
-          <div className="w-8 h-8 bg-[#C84B2F] rounded-xl flex items-center justify-center">
-            <BarChart3 size={16} className="text-white" />
+        <Link href="/home" className="flex items-center gap-2 shrink-0 mr-2">
+          <div className="w-7 h-7 bg-[#C84B2F] rounded-lg flex items-center justify-center">
+            <BarChart3 size={14} className="text-white" />
           </div>
-          <span className="font-bold text-base text-[#1C1917] hidden sm:block">PasalSathi</span>
+          <span className="font-bold text-sm text-white hidden sm:block">PasalSathi</span>
         </Link>
 
-        {/* Desktop nav links — hidden on mobile (bottom nav handles it) */}
-        <nav className="hidden md:flex items-center gap-1">
-          {NAV_ITEMS.map(({ href, icon: Icon, label }) => {
+        {/* Desktop nav — hidden on mobile (bottom nav handles it) */}
+        <nav className="hidden md:flex items-center gap-1 flex-1">
+          {NAV_ITEMS.map(({ href, label }) => {
             const active = pathname === href || (href !== '/home' && pathname.startsWith(href))
             return (
               <Link
                 key={href}
                 href={href}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   active
-                    ? 'bg-[#C84B2F]/10 text-[#C84B2F]'
-                    : 'text-[#6B6560] hover:bg-[#EDE8DF] hover:text-[#1C1917]'
+                    ? 'bg-white/10 text-white'
+                    : 'text-white/55 hover:text-white/90 hover:bg-white/5'
                 }`}
               >
-                <Icon size={17} strokeWidth={active ? 2.5 : 1.8} />
                 {label}
               </Link>
             )
           })}
         </nav>
 
-        {/* Right side — mobile: page title placeholder; desktop: nothing needed */}
-        <div className="md:hidden">
-          {/* spacer to balance logo on mobile */}
-          <div className="w-8" />
-        </div>
+        {/* Mobile: spacer so logo stays left */}
+        <div className="flex-1 md:hidden" />
       </div>
     </header>
   )
