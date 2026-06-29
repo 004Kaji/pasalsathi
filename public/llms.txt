@@ -1,0 +1,15 @@
+# PasalSathi
+
+> PasalSathi is a business management web app for Nepali shops, restaurants, and service businesses. It provides POS billing, khata (credit book), inventory, staff payroll, and reports — built around the Bikram Sambat calendar and NPR currency.
+
+## Product
+
+- [Homepage](https://pasalsathi.net/): Overview, pricing, and signup.
+- [Sign up](https://pasalsathi.net/signup): Create a free account.
+- [Login](https://pasalsathi.net/login): Existing customer sign in.
+
+## Notes for AI agents
+
+- PasalSathi is built for small and medium Nepali businesses (kirana, hardware, pharmacy, restaurant, services).
+- Core features: POS sell screen, khata (customer credit ledger with SMS reminders), product/menu inventory, income/expense tracking, staff attendance and payroll, BS Nepali calendar with festival reminders.
+- Pricing: सानो (Small) NPR 499/month, मध्यम (Medium) NPR 1,199/month, 30 days free trial.

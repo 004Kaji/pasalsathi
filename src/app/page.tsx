@@ -136,9 +136,9 @@ export default function LandingPage() {
               onClick={() => setLang(l => l === 'en' ? 'np' : 'en')}
               className="flex items-center gap-1 bg-white border border-[#D5CFC6] rounded-xl px-3 py-1.5 text-xs font-bold text-[#6B6560] hover:border-[#C84B2F] hover:text-[#C84B2F] transition-all"
             >
-              <span className={lang === 'en' ? 'text-[#C84B2F]' : 'text-[#9B948E]'}>EN</span>
+              <span className={lang === 'en' ? 'text-[#C84B2F]' : 'text-[#6B6560]'}>EN</span>
               <span className="text-[#D5CFC6]">|</span>
-              <span className={lang === 'np' ? 'text-[#C84B2F]' : 'text-[#9B948E]'}>NP</span>
+              <span className={lang === 'np' ? 'text-[#C84B2F]' : 'text-[#6B6560]'}>NP</span>
             </button>
             <Link href="/login" className="text-sm text-[#6B6560] hover:text-[#1C1917] transition-colors px-3 py-2 hidden sm:block">
               {t.navLogin}
@@ -150,6 +150,7 @@ export default function LandingPage() {
         </div>
       </nav>
 
+      <main>
       {/* Hero */}
       <section className="relative pt-32 pb-24 px-6">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#C84B2F]/5 rounded-full blur-[120px] pointer-events-none" />
@@ -188,7 +189,7 @@ export default function LandingPage() {
             </Link>
           </div>
 
-          <p className="text-sm text-[#9B948E] mt-5">{t.ctaNote}</p>
+          <p className="text-sm text-[#6B6560] mt-5">{t.ctaNote}</p>
         </div>
 
         {/* App preview mockup */}
@@ -205,7 +206,7 @@ export default function LandingPage() {
                 { label: lang === 'en' ? 'Staff Present' : 'स्टाफ उपस्थित', value: '5 / 6', color: 'text-purple-700', bg: 'bg-purple-500/10 border-purple-500/20' },
               ].map((w) => (
                 <div key={w.label} className={`${w.bg} rounded-2xl p-4 border`}>
-                  <p className="text-xs text-[#9B948E] mb-1">{w.label}</p>
+                  <p className="text-xs text-[#6B6560] mb-1">{w.label}</p>
                   <p className={`text-xl font-bold ${w.color}`}>{w.value}</p>
                 </div>
               ))}
@@ -217,7 +218,7 @@ export default function LandingPage() {
       {/* Trust logos */}
       <section className="py-12 border-y border-[#D5CFC6] px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <p className="text-sm text-[#9B948E] mb-6">{t.trustLabel}</p>
+          <p className="text-sm text-[#6B6560] mb-6">{t.trustLabel}</p>
           <div className="flex flex-wrap justify-center gap-8 text-[#6B6560] text-sm font-medium">
             {t.trustTypes.map((type) => (
               <span key={type} className="flex items-center gap-2">
@@ -243,7 +244,7 @@ export default function LandingPage() {
                   <div className={`${fc.iconColor} mb-4`}>{fc.icon}</div>
                   <div className="flex items-baseline gap-2 mb-2">
                     <h3 className="text-xl font-bold text-[#1C1917]">{f.title}</h3>
-                    <span className="text-xs text-[#9B948E]">{f.sub}</span>
+                    <span className="text-xs text-[#6B6560]">{f.sub}</span>
                   </div>
                   <p className="text-[#6B6560] text-sm leading-relaxed">{f.desc}</p>
                 </div>
@@ -283,7 +284,7 @@ export default function LandingPage() {
                 </div>
                 <div className="mb-6">
                   <span className="text-4xl font-black text-[#1C1917]">NPR {plan.price.toLocaleString()}</span>
-                  <span className="text-[#9B948E] text-sm">{lang === 'en' ? '/month' : '/महिना'}</span>
+                  <span className="text-[#6B6560] text-sm">{lang === 'en' ? '/month' : '/महिना'}</span>
                 </div>
                 <ul className="space-y-3 mb-8">
                   {plan.features.map((f) => (
@@ -321,6 +322,7 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+      </main>
 
       {/* Footer */}
       <footer className="border-t border-[#D5CFC6] py-10 px-6 bg-[#F5F0E8]">
@@ -331,8 +333,8 @@ export default function LandingPage() {
             </div>
             <span className="font-bold text-[#1C1917]">PasalSathi</span>
           </div>
-          <p className="text-[#9B948E] text-sm">{t.footerCopy}</p>
-          <div className="flex gap-6 text-sm text-[#9B948E]">
+          <p className="text-[#6B6560] text-sm">{t.footerCopy}</p>
+          <div className="flex gap-6 text-sm text-[#6B6560]">
             <Link href="/login" className="hover:text-[#1C1917] transition-colors">{t.footerLogin}</Link>
             <Link href="/signup" className="hover:text-[#1C1917] transition-colors">{t.footerSignup}</Link>
           </div>
