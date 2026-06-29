@@ -158,15 +158,15 @@ export default function LandingPage() {
         <div className="relative max-w-5xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-white border border-[#D5CFC6] rounded-full px-4 py-1.5 text-sm text-[#6B6560] mb-8">
             <span className="w-2 h-2 rounded-full bg-[#4A7055] animate-pulse" />
-            {t.badge}
+            {T.np.badge}
           </div>
 
           <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-4 leading-[1.05]">
-            <span className="text-[#1C1917]">{t.heroTitle1}</span>
+            <span className="text-[#1C1917]">{T.np.heroTitle1}</span>
             <br />
-            <span className="text-[#C84B2F]">{t.heroTitle2}</span>
+            <span className="text-[#C84B2F]">{T.np.heroTitle2}</span>
             <br />
-            <span className="text-[#1C1917]">{t.heroTitle3}</span>
+            <span className="text-[#1C1917]">{T.np.heroTitle3}</span>
           </h1>
 
           <p className="text-2xl md:text-3xl font-bold text-[#4A7055] mb-6 tracking-wide">
@@ -174,7 +174,7 @@ export default function LandingPage() {
           </p>
 
           <p className="text-xl text-[#6B6560] max-w-2xl mx-auto mb-10 leading-relaxed">
-            {t.heroSub}
+            {T.np.heroSub}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
