@@ -1,197 +1,130 @@
-'use client'
+import { redirect } from 'next/navigation'
+import Link from 'next/link'
+import { createServerClient } from '@/lib/db/supabase-server'
+import { formatNPR } from '@/lib/utils/currency'
+import { TrendingUp, TrendingDown, Wallet, ChevronRight } from 'lucide-react'
+import SellClient from '@/components/sell/sell-client'
+import type { Transaction } from '@/lib/types/database'
 
-import { useState } from 'react'
-import { Trash2, WifiOff, RefreshCw } from 'lucide-react'
-import { formatBSFull } from '@/lib/utils/date'
-import { useSell } from '@/hooks/use-sell'
-import type { SaleResult } from '@/lib/types/app'
+const PM_EMOJI: Record<string, string> = {
+  cash: '💵', khata: '📒', esewa: '🟢', khalti: '🟣',
+}
+const PM_LABEL: Record<string, string> = {
+  cash: 'Cash', khata: 'Khata', esewa: 'eSewa', khalti: 'Khalti',
+}
 
-import ProductSearch   from '@/components/sell/product-search'
-import ProductGrid     from '@/components/sell/product-grid'
-import CartList        from '@/components/sell/cart-list'
-import CheckoutBar     from '@/components/sell/checkout-bar'
-import CustomItemSheet from '@/components/sell/custom-item-sheet'
-import CustomerPicker  from '@/components/sell/customer-picker'
-import SuccessScreen   from '@/components/sell/success-screen'
+export default async function SellPage() {
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
 
-export default function SellPage() {
-  const sell = useSell()
+  const { data: business } = await supabase
+    .from('businesses')
+    .select('id')
+    .eq('owner_id', user.id)
+    .single()
 
-  const [search,           setSearch]           = useState('')
-  const [showDropdown,     setShowDropdown]      = useState(false)
-  const [showCustom,       setShowCustom]        = useState(false)
-  const [customPrefill,    setCustomPrefill]     = useState('')
-  const [showCustomerList, setShowCustomerList]  = useState(false)
-  const [cashGiven,        setCashGiven]         = useState('')
-  const [saleResult,       setSaleResult]        = useState<SaleResult | null>(null)
+  if (!business) redirect('/home')
 
-  const bsDate = formatBSFull(new Date())
+  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
+  const todayEnd   = new Date(); todayEnd.setHours(23, 59, 59, 999)
 
-  const filteredProducts = sell.products.filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase())
-  )
+  const [{ data: todayTx }, { data: recentSales }] = await Promise.all([
+    supabase.from('transactions').select('type, amount')
+      .eq('business_id', business.id)
+      .gte('created_at', todayStart.toISOString())
+      .lte('created_at', todayEnd.toISOString()),
+    supabase.from('transactions').select('id, item_name, amount, payment_method, type')
+      .eq('business_id', business.id)
+      .eq('type', 'income')
+      .order('created_at', { ascending: false })
+      .limit(5),
+  ])
 
-  async function onCharge() {
-    const result = await sell.handleSell()
-    if (result) {
-      setSaleResult(result)
-      setCashGiven('')
-    }
-  }
-
-  function onNewSale() {
-    sell.clearCart()
-    setSaleResult(null)
-  }
-
-  if (sell.loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-[#F5F0E8]">
-        <p className="text-[#9B948E] text-lg">Loading POS...</p>
-      </div>
-    )
-  }
-
-  if (saleResult) {
-    return <SuccessScreen result={saleResult} onNewSale={onNewSale} />
-  }
-
-  const isCredit = sell.paymentMethod === 'khata'
+  const sales    = (todayTx ?? []).filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
+  const expenses = (todayTx ?? []).filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0)
+  const net      = sales - expenses
 
   return (
-    <div className={`min-h-screen bg-[#F5F0E8] ${sell.cart.length > 0 ? 'pb-[380px]' : 'pb-24'}`}>
+    <div>
+      {/* Today's Summary + Recent Sales */}
+      <div className="px-4 pt-6 pb-4 space-y-5">
 
-      {/* Sticky header */}
-      <div className="sticky top-0 bg-[#F5F0E8]/90 backdrop-blur-xl border-b border-[#D5CFC6] z-20 px-4 pt-4 pb-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-[#1C1917]">🏪 POS</h1>
-            <p className="text-xs text-[#9B948E] mt-0.5">{bsDate}</p>
+        {/* Summary card */}
+        <div className="bg-white border border-[#D5CFC6] rounded-2xl p-5 space-y-4 shadow-sm">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-[#9B948E]">Today&apos;s Summary</p>
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <TrendingUp size={16} className="text-[#4A7055]" />
+              <span className="text-sm text-[#6B6560] font-medium">Sales</span>
+            </div>
+            <span className="text-lg font-bold text-[#4A7055] font-mono">{formatNPR(sales)}</span>
           </div>
-          <div className="flex items-center gap-2">
-            {/* Pending offline sync badge */}
-            {sell.pendingCount > 0 && (
-              <div className="flex items-center gap-1.5 bg-amber-500/15 border border-amber-500/30 rounded-xl px-2.5 py-1.5">
-                {sell.syncing
-                  ? <RefreshCw size={13} className="text-amber-500 animate-spin" />
-                  : <WifiOff size={13} className="text-amber-500" />
-                }
-                <span className="text-amber-600 font-bold text-xs">
-                  {sell.syncing ? 'Syncing...' : `${sell.pendingCount} offline`}
-                </span>
-              </div>
-            )}
-            {sell.cart.length > 0 && (
-              <>
-                <div className="bg-[#C84B2F]/10 border border-[#C84B2F]/20 rounded-xl px-3 py-1.5">
-                  <span className="text-[#C84B2F] font-bold text-sm">
-                    {sell.cart.reduce((s, i) => s + i.qty, 0)} items
-                  </span>
-                </div>
-                <button
-                  onClick={sell.clearCart}
-                  className="p-2.5 rounded-xl bg-red-500/10 text-red-500 active:scale-95 transition-transform"
-                >
-                  <Trash2 size={18} />
-                </button>
-              </>
-            )}
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <TrendingDown size={16} className="text-[#C84B2F]" />
+              <span className="text-sm text-[#6B6560] font-medium">Expenses</span>
+            </div>
+            <span className="text-lg font-bold text-[#C84B2F] font-mono">{formatNPR(expenses)}</span>
           </div>
+
+          <div className="h-px bg-[#E0D9CE]" />
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Wallet size={16} className="text-[#1C1917]" />
+              <span className="text-sm text-[#6B6560] font-medium">Net</span>
+            </div>
+            <span className={`text-2xl font-black font-mono ${net >= 0 ? 'text-[#4A7055]' : 'text-[#C84B2F]'}`}>
+              {net >= 0 ? '+' : ''}{formatNPR(net)}
+            </span>
+          </div>
+        </div>
+
+        {/* Recent Sales */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-base font-bold text-[#1C1917]">Recent Sales</p>
+            <Link href="/hisab" className="text-sm text-[#C84B2F] font-medium flex items-center gap-0.5">
+              View All <ChevronRight size={15} />
+            </Link>
+          </div>
+
+          {(recentSales ?? []).length === 0 ? (
+            <div className="bg-white border border-[#D5CFC6] rounded-2xl p-6 text-center shadow-sm">
+              <p className="text-2xl mb-1">🏪</p>
+              <p className="text-[#6B6560] text-sm font-medium">No sales yet today</p>
+              <p className="text-[#9B948E] text-xs mt-0.5">Use the POS below to record your first sale</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {(recentSales as Transaction[]).map(tx => (
+                <Link key={tx.id} href={`/hisab/${tx.id}`}>
+                  <div className="bg-white border border-[#D5CFC6] rounded-2xl px-4 py-4 flex items-center justify-between active:scale-[0.99] transition-transform shadow-sm">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-[#1C1917] truncate">{tx.item_name}</p>
+                      <p className="text-xs text-[#9B948E] mt-0.5">
+                        {PM_EMOJI[tx.payment_method]} {PM_LABEL[tx.payment_method] ?? tx.payment_method}
+                      </p>
+                    </div>
+                    <p className="text-base font-bold text-[#4A7055] ml-3 shrink-0 font-mono">
+                      +{formatNPR(Number(tx.amount))}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="px-4 pt-4 space-y-4">
+      {/* Divider */}
+      <div className="h-px bg-[#D5CFC6] mx-4 mb-0" />
 
-        {/* Product search */}
-        <ProductSearch
-          search={search}
-          filteredProducts={filteredProducts}
-          showDropdown={showDropdown}
-          onSearchChange={setSearch}
-          onShowDropdown={setShowDropdown}
-          onSelectProduct={p => { sell.addToCart(p); setSearch(''); setShowDropdown(false) }}
-          onAddCustom={prefill => { setCustomPrefill(prefill); setShowCustom(true) }}
-        />
-
-        {/* Product grid — shown when not searching */}
-        {!search && (
-          <ProductGrid
-            products={sell.products}
-            cart={sell.cart}
-            onSelect={sell.addToCart}
-            onAddCustom={() => { setCustomPrefill(''); setShowCustom(true) }}
-          />
-        )}
-
-        {!search && sell.products.length === 0 && (
-          <p className="text-center py-8 text-[#9B948E] text-sm">
-            No products yet — go to Products tab to add items.
-          </p>
-        )}
-
-        {/* Cart + discount */}
-        {sell.cart.length > 0 && (
-          <CartList
-            cart={sell.cart}
-            discountPercent={sell.discountPercent}
-            onUpdateQty={sell.updateQty}
-            onUpdatePrice={sell.updatePrice}
-            onRemoveItem={sell.removeItem}
-            onDiscountChange={sell.setDiscountPercent}
-          />
-        )}
-
-        {/* Khata customer picker — credit only */}
-        {sell.cart.length > 0 && isCredit && (
-          <CustomerPicker
-            customers={sell.customers}
-            customerSearch={sell.customerName}
-            selectedCustomer={sell.selectedCustomer}
-            showList={showCustomerList}
-            onSearchChange={sell.setCustomerName}
-            onShowList={setShowCustomerList}
-            onSelect={sell.setSelectedCustomer}
-            onDeselect={() => sell.setSelectedCustomer(null)}
-            onCreateNew={sell.createAndSelectCustomer}
-          />
-        )}
-
-        {sell.error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
-            <p className="text-red-500 text-sm font-medium">{sell.error}</p>
-          </div>
-        )}
-      </div>
-
-      {/* Fixed checkout bar */}
-      {sell.cart.length > 0 && (
-        <CheckoutBar
-          cart={sell.cart}
-          discountPercent={sell.discountPercent}
-          paymentMethod={sell.paymentMethod}
-          customerName={sell.customerName}
-          cashGiven={cashGiven}
-          submitting={sell.submitting}
-          selectedCustomer={sell.selectedCustomer}
-          onPaymentMethodChange={m => {
-            sell.setPaymentMethod(m)
-            if (m !== 'khata') sell.setSelectedCustomer(null)
-            setCashGiven('')
-          }}
-          onCustomerNameChange={sell.setCustomerName}
-          onCashGivenChange={setCashGiven}
-          onCharge={onCharge}
-        />
-      )}
-
-      {/* Custom item bottom sheet */}
-      {showCustom && (
-        <CustomItemSheet
-          prefillName={customPrefill}
-          onAdd={sell.addCustomItem}
-          onClose={() => setShowCustom(false)}
-        />
-      )}
+      {/* POS client */}
+      <SellClient />
     </div>
   )
 }
