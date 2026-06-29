@@ -3,17 +3,20 @@
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/db/supabase'
-import { Plus, Search, MessageSquare, ChevronRight, Users } from 'lucide-react'
+import { Plus, Search, MessageSquare, ChevronRight, Users, Send } from 'lucide-react'
 import { PageSkeleton } from '@/components/ui/skeleton'
 import type { Customer } from '@/lib/types/database'
 
 export default function KhataPage() {
-  const [customers,  setCustomers]  = useState<Customer[]>([])
-  const [search,     setSearch]     = useState('')
-  const [loading,    setLoading]    = useState(true)
-  const [businessId, setBusinessId] = useState('')
-  const [smsLoading, setSmsLoading] = useState<string | null>(null)
-  const [smsMsg,     setSmsMsg]     = useState<{ id: string; text: string; ok: boolean } | null>(null)
+  const [customers,   setCustomers]   = useState<Customer[]>([])
+  const [search,      setSearch]      = useState('')
+  const [loading,     setLoading]     = useState(true)
+  const [businessId,  setBusinessId]  = useState('')
+  const [bizName,     setBizName]     = useState('')
+  const [smsLoading,  setSmsLoading]  = useState<string | null>(null)
+  const [smsMsg,      setSmsMsg]      = useState<{ id: string; text: string; ok: boolean } | null>(null)
+  const [bulkSending, setBulkSending] = useState(false)
+  const [bulkDone,    setBulkDone]    = useState(false)
 
   const fetchCustomers = useCallback(async () => {
     setLoading(true)
@@ -22,9 +25,10 @@ export default function KhataPage() {
     if (!user) return
 
     const { data: biz } = await supabase
-      .from('businesses').select('id').eq('owner_id', user.id).single()
+      .from('businesses').select('id, name').eq('owner_id', user.id).single()
     if (!biz) return
     setBusinessId(biz.id)
+    setBizName((biz as { id: string; name: string }).name ?? 'PasalSathi')
 
     const { data } = await supabase
       .from('customers')
@@ -47,6 +51,11 @@ export default function KhataPage() {
     (sum, c) => sum + Math.max(0, Number(c.balance)), 0
   )
 
+  function buildMessage(customer: Customer): string {
+    const amt = Number(customer.balance).toLocaleString('en-IN', { maximumFractionDigits: 0 })
+    return `नमस्ते ${customer.name} जी, तपाईंको NPR ${amt} उधारो बाँकी छ। कृपया भुक्तानी गर्नुहोस्। - ${bizName}`
+  }
+
   async function sendReminder(customer: Customer) {
     const outstanding = Number(customer.balance)
     if (!customer.phone || outstanding <= 0) return
@@ -54,16 +63,31 @@ export default function KhataPage() {
     setSmsLoading(customer.id)
     setSmsMsg(null)
 
-    const message = `Hello ${customer.name}, you have NPR ${outstanding.toLocaleString()} outstanding. Please make payment — PasalSathi`
     const res  = await fetch('/api/sms/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: customer.phone, message, businessId, customerId: customer.id }),
+      body: JSON.stringify({ phone: customer.phone, message: buildMessage(customer), businessId }),
     })
     const data = await res.json() as { error?: string }
     setSmsMsg({ id: customer.id, text: res.ok ? 'SMS sent ✓' : (data.error ?? 'Failed'), ok: res.ok })
     setSmsLoading(null)
     setTimeout(() => setSmsMsg(null), 3000)
+  }
+
+  async function sendAllReminders() {
+    const eligible = customers.filter(c => c.phone && Number(c.balance) > 0)
+    if (eligible.length === 0) return
+    setBulkSending(true)
+    for (const c of eligible) {
+      await fetch('/api/sms/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: c.phone, message: buildMessage(c), businessId }),
+      }).catch(() => {})
+    }
+    setBulkSending(false)
+    setBulkDone(true)
+    setTimeout(() => setBulkDone(false), 4000)
   }
 
   return (
@@ -129,7 +153,7 @@ export default function KhataPage() {
                     <div className="flex items-center gap-2 ml-3 shrink-0">
                       <div className="text-right">
                         <p className={`text-base font-bold ${isClear ? 'text-[#4A7055]' : 'text-red-500'}`}>
-                          NPR {outstanding.toLocaleString('ne-NP')}
+                          NPR {outstanding.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                         </p>
                         <p className="text-xs text-[#9B948E]">{isClear ? '🟢 Clear' : '🔴 Due'}</p>
                       </div>
@@ -168,9 +192,30 @@ export default function KhataPage() {
                 <p className="text-sm font-semibold text-[#6B6560]">Total Owed</p>
               </div>
               <p className="text-xl font-bold text-[#C84B2F]">
-                NPR {totalOutstanding.toLocaleString('ne-NP')}
+                NPR {totalOutstanding.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
               </p>
             </div>
+
+            {/* Bulk SMS reminders */}
+            {customers.some(c => c.phone && Number(c.balance) > 0) && (
+              <button
+                onClick={sendAllReminders}
+                disabled={bulkSending || bulkDone}
+                className={`w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-60 ${
+                  bulkDone
+                    ? 'bg-[#4A7055] text-white'
+                    : 'bg-[#4A7055]/10 border border-[#4A7055]/20 text-[#4A7055]'
+                }`}
+              >
+                <Send size={16} />
+                {bulkDone
+                  ? '✓ Reminders sent!'
+                  : bulkSending
+                  ? 'Sending reminders...'
+                  : `Send Reminders to All (${customers.filter(c => c.phone && Number(c.balance) > 0).length})`
+                }
+              </button>
+            )}
           </>
         )}
       </div>
