@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowRight, BarChart3, BookOpen, Package, Users, TrendingUp, CheckCircle, Star } from 'lucide-react'
+import { ArrowRight, Store, BarChart3, BookOpen, Package, Users, TrendingUp, CheckCircle, Star } from 'lucide-react'
 
 type Lang = 'en' | 'np'
 
@@ -116,7 +116,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 bg-[#C84B2F] rounded-lg flex items-center justify-center">
-              <BarChart3 size={16} className="text-white" />
+              <Store size={16} className="text-white" />
             </div>
             <span className="font-bold text-lg text-[#1C1917]">PasalSathi</span>
           </div>
@@ -327,7 +327,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 bg-[#C84B2F] rounded-lg flex items-center justify-center">
-              <BarChart3 size={14} className="text-white" />
+              <Store size={14} className="text-white" />
             </div>
             <span className="font-bold text-[#1C1917]">PasalSathi</span>
           </div>

@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { BarChart3, Settings } from 'lucide-react'
+import { Store, Settings } from 'lucide-react'
 
 const BASE_ITEMS = [
   { href: '/home',     label: 'Home'     },
@@ -36,7 +36,7 @@ export default function TopNav() {
         {/* Logo */}
         <Link href="/home" className="flex items-center gap-2 shrink-0 mr-2">
           <div className="w-7 h-7 bg-[#C84B2F] rounded-lg flex items-center justify-center">
-            <BarChart3 size={14} className="text-white" />
+            <Store size={14} className="text-white" />
           </div>
           <span className="font-bold text-sm text-white hidden sm:block">PasalSathi</span>
         </Link>
