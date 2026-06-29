@@ -34,6 +34,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     redirect('/home')
   }
 
+  // Generate referral code for existing businesses that don't have one yet
+  if (!business.referral_code) {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+    const refCode = Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+    await supabase.from('businesses').update({ referral_code: refCode }).eq('id', business.id)
+    business.referral_code = refCode
+  }
+
   const subStatus = getSubscriptionStatus(business as Business)
 
   return (
