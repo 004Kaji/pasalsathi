@@ -22,24 +22,26 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .eq('owner_id', user.id)
     .single()
 
+  const genRefCode = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+    return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+  }
+
   if (!business) {
     const defaultName = (user.email ?? 'My Business').split('@')[0].replace(/[._]/g, ' ')
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-    const refCode = Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
     await supabase.from('businesses').insert({
       owner_id:      user.id,
       name:          defaultName.charAt(0).toUpperCase() + defaultName.slice(1),
-      referral_code: refCode,
+      referral_code: genRefCode(),
     })
     redirect('/home')
   }
 
   // Generate referral code for existing businesses that don't have one yet
   if (!business.referral_code) {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-    const refCode = Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
-    await supabase.from('businesses').update({ referral_code: refCode }).eq('id', business.id)
-    business.referral_code = refCode
+    const refCode = genRefCode()
+    const { error } = await supabase.from('businesses').update({ referral_code: refCode }).eq('id', business.id)
+    if (!error) business.referral_code = refCode
   }
 
   const subStatus = getSubscriptionStatus(business as Business)

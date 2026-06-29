@@ -48,6 +48,7 @@ const T = {
     footerCopy: '© 2026 PasalSathi · Built for Nepali businesses',
     footerLogin: 'Login',
     footerSignup: 'Sign up',
+    tagline: 'Your shop, in your hands.',
     trustTypes: ['Kiryana', 'Hardware', 'Pharmacy', 'Clothing', 'Wholesale', 'Restaurant'],
   },
   np: {
@@ -91,6 +92,7 @@ const T = {
     footerCopy: '© 2026 PasalSathi · नेपाली व्यापारको लागि बनाइएको',
     footerLogin: 'लगइन',
     footerSignup: 'दर्ता',
+    tagline: 'आफ्नो पसल, आफ्नै हातमा।',
     trustTypes: ['किराना पसल', 'हार्डवेयर', 'फार्मेसी', 'कपडा पसल', 'थोक व्यापार', 'रेस्टुरेन्ट'],
   },
 }
@@ -170,7 +172,7 @@ export default function LandingPage() {
           </h1>
 
           <p className="text-2xl md:text-3xl font-bold text-[#4A7055] mb-6 tracking-wide">
-            आफ्नो पसल, आफ्नै हातमा।
+            {t.tagline}
           </p>
 
           <p className="text-xl text-[#6B6560] max-w-2xl mx-auto mb-10 leading-relaxed">

@@ -20,7 +20,7 @@ export default async function HomePage() {
   const { data: business } = await supabase
     .from('businesses').select('id, name, phone, address').eq('owner_id', user.id).single()
 
-  if (!business) redirect('/home')
+  if (!business) redirect('/')
 
   const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
   const todayEnd   = new Date(); todayEnd.setHours(23, 59, 59, 999)

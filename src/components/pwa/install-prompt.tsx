@@ -30,12 +30,13 @@ export default function InstallPrompt() {
       e.preventDefault()
       setDeferredPrompt(e as BeforeInstallPromptEvent)
     }
+    const onAppInstalled = () => { setDeferredPrompt(null); setDismissed(true) }
     window.addEventListener('beforeinstallprompt', onBeforeInstall)
-    window.addEventListener('appinstalled', () => {
-      setDeferredPrompt(null)
-      setDismissed(true)
-    })
-    return () => window.removeEventListener('beforeinstallprompt', onBeforeInstall)
+    window.addEventListener('appinstalled', onAppInstalled)
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onBeforeInstall)
+      window.removeEventListener('appinstalled', onAppInstalled)
+    }
   }, [])
 
   function dismiss() {

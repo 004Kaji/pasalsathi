@@ -27,7 +27,8 @@ export async function POST(request: NextRequest) {
     referrer_id: referrer.id,
     referee_id:  referee.id,
   })
-  if (error) return NextResponse.json({ ok: true }) // already claimed — ignore
+  if (error?.code === '23505') return NextResponse.json({ ok: true }) // already claimed
+  if (error) return NextResponse.json({ ok: false }, { status: 500 })
 
   // Give referrer +1 month
   await supabase.from('businesses')

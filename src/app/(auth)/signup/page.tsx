@@ -39,6 +39,7 @@ function SignupForm() {
   }, [refCode])
 
   async function handleGoogleSignup() {
+    if (refCode) localStorage.setItem('ps_ref', refCode.toUpperCase())
     const supabase = createClient()
     await supabase.auth.signInWithOAuth({
       provider: 'google',
