@@ -16,7 +16,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "PasalSathi — Nepali Business Management",
   description: "Invoicing, khata, payroll, inventory and POS for Nepali businesses",
-  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -42,9 +41,6 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <head>
-        <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
-      </head>
       <body className="min-h-full flex flex-col">{children}</body>
       <Script id="register-sw" strategy="afterInteractive">
         {`
