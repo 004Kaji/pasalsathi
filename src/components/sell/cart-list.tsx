@@ -133,41 +133,30 @@ export default function CartList({
       </div>
 
       {/* Discount row */}
-      <div className="flex items-center gap-2 bg-white border border-[#D5CFC6] rounded-2xl px-4 py-3 shadow-sm">
-        <Tag size={16} className="text-amber-500 shrink-0" />
-        <span className="text-sm font-semibold text-amber-600 shrink-0">Discount</span>
+      <div className="flex items-center gap-3 bg-white border border-[#D5CFC6] rounded-2xl px-4 py-3 shadow-sm">
+        <Tag size={15} className="text-amber-500 shrink-0" />
+        <span className="text-sm font-semibold text-[#1C1917] shrink-0">Discount</span>
 
-        <input
-          type="number"
-          min="0"
-          placeholder="0"
-          value={discountPercent}
-          onChange={e => onDiscountChange(e.target.value)}
-          className="w-16 bg-amber-500/10 border border-amber-500/30 rounded-xl px-2 py-1.5 text-amber-700 font-bold text-base text-center outline-none"
-        />
-
-        {/* % / NPR toggle */}
-        <div className="flex bg-amber-500/10 rounded-lg overflow-hidden border border-amber-500/20">
+        {/* Input + unit toggle as one pill */}
+        <div className="flex items-center bg-[#EDE8DF] rounded-xl overflow-hidden">
+          <input
+            type="number"
+            min="0"
+            placeholder="0"
+            value={discountPercent}
+            onChange={e => onDiscountChange(e.target.value)}
+            className="w-16 bg-transparent text-[#1C1917] font-bold text-base text-center outline-none px-2 py-1.5"
+          />
           <button
-            onClick={() => onDiscountTypeChange('percent')}
-            className={`px-2 py-1 text-xs font-bold transition-colors ${
-              discountType === 'percent' ? 'bg-amber-500 text-white' : 'text-amber-600'
-            }`}
+            onClick={() => onDiscountTypeChange(discountType === 'percent' ? 'amount' : 'percent')}
+            className="bg-[#C84B2F] text-white text-xs font-bold px-3 py-2.5 shrink-0 transition-colors"
           >
-            %
-          </button>
-          <button
-            onClick={() => onDiscountTypeChange('amount')}
-            className={`px-2 py-1 text-xs font-bold transition-colors ${
-              discountType === 'amount' ? 'bg-amber-500 text-white' : 'text-amber-600'
-            }`}
-          >
-            NPR
+            {discountType === 'percent' ? '%' : '₨'}
           </button>
         </div>
 
         {discVal > 0 && (
-          <p className="flex-1 text-right text-sm text-amber-600 font-semibold">
+          <p className="flex-1 text-right text-sm font-bold text-amber-600">
             − NPR {discountAmt.toLocaleString('ne-NP', { maximumFractionDigits: 0 })}
           </p>
         )}
