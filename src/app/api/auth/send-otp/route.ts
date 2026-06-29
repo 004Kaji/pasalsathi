@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/admin'
-import { normalizePhone, isValidNepaliPhone } from '@/lib/phone'
+import { createAdminClient } from '@/lib/db/supabase'
+import { normalizePhone, isValidNepaliPhone } from '@/lib/utils/phone'
 
 function generateOtp(): string {
   return Math.floor(100000 + Math.random() * 900000).toString()

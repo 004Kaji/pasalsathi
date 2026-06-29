@@ -43,5 +43,5 @@ export async function GET(request: NextRequest) {
     .eq('owner_id', user.id)
     .single()
 
-  return NextResponse.redirect(`${origin}${business ? '/dashboard' : '/onboarding'}`)
+  return NextResponse.redirect(`${origin}${business ? '/home' : '/onboarding'}`)
 }

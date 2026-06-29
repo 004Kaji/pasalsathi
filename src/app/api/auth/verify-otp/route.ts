@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/admin'
-import { normalizePhone, isValidNepaliPhone } from '@/lib/phone'
+import { createAdminClient } from '@/lib/db/supabase'
+import { normalizePhone, isValidNepaliPhone } from '@/lib/utils/phone'
 
 export async function POST(request: NextRequest) {
   const { phone, otp } = await request.json() as { phone: string; otp: string }
