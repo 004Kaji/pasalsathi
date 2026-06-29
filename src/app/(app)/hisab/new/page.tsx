@@ -1,13 +1,7 @@
 'use client'
-/**
- * hisab/new/page.tsx
- * Form to record a new income or expense transaction.
- * Columns match 004_clean_schema.sql: type, amount, item_name, payment_method.
- * No category, no discount, no transaction_date (created_at is auto-set by DB).
- */
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/db/supabase'
 import { ArrowLeft, TrendingUp, TrendingDown } from 'lucide-react'
 import type { PaymentMethod, TransactionType } from '@/lib/types/database'
@@ -23,10 +17,13 @@ const PAYMENT_METHODS: { value: PaymentMethod; label: string; emoji: string }[] 
 /** Quick-tap amount shortcuts */
 const QUICK_AMOUNTS = [100, 500, 1000, 5000] as const
 
-export default function NewTransactionPage() {
+function NewTransactionForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
 
-  const [transactionType, setTransactionType] = useState<TransactionType>('income')
+  const [transactionType, setTransactionType] = useState<TransactionType>(
+    searchParams.get('type') === 'expense' ? 'expense' : 'income'
+  )
   const [amount,          setAmount]          = useState('')
   const [itemName,        setItemName]        = useState('')
   const [paymentMethod,   setPaymentMethod]   = useState<PaymentMethod>('cash')
@@ -204,5 +201,13 @@ export default function NewTransactionPage() {
         </button>
       </form>
     </div>
+  )
+}
+
+export default function NewTransactionPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#0a0a0a]" />}>
+      <NewTransactionForm />
+    </Suspense>
   )
 }

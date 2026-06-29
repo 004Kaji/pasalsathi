@@ -39,6 +39,9 @@ export interface Business {
   name: string
   phone: string | null
   address: string | null
+  pan_number: string | null
+  vat_number: string | null
+  business_reg_number: string | null
   created_at: string
 }
 

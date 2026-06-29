@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/db/supabase'
 import { ArrowLeft, RotateCcw } from 'lucide-react'
+import { formatBSFull } from '@/lib/utils/date'
 import type { Transaction } from '@/lib/types/database'
 
 const PM_EMOJI: Record<string, string> = {
@@ -69,9 +70,10 @@ export default function ReturnPage() {
   }
 
   function formatTime(iso: string) {
-    return new Date(iso).toLocaleString('ne-NP', {
-      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
-    })
+    const d = new Date(iso)
+    const bsDate = formatBSFull(d)
+    const time = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+    return `${bsDate}, ${time}`
   }
 
   return (
@@ -126,7 +128,7 @@ export default function ReturnPage() {
               </div>
               <div className="flex items-center gap-3 ml-3 shrink-0">
                 <span className="text-base font-bold text-[#4A7055] font-mono">
-                  NPR {Number(tx.amount).toLocaleString('ne-NP')}
+                  NPR {Number(tx.amount).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                 </span>
                 <button
                   onClick={() => setConfirming(tx)}
@@ -141,7 +143,7 @@ export default function ReturnPage() {
             {confirming?.id === tx.id && (
               <div className="border-t border-[#D5CFC6] bg-red-500/5 px-4 py-3 flex items-center justify-between gap-3">
                 <p className="text-sm text-red-600 font-medium flex-1">
-                  Refund NPR {Number(tx.amount).toLocaleString('ne-NP')}?
+                  Refund NPR {Number(tx.amount).toLocaleString('en-IN', { maximumFractionDigits: 0 })}?
                 </p>
                 <div className="flex gap-2">
                   <button

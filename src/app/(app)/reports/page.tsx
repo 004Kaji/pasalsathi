@@ -32,8 +32,9 @@ function getDateRange(period: Period, customFrom: string, customTo: string): { s
 }
 
 function fmtNPR(n: number) {
-  return `NPR ${n.toLocaleString('ne-NP', { maximumFractionDigits: 0 })}`
+  return `NPR ${n.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
 }
+
 
 export default function ReportsPage() {
   const [period,     setPeriod]     = useState<Period>('today')

@@ -8,18 +8,10 @@ import { createClient } from '@/lib/db/supabase'
 export default function LoginPage() {
   const router = useRouter()
 
-  const [phone, setPhone]           = useState('')
-  const [otp, setOtp]               = useState('')
-  const [otpSent, setOtpSent]       = useState(false)
-  const [phoneLoading, setPhoneLoading] = useState(false)
-  const [phoneError, setPhoneError] = useState('')
-
   const [email, setEmail]           = useState('')
   const [password, setPassword]     = useState('')
   const [emailLoading, setEmailLoading] = useState(false)
   const [emailError, setEmailError] = useState('')
-
-  const [tab, setTab] = useState<'phone' | 'email'>('phone')
 
   async function handleGoogleLogin() {
     const supabase = createClient()
@@ -27,33 +19,6 @@ export default function LoginPage() {
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/auth/callback` },
     })
-  }
-
-  async function handleSendOtp() {
-    setPhoneError(''); setPhoneLoading(true)
-    const res = await fetch('/api/auth/send-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone }),
-    })
-    const data = await res.json() as { error?: string }
-    if (!res.ok) { setPhoneError(data.error ?? 'Error sending OTP'); setPhoneLoading(false); return }
-    setOtpSent(true); setPhoneLoading(false)
-  }
-
-  async function handleVerifyOtp() {
-    setPhoneError(''); setPhoneLoading(true)
-    const res = await fetch('/api/auth/verify-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone, otp }),
-    })
-    const data = await res.json() as { hashed_token?: string; error?: string }
-    if (!res.ok || !data.hashed_token) { setPhoneError(data.error ?? 'Incorrect OTP'); setPhoneLoading(false); return }
-    const supabase = createClient()
-    const { error } = await supabase.auth.verifyOtp({ token_hash: data.hashed_token, type: 'magiclink' })
-    if (error) { setPhoneError('Login failed. Try again.'); setPhoneLoading(false); return }
-    router.push('/home'); router.refresh()
   }
 
   async function handleEmailLogin(e: React.FormEvent) {
@@ -103,84 +68,26 @@ export default function LoginPage() {
             <div className="flex-1 h-px bg-[#E0D9CE]" />
           </div>
 
-          {/* Tab switcher */}
-          <div className="flex bg-[#F5F0E8] rounded-xl p-1">
-            {(['phone', 'email'] as const).map(t => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
-                  tab === t ? 'bg-white shadow-sm text-[#1C1917]' : 'text-[#6B6560]'
-                }`}
-              >
-                {t === 'phone' ? '📱 Phone' : '✉️ Email'}
-              </button>
-            ))}
-          </div>
-
-          {/* Phone tab */}
-          {tab === 'phone' && (
-            <div className="space-y-3">
-              {!otpSent ? (
-                <>
-                  <div>
-                    <label className="text-xs font-semibold text-[#6B6560] block mb-1.5">Phone Number</label>
-                    <div className="flex gap-2">
-                      <span className="flex items-center px-3 bg-[#EDE8DF] border border-[#D5CFC6] rounded-xl text-sm text-[#6B6560] whitespace-nowrap font-mono">
-                        +977
-                      </span>
-                      <input type="tel" placeholder="98XXXXXXXX" value={phone}
-                        onChange={e => setPhone(e.target.value)} maxLength={10} className={inp} />
-                    </div>
-                  </div>
-                  {phoneError && <p className="text-sm text-[#C84B2F]">{phoneError}</p>}
-                  <button onClick={handleSendOtp} disabled={phoneLoading || phone.length < 10} className={btn}>
-                    {phoneLoading ? 'Sending...' : 'Send OTP'}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <p className="text-sm text-[#6B6560] text-center">OTP sent to <span className="font-semibold text-[#1C1917]">+977 {phone}</span></p>
-                  <div>
-                    <label className="text-xs font-semibold text-[#6B6560] block mb-1.5">OTP Code</label>
-                    <input type="number" placeholder="6-digit code" value={otp}
-                      onChange={e => setOtp(e.target.value)} className={inp + ' text-center text-xl tracking-widest font-mono'} />
-                  </div>
-                  {phoneError && <p className="text-sm text-[#C84B2F]">{phoneError}</p>}
-                  <button onClick={handleVerifyOtp} disabled={phoneLoading || otp.length < 6} className={btn}>
-                    {phoneLoading ? 'Verifying...' : 'Login'}
-                  </button>
-                  <button type="button" onClick={() => { setOtpSent(false); setOtp(''); setPhoneError('') }}
-                    className="w-full text-sm text-[#6B6560] hover:text-[#1C1917]">
-                    Change number
-                  </button>
-                </>
-              )}
+          {/* Email form */}
+          <form onSubmit={handleEmailLogin} className="space-y-3">
+            <div>
+              <label className="text-xs font-semibold text-[#6B6560] block mb-1.5">Email</label>
+              <input type="email" placeholder="your@email.com" value={email}
+                onChange={e => setEmail(e.target.value)} required className={inp} />
             </div>
-          )}
-
-          {/* Email tab */}
-          {tab === 'email' && (
-            <form onSubmit={handleEmailLogin} className="space-y-3">
-              <div>
-                <label className="text-xs font-semibold text-[#6B6560] block mb-1.5">Email</label>
-                <input type="email" placeholder="your@email.com" value={email}
-                  onChange={e => setEmail(e.target.value)} required className={inp} />
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-semibold text-[#6B6560]">Password</label>
+                <Link href="/forgot-password" className="text-xs text-[#C84B2F] hover:underline">Forgot?</Link>
               </div>
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-semibold text-[#6B6560]">Password</label>
-                  <Link href="/forgot-password" className="text-xs text-[#C84B2F] hover:underline">Forgot?</Link>
-                </div>
-                <input type="password" placeholder="Password" value={password}
-                  onChange={e => setPassword(e.target.value)} required className={inp} />
-              </div>
-              {emailError && <p className="text-sm text-[#C84B2F]">{emailError}</p>}
-              <button type="submit" disabled={emailLoading} className={btn}>
-                {emailLoading ? 'Signing in...' : 'Sign In'}
-              </button>
-            </form>
-          )}
+              <input type="password" placeholder="Password" value={password}
+                onChange={e => setPassword(e.target.value)} required className={inp} />
+            </div>
+            {emailError && <p className="text-sm text-[#C84B2F]">{emailError}</p>}
+            <button type="submit" disabled={emailLoading} className={btn}>
+              {emailLoading ? 'Signing in...' : 'Sign In'}
+            </button>
+          </form>
 
         </div>
 

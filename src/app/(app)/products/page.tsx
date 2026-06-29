@@ -212,7 +212,7 @@ export default function ProductsPage() {
                 <p className="text-sm font-medium text-[#4A7055]">Stock Value</p>
               </div>
               <p className="text-xl font-bold text-[#4A7055]">
-                NPR {totalValue.toLocaleString('ne-NP')}
+                NPR {totalValue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
               </p>
             </div>
           </div>
@@ -385,12 +385,12 @@ function ProductCard({ product }: { product: Product }) {
           </div>
           <div className="min-w-0">
             <p className="text-base font-bold text-[#1C1917] truncate">{product.name}</p>
-            <p className="text-sm text-[#6B6560]">NPR {Number(product.price).toLocaleString('ne-NP')} / {unit}</p>
+            <p className="text-sm text-[#6B6560]">NPR {Number(product.price).toLocaleString('en-IN', { maximumFractionDigits: 0 })} / {unit}</p>
           </div>
         </div>
         <div className="text-right ml-3 shrink-0 flex items-center gap-2">
           <div>
-            <p className="text-xl font-bold text-[#1C1917]">{Number(product.stock).toLocaleString('ne-NP')}</p>
+            <p className="text-xl font-bold text-[#1C1917]">{Number(product.stock).toLocaleString('en-IN', { maximumFractionDigits: 0 })}</p>
             <p className="text-xs text-[#9B948E]">{unit}</p>
           </div>
           <ChevronRight size={18} className="text-[#9B948E]" />
@@ -417,7 +417,7 @@ function ServiceCard({ product }: { product: Product }) {
         </div>
         <div className="text-right ml-3 shrink-0 flex items-center gap-2">
           <p className="text-xl font-bold text-purple-600">
-            NPR {Number(product.price).toLocaleString('ne-NP')}
+            NPR {Number(product.price).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
           </p>
           <ChevronRight size={18} className="text-[#9B948E]" />
         </div>

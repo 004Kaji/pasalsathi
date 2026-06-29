@@ -25,9 +25,12 @@ export default function SettingsPage() {
   const [tab,        setTab]        = useState<Tab>('business')
   const [business,   setBusiness]   = useState<Business | null>(null)
   const [userEmail,  setUserEmail]  = useState('')
-  const [name,       setName]       = useState('')
-  const [phone,      setPhone]      = useState('')
-  const [address,    setAddress]    = useState('')
+  const [name,              setName]              = useState('')
+  const [phone,             setPhone]             = useState('')
+  const [address,           setAddress]           = useState('')
+  const [panNumber,         setPanNumber]         = useState('')
+  const [vatNumber,         setVatNumber]         = useState('')
+  const [businessRegNumber, setBusinessRegNumber] = useState('')
   const [loading,    setLoading]    = useState(true)
   const [saving,     setSaving]     = useState(false)
   const [saved,      setSaved]      = useState(false)
@@ -43,7 +46,13 @@ export default function SettingsPage() {
       const { data: biz } = await supabase.from('businesses').select('*').eq('owner_id', user.id).single()
       if (biz) {
         const b = biz as Business
-        setBusiness(b); setName(b.name); setPhone(b.phone ?? ''); setAddress(b.address ?? '')
+        setBusiness(b)
+        setName(b.name)
+        setPhone(b.phone ?? '')
+        setAddress(b.address ?? '')
+        setPanNumber(b.pan_number ?? '')
+        setVatNumber(b.vat_number ?? '')
+        setBusinessRegNumber(b.business_reg_number ?? '')
       }
       setLoading(false)
     }
@@ -56,7 +65,12 @@ export default function SettingsPage() {
     setSaving(true)
     const supabase = createClient()
     const { error } = await supabase.from('businesses').update({
-      name: name.trim(), phone: phone.trim() || null, address: address.trim() || null,
+      name: name.trim(),
+      phone: phone.trim() || null,
+      address: address.trim() || null,
+      pan_number: panNumber.trim() || null,
+      vat_number: vatNumber.trim() || null,
+      business_reg_number: businessRegNumber.trim() || null,
     }).eq('id', business.id)
     if (error) { setSaving(false); alert('Save failed: ' + error.message); return }
     setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000)
@@ -152,6 +166,23 @@ export default function SettingsPage() {
                 <input placeholder="New Road, Kathmandu" value={address} onChange={e => setAddress(e.target.value)} className={inp} />
               </div>
             </div>
+
+            <div className="bg-white border border-[#D5CFC6] rounded-2xl p-5 space-y-4 shadow-sm">
+              <p className="text-xs font-bold text-[#9B948E] uppercase tracking-widest">Tax &amp; Registration (Optional)</p>
+              <div>
+                <label className="text-xs font-semibold text-[#6B6560] block mb-1.5">PAN Number</label>
+                <input placeholder="9-digit PAN number" value={panNumber} onChange={e => setPanNumber(e.target.value)} className={inp} maxLength={9} />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-[#6B6560] block mb-1.5">VAT Number</label>
+                <input placeholder="VAT registration number" value={vatNumber} onChange={e => setVatNumber(e.target.value)} className={inp} />
+                <p className="text-xs text-[#9B948E] mt-1">13% VAT will be added to receipts when this is set</p>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-[#6B6560] block mb-1.5">Business Registration No.</label>
+                <input placeholder="Company reg number" value={businessRegNumber} onChange={e => setBusinessRegNumber(e.target.value)} className={inp} />
+              </div>
+            </div>
             <button
               type="submit"
               disabled={saving}
@@ -187,12 +218,78 @@ export default function SettingsPage() {
 
         {/* SUBSCRIPTION */}
         {tab === 'subscription' && (
-          <div className="bg-white border border-[#D5CFC6] rounded-2xl p-8 text-center shadow-sm">
-            <div className="w-14 h-14 bg-[#C84B2F]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <CreditCard size={28} className="text-[#C84B2F]" />
+          <div className="space-y-4">
+
+            {/* Current plan */}
+            <div className="bg-[#4A7055]/10 border border-[#4A7055]/20 rounded-2xl px-5 py-4 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold text-[#4A7055] uppercase tracking-widest mb-1">Current Plan</p>
+                <p className="text-lg font-bold text-[#1C1917]">Free</p>
+                <p className="text-xs text-[#9B948E] mt-0.5">Unlimited during beta period</p>
+              </div>
+              <div className="w-10 h-10 bg-[#4A7055]/15 rounded-xl flex items-center justify-center">
+                <CreditCard size={20} className="text-[#4A7055]" />
+              </div>
             </div>
-            <h2 className="text-lg font-bold text-[#1C1917] mb-1">Subscription</h2>
-            <p className="text-sm text-[#9B948E]">Billing and plan management coming soon.</p>
+
+            {/* Plan cards */}
+            {[
+              {
+                key: 'sano', nameNp: 'सानो', nameEn: 'Sano', price: 499, popular: false,
+                features: ['Up to 2 staff', '50 customers', '100 products', '20 SMS/month', 'Basic reports'],
+              },
+              {
+                key: 'madhyam', nameNp: 'मध्यम', nameEn: 'Madhyam', price: 1199, popular: true,
+                features: ['Up to 10 staff', '300 customers', '500 products', '100 SMS/month', 'PDF reports'],
+              },
+            ].map(plan => (
+              <div key={plan.key} className={`relative bg-white border rounded-2xl p-5 shadow-sm ${
+                plan.popular ? 'border-[#C84B2F]/30 ring-1 ring-[#C84B2F]/20' : 'border-[#D5CFC6]'
+              }`}>
+                {plan.popular && (
+                  <div className="absolute -top-3 left-5 bg-[#C84B2F] text-white text-[10px] font-bold px-3 py-0.5 rounded-full">
+                    Most Popular
+                  </div>
+                )}
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+                      plan.popular ? 'bg-[#C84B2F]/10 text-[#C84B2F]' : 'bg-[#4A7055]/10 text-[#4A7055]'
+                    }`}>{plan.nameNp}</span>
+                    <p className="text-2xl font-black text-[#1C1917] mt-2">
+                      NPR {plan.price.toLocaleString('en-IN')}
+                      <span className="text-sm font-normal text-[#9B948E]">/mo</span>
+                    </p>
+                  </div>
+                </div>
+                <ul className="space-y-2 mb-4">
+                  {plan.features.map(f => (
+                    <li key={f} className="flex items-center gap-2 text-sm text-[#6B6560]">
+                      <span className="w-4 h-4 rounded-full bg-[#4A7055]/15 flex items-center justify-center shrink-0">
+                        <span className="text-[#4A7055] text-[10px] font-bold">✓</span>
+                      </span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  onClick={() => {
+                    window.open(`mailto:pasalsathi@gmail.com?subject=Upgrade to ${plan.nameEn} Plan&body=Hi, I want to upgrade to the ${plan.nameEn} plan (NPR ${plan.price}/month). My business: ${business?.name ?? ''}`, '_blank')
+                  }}
+                  className={`w-full py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.98] ${
+                    plan.popular
+                      ? 'bg-[#C84B2F] text-white hover:opacity-90'
+                      : 'bg-[#F5F0E8] text-[#1C1917] hover:bg-[#EDE8DF] border border-[#D5CFC6]'
+                  }`}
+                >
+                  Upgrade to {plan.nameNp}
+                </button>
+              </div>
+            ))}
+
+            <p className="text-xs text-center text-[#9B948E] px-2">
+              Online payment (Khalti / eSewa) coming soon. For now, tap Upgrade to contact us.
+            </p>
           </div>
         )}
 

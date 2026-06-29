@@ -137,7 +137,7 @@ export default function CheckoutBar({
                   <p className="text-sm font-bold text-amber-300">{selectedCustomer.name}</p>
                   {Number(selectedCustomer.balance) > 0 && (
                     <p className="text-xs text-amber-400/70">
-                      Outstanding: NPR {Number(selectedCustomer.balance).toLocaleString('ne-NP')}
+                      Outstanding: NPR {Number(selectedCustomer.balance).toLocaleString('en-IN')}
                     </p>
                   )}
                 </div>
@@ -178,7 +178,7 @@ export default function CheckoutBar({
                         <span className="text-sm font-semibold text-white">{c.name}</span>
                         {Number(c.balance) > 0 && (
                           <span className="text-xs text-amber-400 ml-2 shrink-0">
-                            NPR {Number(c.balance).toLocaleString('ne-NP')}
+                            NPR {Number(c.balance).toLocaleString('en-IN')}
                           </span>
                         )}
                       </button>
@@ -224,7 +224,7 @@ export default function CheckoutBar({
           </div>
           {discountVal > 0 && (
             <p className="flex-1 text-right text-sm font-bold text-amber-400">
-              − NPR {discountAmount.toLocaleString('ne-NP', { maximumFractionDigits: 0 })}
+              − NPR {discountAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
             </p>
           )}
         </div>
@@ -265,7 +265,7 @@ export default function CheckoutBar({
               />
               {splitAmt > 0 && splitAmt < total && (
                 <span className="text-xs text-white/50">
-                  {PAYMENT_METHODS.find(p => p.value === paymentMethod)?.label}: NPR {(total - splitAmt).toLocaleString('ne-NP', { maximumFractionDigits: 0 })}
+                  {PAYMENT_METHODS.find(p => p.value === paymentMethod)?.label}: NPR {(total - splitAmt).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                 </span>
               )}
             </div>
@@ -296,7 +296,7 @@ export default function CheckoutBar({
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2 bg-white/10 border border-white/15 rounded-xl px-3 py-2.5 flex-1 min-w-0">
               <Calculator size={15} className="text-white/40 shrink-0" />
-              <span className="text-white/40 text-sm shrink-0">Give Rs.</span>
+              <span className="text-white/40 text-sm shrink-0">Received</span>
               <input
                 type="number"
                 inputMode="numeric"
@@ -310,7 +310,7 @@ export default function CheckoutBar({
               <div className="bg-green-500/20 border border-green-500/25 rounded-xl px-4 py-1.5 text-center shrink-0">
                 <p className="text-[10px] text-green-400/70 uppercase tracking-wide">Change</p>
                 <p className="text-lg font-bold text-green-400 leading-tight">
-                  NPR {change.toLocaleString('ne-NP', { maximumFractionDigits: 0 })}
+                  NPR {change.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                 </p>
               </div>
             )}
@@ -318,7 +318,7 @@ export default function CheckoutBar({
               <div className="bg-red-500/20 border border-red-500/25 rounded-xl px-4 py-1.5 text-center shrink-0">
                 <p className="text-[10px] text-red-400/70 uppercase tracking-wide">Short</p>
                 <p className="text-lg font-bold text-red-400 leading-tight">
-                  NPR {Math.abs(change).toLocaleString('ne-NP', { maximumFractionDigits: 0 })}
+                  NPR {Math.abs(change).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                 </p>
               </div>
             )}
@@ -330,11 +330,11 @@ export default function CheckoutBar({
           <div className="shrink-0">
             {discountVal > 0 && (
               <p className="text-xs text-white/30 line-through leading-none">
-                NPR {subtotal.toLocaleString('ne-NP', { maximumFractionDigits: 0 })}
+                NPR {subtotal.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
               </p>
             )}
             <p className="text-3xl font-black text-white leading-tight">
-              NPR {total.toLocaleString('ne-NP', { maximumFractionDigits: 0 })}
+              NPR {total.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
             </p>
             {discountVal > 0 && (
               <p className="text-xs text-amber-400 leading-none">
@@ -343,7 +343,7 @@ export default function CheckoutBar({
             )}
             {splitEnabled && splitAmt > 0 && (
               <p className="text-[10px] text-purple-400 leading-none mt-0.5">
-                {PAYMENT_METHODS.find(p => p.value === paymentMethod)?.label} {primaryAmt.toLocaleString('ne-NP', { maximumFractionDigits: 0 })} + {SPLIT_METHODS.find(p => p.value === splitMethod)?.label} {splitAmt.toLocaleString('ne-NP', { maximumFractionDigits: 0 })}
+                {PAYMENT_METHODS.find(p => p.value === paymentMethod)?.label} {primaryAmt.toLocaleString('en-IN', { maximumFractionDigits: 0 })} + {SPLIT_METHODS.find(p => p.value === splitMethod)?.label} {splitAmt.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
               </p>
             )}
           </div>
