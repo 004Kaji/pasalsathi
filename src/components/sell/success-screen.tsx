@@ -1,8 +1,12 @@
 'use client'
 
-import { CheckCircle, WifiOff } from 'lucide-react'
+import { CheckCircle, WifiOff, MessageCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import type { SaleResult } from '@/lib/types/app'
+
+const METHOD_LABELS: Record<string, string> = {
+  cash: 'Cash', khata: 'Khata', esewa: 'eSewa', khalti: 'Khalti', fonepay: 'FonePay',
+}
 
 interface Props {
   result:    SaleResult
@@ -11,8 +15,26 @@ interface Props {
 
 export default function SuccessScreen({ result, onNewSale }: Props) {
   const router = useRouter()
-  const { total, items, discountPercent, paymentMethod, customer, offline } = result
+  const { total, items, discountPercent, discountType, paymentMethod, customer, offline, splitMethod, splitAmount } = result
   const hadCatalog = items.some(i => !i.isQuick)
+
+  function shareWhatsApp() {
+    const lines = [
+      '🧾 Receipt',
+      '',
+      ...items.map(i => `${i.name} ×${i.qty}  NPR ${(i.qty * i.unitPrice).toLocaleString()}`),
+      '',
+      discountPercent > 0
+        ? `Discount: ${discountType === 'amount' ? `NPR ${discountPercent} off` : `${discountPercent}%`}`
+        : '',
+      `Total: NPR ${total.toLocaleString()}`,
+      splitMethod && splitAmount
+        ? `(${METHOD_LABELS[paymentMethod]} NPR ${(total - splitAmount).toLocaleString()} + ${METHOD_LABELS[splitMethod]} NPR ${splitAmount.toLocaleString()})`
+        : `Payment: ${METHOD_LABELS[paymentMethod]}`,
+    ].filter(l => l !== undefined && l !== null && (l !== '')).join('\n')
+
+    window.open(`https://wa.me/?text=${encodeURIComponent(lines)}`, '_blank')
+  }
 
   return (
     <div className="min-h-screen bg-[#F5F0E8] flex flex-col items-center justify-center px-6 text-center">
@@ -27,24 +49,27 @@ export default function SuccessScreen({ result, onNewSale }: Props) {
         }
       </div>
 
-      {/* Title */}
       <h1 className="text-3xl font-bold text-[#1C1917] mb-1">
         {offline ? 'Saved Offline' : 'Sale Complete!'}
       </h1>
 
-      {/* Offline notice */}
       {offline && (
         <p className="text-sm text-amber-600 mb-3 max-w-xs">
           No internet right now. Sale is queued and will sync automatically when you&apos;re back online.
         </p>
       )}
 
-      {/* Total */}
       <p className={`text-5xl font-bold mb-3 ${offline ? 'text-amber-600' : 'text-[#4A7055]'}`}>
         NPR {total.toLocaleString('ne-NP', { maximumFractionDigits: 2 })}
       </p>
 
-      {/* Items */}
+      {/* Split info */}
+      {splitMethod && splitAmount && (
+        <p className="text-sm text-purple-600 mb-2 font-medium">
+          {METHOD_LABELS[paymentMethod]} NPR {(total - splitAmount).toLocaleString()} + {METHOD_LABELS[splitMethod]} NPR {splitAmount.toLocaleString()}
+        </p>
+      )}
+
       <div className="space-y-1 text-sm text-[#6B6560] mb-3">
         {items.map(i => (
           <p key={i.id}>{i.name} × {i.qty} — NPR {(i.qty * i.unitPrice).toLocaleString('ne-NP')}</p>
@@ -52,7 +77,9 @@ export default function SuccessScreen({ result, onNewSale }: Props) {
       </div>
 
       {discountPercent > 0 && (
-        <p className="text-amber-600 text-sm mb-2">{discountPercent}% discount applied</p>
+        <p className="text-amber-600 text-sm mb-2">
+          {discountType === 'amount' ? `NPR ${discountPercent} discount` : `${discountPercent}% discount`} applied
+        </p>
       )}
 
       {paymentMethod === 'khata' && customer && (
@@ -63,12 +90,23 @@ export default function SuccessScreen({ result, onNewSale }: Props) {
         </div>
       )}
 
-      <p className="text-[#9B948E] text-xs mt-3 mb-8">
+      <p className="text-[#9B948E] text-xs mt-3 mb-6">
         {offline
           ? '⏳ Will sync when online'
           : `Ledger saved${hadCatalog ? ' · Stock updated' : ''}${paymentMethod === 'khata' ? ' · Khata updated' : ''}`
         }
       </p>
+
+      {/* WhatsApp share */}
+      {!offline && (
+        <button
+          onClick={shareWhatsApp}
+          className="flex items-center gap-2 mb-4 px-5 py-2.5 bg-green-500/10 border border-green-500/20 rounded-2xl text-green-700 font-semibold text-sm active:scale-95"
+        >
+          <MessageCircle size={16} />
+          Share Receipt on WhatsApp
+        </button>
+      )}
 
       <div className="flex gap-3 w-full max-w-xs">
         <button

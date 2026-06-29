@@ -41,9 +41,11 @@ export interface PaymentMethodOption {
 export interface SaleResult {
   total: number
   discountPercent: number
+  discountType: 'percent' | 'amount'
   items: CartItem[]
   paymentMethod: PaymentMethod
   customer: Customer | null
-  /** True when saved to IndexedDB because device was offline at checkout time */
+  splitMethod?: PaymentMethod
+  splitAmount?: number
   offline?: boolean
 }

@@ -1,8 +1,11 @@
 'use client'
 
-import { Plus } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Plus, Star } from 'lucide-react'
 import type { Product } from '@/lib/types/database'
 import type { CartItem } from '@/lib/types/app'
+
+const STORAGE_KEY = 'ps_pinned_products'
 
 interface Props {
   products: Product[]
@@ -12,12 +15,36 @@ interface Props {
 }
 
 export default function ProductGrid({ products, cart, onSelect, onAddCustom }: Props) {
+  const [pinned, setPinned] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) setPinned(new Set(JSON.parse(stored) as string[]))
+  }, [])
+
+  function togglePin(e: React.MouseEvent, id: string) {
+    e.stopPropagation()
+    setPinned(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([...next]))
+      return next
+    })
+  }
+
+  const sorted = [...products].sort((a, b) => {
+    const aPin = pinned.has(a.id) ? 0 : 1
+    const bPin = pinned.has(b.id) ? 0 : 1
+    return aPin - bPin
+  })
+
   return (
     <div className="grid grid-cols-2 gap-3">
-      {products.map(product => {
+      {sorted.map(product => {
         const isService  = product.type === 'service'
         const outOfStock = !isService && product.track_stock && product.stock <= 0
         const inCart     = cart.find(item => item.id === product.id)
+        const isPinned   = pinned.has(product.id)
 
         return (
           <button
@@ -34,7 +61,18 @@ export default function ProductGrid({ products, cart, onSelect, onAddCustom }: P
                   : 'bg-[#EDE8DF] border-[#D5CFC6]'
             }`}
           >
-            {/* Quantity badge when item is in cart */}
+            {/* Pin star — top left */}
+            <button
+              onClick={(e) => togglePin(e, product.id)}
+              className="absolute top-2 left-2 p-0.5"
+            >
+              <Star
+                size={13}
+                className={isPinned ? 'text-[#C9933A] fill-[#C9933A]' : 'text-[#9B948E]'}
+              />
+            </button>
+
+            {/* Quantity badge — top right */}
             {inCart && (
               <div className={`absolute top-2.5 right-2.5 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white ${
                 isService ? 'bg-purple-600' : 'bg-[#C84B2F]'
@@ -43,7 +81,7 @@ export default function ProductGrid({ products, cart, onSelect, onAddCustom }: P
               </div>
             )}
 
-            <div className="text-xl mb-2">
+            <div className="text-xl mb-2 mt-1">
               {isService ? '🛠️' : outOfStock ? '📭' : '📦'}
             </div>
 
@@ -57,7 +95,6 @@ export default function ProductGrid({ products, cart, onSelect, onAddCustom }: P
               NPR {Number(product.price).toLocaleString('ne-NP')}
             </p>
 
-            {/* Stock count — only shown for physical products */}
             {!isService && (
               <p className={`text-[11px] mt-0.5 ${outOfStock ? 'text-red-500' : 'text-[#9B948E]'}`}>
                 {outOfStock ? 'Out of stock' : `${product.stock} ${product.unit}`}

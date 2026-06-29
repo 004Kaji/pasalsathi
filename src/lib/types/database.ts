@@ -19,7 +19,7 @@ export type ProductType = 'product' | 'service'
 export type TransactionType = 'income' | 'expense'
 
 /** How the customer paid */
-export type PaymentMethod = 'cash' | 'khata' | 'esewa' | 'khalti'
+export type PaymentMethod = 'cash' | 'khata' | 'esewa' | 'khalti' | 'fonepay'
 
 /** Direction of a khata ledger entry */
 export type KhataEntryType = 'credit' | 'payment'

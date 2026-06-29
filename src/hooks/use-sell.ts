@@ -22,6 +22,7 @@ interface SellState {
   cart:             CartItem[]
   paymentMethod:    PaymentMethod
   discountPercent:  string
+  discountType:     'percent' | 'amount'
   customerName:     string
   selectedCustomer: Customer | null
   pendingCount:     number
@@ -35,12 +36,14 @@ interface SellState {
   updatePrice:             (itemId: string, price: string) => void
   removeItem:              (itemId: string) => void
   clearCart:               () => void
+  loadCart:                (items: CartItem[]) => void
   setPaymentMethod:        (method: PaymentMethod) => void
   setDiscountPercent:      (value: string) => void
+  setDiscountType:         (type: 'percent' | 'amount') => void
   setCustomerName:         (value: string) => void
   setSelectedCustomer:     (customer: Customer | null) => void
   createAndSelectCustomer: (name: string) => Promise<void>
-  handleSell:              () => Promise<SaleResult | null>
+  handleSell:              (split?: { method: PaymentMethod; amount: number }) => Promise<SaleResult | null>
 }
 
 // ── shared DB submission (used for both online checkout and offline sync) ──────
@@ -98,6 +101,7 @@ export function useSell(): SellState {
 
   const [paymentMethod,    setPaymentMethod]    = useState<PaymentMethod>('cash')
   const [discountPercent,  setDiscountPercent]  = useState('')
+  const [discountType,     setDiscountType]     = useState<'percent' | 'amount'>('percent')
   const [customerName,     setCustomerName]     = useState('')
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [pendingCount,     setPendingCount]     = useState(0)
@@ -220,10 +224,15 @@ export function useSell(): SellState {
   function clearCart() {
     setCart([])
     setDiscountPercent('')
+    setDiscountType('percent')
     setCustomerName('')
     setSelectedCustomer(null)
     setPaymentMethod('cash')
     setError('')
+  }
+
+  function loadCart(items: CartItem[]) {
+    setCart(items)
   }
 
   // ── create a new khata customer inline and immediately select them ──────────
@@ -245,10 +254,12 @@ export function useSell(): SellState {
 
   // ── checkout ───────────────────────────────────────────────────────────────
 
-  async function handleSell(): Promise<SaleResult | null> {
+  async function handleSell(split?: { method: PaymentMethod; amount: number }): Promise<SaleResult | null> {
     const discountAmt = parseFloat(discountPercent) || 0
     const subtotal    = cart.reduce((sum, i) => sum + i.qty * i.unitPrice, 0)
-    const total       = subtotal - subtotal * (discountAmt / 100)
+    const total       = discountType === 'amount'
+      ? subtotal - discountAmt
+      : subtotal - subtotal * (discountAmt / 100)
     const isKhata     = paymentMethod === 'khata'
     const itemSummary = cart.map(i => `${i.name} x${i.qty}`).join(', ')
 
@@ -277,8 +288,10 @@ export function useSell(): SellState {
       setPendingCount(c => c + 1)
       setSubmitting(false)
       return {
-        total, items: cart, discountPercent: discountAmt,
-        paymentMethod, customer: selectedCustomer, offline: true,
+        total, items: cart, discountPercent: discountAmt, discountType,
+        paymentMethod, customer: selectedCustomer,
+        splitMethod: split?.method, splitAmount: split?.amount,
+        offline: true,
       }
     }
 
@@ -322,7 +335,11 @@ export function useSell(): SellState {
       }
 
       setSubmitting(false)
-      return { total, items: cart, discountPercent: discountAmt, paymentMethod, customer: selectedCustomer }
+      return {
+        total, items: cart, discountPercent: discountAmt, discountType,
+        paymentMethod, customer: selectedCustomer,
+        splitMethod: split?.method, splitAmount: split?.amount,
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to save sale. Try again.')
       setSubmitting(false)
@@ -331,10 +348,10 @@ export function useSell(): SellState {
   }
 
   return {
-    bizId, products, customers, cart, paymentMethod, discountPercent,
+    bizId, products, customers, cart, paymentMethod, discountPercent, discountType,
     customerName, selectedCustomer, pendingCount, loading, submitting, syncing, error,
-    addToCart, addCustomItem, updateQty, updatePrice, removeItem, clearCart,
-    setPaymentMethod, setDiscountPercent, setCustomerName, setSelectedCustomer,
+    addToCart, addCustomItem, updateQty, updatePrice, removeItem, clearCart, loadCart,
+    setPaymentMethod, setDiscountPercent, setDiscountType, setCustomerName, setSelectedCustomer,
     createAndSelectCustomer, handleSell,
   }
 }

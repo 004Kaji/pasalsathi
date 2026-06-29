@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
-import { Trash2, WifiOff, RefreshCw } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Trash2, WifiOff, RefreshCw, PauseCircle, PlayCircle, Undo2 } from 'lucide-react'
+import Link from 'next/link'
 import { formatBSFull } from '@/lib/utils/date'
 import { useSell } from '@/hooks/use-sell'
+import type { PaymentMethod } from '@/lib/types/database'
 import type { SaleResult } from '@/lib/types/app'
 
 import ProductSearch   from '@/components/sell/product-search'
@@ -13,6 +15,8 @@ import CheckoutBar     from '@/components/sell/checkout-bar'
 import CustomItemSheet from '@/components/sell/custom-item-sheet'
 import CustomerPicker  from '@/components/sell/customer-picker'
 import SuccessScreen   from '@/components/sell/success-screen'
+
+const HELD_CART_KEY = 'ps_held_cart'
 
 export default function SellClient() {
   const sell = useSell()
@@ -24,15 +28,20 @@ export default function SellClient() {
   const [showCustomerList, setShowCustomerList]  = useState(false)
   const [cashGiven,        setCashGiven]         = useState('')
   const [saleResult,       setSaleResult]        = useState<SaleResult | null>(null)
+  const [hasHeld,          setHasHeld]           = useState(false)
 
   const bsDate = formatBSFull(new Date())
+
+  useEffect(() => {
+    setHasHeld(!!localStorage.getItem(HELD_CART_KEY))
+  }, [])
 
   const filteredProducts = sell.products.filter(p =>
     p.name.toLowerCase().includes(search.toLowerCase())
   )
 
-  async function onCharge() {
-    const result = await sell.handleSell()
+  async function onCharge(split?: { method: PaymentMethod; amount: number }) {
+    const result = await sell.handleSell(split)
     if (result) {
       setSaleResult(result)
       setCashGiven('')
@@ -42,6 +51,21 @@ export default function SellClient() {
   function onNewSale() {
     sell.clearCart()
     setSaleResult(null)
+  }
+
+  function holdCart() {
+    if (sell.cart.length === 0) return
+    localStorage.setItem(HELD_CART_KEY, JSON.stringify(sell.cart))
+    setHasHeld(true)
+    sell.clearCart()
+  }
+
+  function resumeCart() {
+    const stored = localStorage.getItem(HELD_CART_KEY)
+    if (!stored) return
+    sell.loadCart(JSON.parse(stored))
+    localStorage.removeItem(HELD_CART_KEY)
+    setHasHeld(false)
   }
 
   if (sell.loading) {
@@ -63,9 +87,9 @@ export default function SellClient() {
   const isCredit = sell.paymentMethod === 'khata'
 
   return (
-    <div className={sell.cart.length > 0 ? 'pb-[380px]' : 'pb-0'}>
+    <div className={sell.cart.length > 0 ? 'pb-[400px]' : 'pb-0'}>
 
-      {/* Sticky POS header — top-14 clears the fixed TopNav */}
+      {/* Sticky POS header */}
       <div className="sticky top-14 bg-[#F5F0E8]/90 backdrop-blur-xl border-b border-[#D5CFC6] z-20 px-4 pt-4 pb-3">
         <div className="flex items-center justify-between">
           <div>
@@ -84,6 +108,25 @@ export default function SellClient() {
                 </span>
               </div>
             )}
+
+            {/* Return button */}
+            <Link
+              href="/sell/return"
+              className="p-2.5 rounded-xl bg-[#EDE8DF] text-[#6B6560] active:scale-95 transition-transform"
+            >
+              <Undo2 size={16} />
+            </Link>
+
+            {/* Hold sale — visible when cart has items */}
+            {sell.cart.length > 0 && (
+              <button
+                onClick={holdCart}
+                className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 active:scale-95 transition-transform"
+              >
+                <PauseCircle size={18} />
+              </button>
+            )}
+
             {sell.cart.length > 0 && (
               <>
                 <div className="bg-[#C84B2F]/10 border border-[#C84B2F]/20 rounded-xl px-3 py-1.5">
@@ -104,6 +147,17 @@ export default function SellClient() {
       </div>
 
       <div className="px-4 pt-4 space-y-4">
+
+        {/* Resume held cart banner */}
+        {hasHeld && sell.cart.length === 0 && (
+          <button
+            onClick={resumeCart}
+            className="w-full flex items-center gap-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl px-4 py-3 active:scale-[0.98] transition-transform"
+          >
+            <PlayCircle size={20} className="text-blue-600 shrink-0" />
+            <span className="text-blue-700 font-semibold text-sm">Resume held sale</span>
+          </button>
+        )}
 
         <ProductSearch
           search={search}
@@ -134,10 +188,12 @@ export default function SellClient() {
           <CartList
             cart={sell.cart}
             discountPercent={sell.discountPercent}
+            discountType={sell.discountType}
             onUpdateQty={sell.updateQty}
             onUpdatePrice={sell.updatePrice}
             onRemoveItem={sell.removeItem}
             onDiscountChange={sell.setDiscountPercent}
+            onDiscountTypeChange={sell.setDiscountType}
           />
         )}
 
@@ -166,6 +222,7 @@ export default function SellClient() {
         <CheckoutBar
           cart={sell.cart}
           discountPercent={sell.discountPercent}
+          discountType={sell.discountType}
           paymentMethod={sell.paymentMethod}
           customerName={sell.customerName}
           cashGiven={cashGiven}
