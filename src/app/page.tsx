@@ -160,13 +160,17 @@ export default function LandingPage() {
             {t.badge}
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-6 leading-[1.05]">
+          <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-4 leading-[1.05]">
             <span className="text-[#1C1917]">{t.heroTitle1}</span>
             <br />
             <span className="text-[#C84B2F]">{t.heroTitle2}</span>
             <br />
             <span className="text-[#1C1917]">{t.heroTitle3}</span>
           </h1>
+
+          <p className="text-2xl md:text-3xl font-bold text-[#4A7055] mb-6 tracking-wide">
+            आफ्नो पसल, आफ्नै हातमा।
+          </p>
 
           <p className="text-xl text-[#6B6560] max-w-2xl mx-auto mb-10 leading-relaxed">
             {t.heroSub}
