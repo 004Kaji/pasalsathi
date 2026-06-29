@@ -28,11 +28,12 @@ export default function CustomerDetailPage() {
   const [businessId, setBusinessId] = useState('')
   const [loading,    setLoading]    = useState(true)
 
-  const [showForm,  setShowForm]  = useState(false)
-  const [entryType, setEntryType] = useState<EntryType>('credit')
-  const [amount,    setAmount]    = useState('')
-  const [saving,    setSaving]    = useState(false)
-  const [formError, setFormError] = useState('')
+  const [showForm,      setShowForm]      = useState(false)
+  const [entryType,     setEntryType]     = useState<EntryType>('credit')
+  const [amount,        setAmount]        = useState('')
+  const [collectMethod, setCollectMethod] = useState<'cash' | 'esewa' | 'khalti'>('cash')
+  const [saving,        setSaving]        = useState(false)
+  const [formError,     setFormError]     = useState('')
 
   const [smsLoading, setSmsLoading] = useState(false)
   const [smsMsg,     setSmsMsg]     = useState('')
@@ -99,7 +100,7 @@ export default function CustomerDetailPage() {
         type:           'income',
         amount:         amt,
         item_name:      `Khata payment — ${customer?.name ?? ''}`,
-        payment_method: 'cash',
+        payment_method: collectMethod,
       })
     }
 
@@ -232,6 +233,29 @@ export default function CustomerDetailPage() {
                 </button>
               ))}
             </div>
+
+            {/* Payment method selector — only for collect payment */}
+            {entryType === 'payment' && (
+              <div className="mb-4">
+                <p className="text-xs font-semibold text-gray-500 mb-2">Payment received via</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['cash', 'esewa', 'khalti'] as const).map(m => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setCollectMethod(m)}
+                      className={`py-2.5 rounded-xl text-sm font-bold capitalize border transition-all ${
+                        collectMethod === m
+                          ? 'bg-green-600 border-green-500 text-white'
+                          : 'bg-white/5 border-white/10 text-gray-400'
+                      }`}
+                    >
+                      {m === 'cash' ? '💵' : m === 'esewa' ? '🟢' : '🟣'} {m}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {formError && <p className="text-red-400 text-sm font-medium mb-3">{formError}</p>}
 

@@ -56,8 +56,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'SMS पठाउन समस्या भयो' }, { status: 500 })
     }
   } else {
-    // Dev mode: log OTP to console
-    console.log(`[DEV] OTP for ${normalized}: ${otp}`)
+    // Dev mode: no Sparrow token — OTP stored in DB, retrieve via Supabase dashboard
+    void normalized
+    void otp
   }
 
   return NextResponse.json({ success: true })

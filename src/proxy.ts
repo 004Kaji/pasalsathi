@@ -24,9 +24,10 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
-  const isAuthPage  = pathname.startsWith('/login') || pathname.startsWith('/signup')
+  const isAuthPage  = pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/forgot-password')
   const isOnboarding = pathname.startsWith('/onboarding')
-  const isPublic    = isAuthPage || pathname === '/' || pathname.startsWith('/auth/callback')
+  // /update-password is public (recovery session) but NOT in isAuthPage — authenticated users must reach it
+  const isPublic    = isAuthPage || pathname === '/' || pathname.startsWith('/auth/') || pathname.startsWith('/update-password')
 
   if (!user && !isPublic) {
     return NextResponse.redirect(new URL('/login', request.url))

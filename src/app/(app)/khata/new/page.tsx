@@ -3,8 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/db/supabase'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { ArrowLeft } from 'lucide-react'
 
 export default function NewCustomerPage() {
@@ -13,7 +11,7 @@ export default function NewCustomerPage() {
   const [phone,   setPhone]   = useState('')
   const [address, setAddress] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [error,   setError]   = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -27,11 +25,7 @@ export default function NewCustomerPage() {
     if (!user) { router.push('/login'); return }
 
     const { data: biz } = await supabase
-      .from('businesses')
-      .select('id')
-      .eq('owner_id', user.id)
-      .single()
-
+      .from('businesses').select('id').eq('owner_id', user.id).single()
     if (!biz) { router.push('/onboarding'); return }
 
     const { error: insertError } = await supabase.from('customers').insert({
@@ -51,78 +45,83 @@ export default function NewCustomerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0a0a0a]">
+
+      {/* Header */}
       <div className="bg-amber-600 px-4 pt-5 pb-6">
         <div className="flex items-center gap-3">
-          <button onClick={() => router.back()} className="p-2 rounded-xl bg-white/20 text-white active:scale-95 transition-transform">
+          <button
+            onClick={() => router.back()}
+            className="p-2 rounded-xl bg-white/20 text-white active:scale-95 transition-transform"
+          >
             <ArrowLeft size={22} />
           </button>
           <h1 className="text-xl font-bold text-white">Add New Customer</h1>
         </div>
-        <p className="text-amber-100 text-sm mt-3">Enter customer details. You can record credits and payments later.</p>
+        <p className="text-amber-100 text-sm mt-3 ml-1">
+          Record credits and payments after adding.
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="px-4 pt-5 space-y-4 pb-10">
 
-        <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
-          {/* Name - required */}
-          <div className="space-y-2">
-            <Label className="text-base font-semibold text-gray-700">
-              Full Name <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              placeholder="e.g.: Ram Bahadur Thapa"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="text-base h-12 rounded-xl"
-              required
+        {/* Name */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-semibold text-gray-400">
+            Full Name <span className="text-red-400">*</span>
+          </label>
+          <input
+            type="text"
+            placeholder="Ram Bahadur Thapa"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            required
+            className="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white text-base placeholder:text-gray-700 outline-none focus:border-amber-500/50"
+          />
+        </div>
+
+        {/* Phone */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-semibold text-gray-400">
+            Phone <span className="text-gray-600 font-normal">(for SMS reminders)</span>
+          </label>
+          <div className="flex gap-2">
+            <span className="flex items-center px-3 bg-white/5 border border-white/10 rounded-xl text-sm text-gray-500 whitespace-nowrap">
+              +977
+            </span>
+            <input
+              type="tel"
+              placeholder="98XXXXXXXX"
+              value={phone}
+              onChange={e => setPhone(e.target.value)}
+              maxLength={10}
+              className="flex-1 px-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white text-base placeholder:text-gray-700 outline-none focus:border-amber-500/50"
             />
           </div>
+        </div>
 
-          {/* Phone */}
-          <div className="space-y-2">
-            <Label className="text-base font-semibold text-gray-700">
-              Phone Number
-              <span className="text-gray-400 font-normal ml-2">(for SMS reminders)</span>
-            </Label>
-            <div className="flex gap-2">
-              <span className="flex items-center px-3 bg-gray-100 border rounded-xl text-sm text-gray-600 whitespace-nowrap">
-                +977
-              </span>
-              <Input
-                type="tel"
-                placeholder="98XXXXXXXX"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="text-base h-12 rounded-xl"
-                maxLength={10}
-              />
-            </div>
-          </div>
-
-          {/* Address */}
-          <div className="space-y-2">
-            <Label className="text-base font-semibold text-gray-700">Address</Label>
-            <Input
-              placeholder="e.g.: New Road, Kathmandu"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              className="text-base h-12 rounded-xl"
-            />
-          </div>
-
+        {/* Address */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-semibold text-gray-400">Address</label>
+          <input
+            type="text"
+            placeholder="New Road, Kathmandu"
+            value={address}
+            onChange={e => setAddress(e.target.value)}
+            className="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white text-base placeholder:text-gray-700 outline-none focus:border-amber-500/50"
+          />
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-            <p className="text-red-700 text-base">{error}</p>
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+            <p className="text-red-400 text-sm font-medium">{error}</p>
           </div>
         )}
 
         <button
           type="submit"
           disabled={loading || !name.trim()}
-          className="w-full py-5 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xl active:scale-[0.98] transition-all disabled:opacity-50"
+          className="w-full py-5 rounded-2xl bg-amber-600 text-white font-bold text-xl active:scale-[0.98] transition-all disabled:opacity-50"
         >
           {loading ? 'Adding...' : '✓ Add Customer'}
         </button>

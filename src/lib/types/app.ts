@@ -44,4 +44,6 @@ export interface SaleResult {
   items: CartItem[]
   paymentMethod: PaymentMethod
   customer: Customer | null
+  /** True when saved to IndexedDB because device was offline at checkout time */
+  offline?: boolean
 }

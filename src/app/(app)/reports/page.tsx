@@ -1,54 +1,70 @@
 'use client'
-/**
- * reports/page.tsx
- * Monthly income/expense report filtered by Bikram Sambat month.
- * Uses simplified schema columns: type (income/expense), amount, item_name, payment_method, created_at.
- * No category, description, or transaction_date — filters by created_at date range.
- */
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/db/supabase'
-import { Download, FileSpreadsheet, TrendingUp, TrendingDown } from 'lucide-react'
-import { todayBS, daysInBSMonth } from '@/lib/utils/date'
-import NepaliDate from 'nepali-date-converter'
-import type { Transaction } from '@/lib/types/database'
+import { Download, TrendingUp, TrendingDown, ChevronDown } from 'lucide-react'
+import { PageSkeleton } from '@/components/ui/skeleton'
+import type { Transaction, Customer } from '@/lib/types/database'
 
-const BS_MONTH_NAMES = [
-  'Baisakh', 'Jestha', 'Asar', 'Shrawan', 'Bhadra', 'Aswin',
-  'Kartik', 'Mangsir', 'Poush', 'Magh', 'Falgun', 'Chaitra',
-]
+type Period = 'today' | 'week' | 'month' | 'custom'
 
-const PM_EMOJI: Record<string, string> = {
-  cash: '💵', khata: '📒', esewa: '🟢', khalti: '🟣',
+const PERIOD_LABELS: Record<Period, string> = {
+  today:  'Today',
+  week:   'This Week',
+  month:  'This Month',
+  custom: 'Custom',
 }
 
-/** Convert a BS month/year into the AD ISO date range for querying created_at */
-function bsMonthToAdRange(bsYear: number, bsMonth: number): { start: string; end: string } {
-  const days    = daysInBSMonth(bsYear, bsMonth)
-  const startAD = new NepaliDate(bsYear, bsMonth - 1, 1).toJsDate()
-  const endAD   = new NepaliDate(bsYear, bsMonth - 1, days).toJsDate()
-  const fmt     = (d: Date) => d.toISOString().split('T')[0]
-  return { start: fmt(startAD), end: fmt(endAD) }
+/** Returns ISO start/end strings for the selected period */
+function getDateRange(period: Period, customFrom: string, customTo: string): { start: string; end: string } {
+  const now   = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+  if (period === 'today') {
+    return {
+      start: today.toISOString(),
+      end:   new Date(today.getTime() + 86400000 - 1).toISOString(),
+    }
+  }
+  if (period === 'week') {
+    const day  = today.getDay()
+    const diff = (day === 0 ? -6 : 1 - day) // Monday as week start
+    const mon  = new Date(today)
+    mon.setDate(today.getDate() + diff)
+    return {
+      start: mon.toISOString(),
+      end:   new Date(today.getTime() + 86400000 - 1).toISOString(),
+    }
+  }
+  if (period === 'month') {
+    const start = new Date(today.getFullYear(), today.getMonth(), 1)
+    return {
+      start: start.toISOString(),
+      end:   new Date(today.getTime() + 86400000 - 1).toISOString(),
+    }
+  }
+  // custom
+  const s = customFrom ? new Date(customFrom + 'T00:00:00').toISOString() : today.toISOString()
+  const e = customTo   ? new Date(customTo   + 'T23:59:59').toISOString() : new Date(today.getTime() + 86400000 - 1).toISOString()
+  return { start: s, end: e }
 }
 
-/** Compact NPR formatter for summary cards */
-function formatNPR(n: number): string {
-  if (n >= 100000) return `NPR ${(n / 100000).toFixed(1)}L`
-  if (n >= 1000)   return `NPR ${(n / 1000).toFixed(1)}K`
-  return `NPR ${n.toLocaleString('ne-NP')}`
+function fmtNPR(n: number) {
+  return `NPR ${n.toLocaleString('ne-NP', { maximumFractionDigits: 0 })}`
 }
 
-export default function ReportPage() {
-  const todayBs = todayBS()
+export default function ReportsPage() {
+  const [period,      setPeriod]      = useState<Period>('today')
+  const [customFrom,  setCustomFrom]  = useState('')
+  const [customTo,    setCustomTo]    = useState('')
+  const [showPicker,  setShowPicker]  = useState(false)
 
-  const [month,        setMonth]        = useState(todayBs.month)
-  const [year,         setYear]         = useState(todayBs.year)
   const [loading,      setLoading]      = useState(true)
   const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [tab,          setTab]          = useState<'income' | 'expense'>('income')
+  const [customers,    setCustomers]    = useState<Customer[]>([])
+  const [bizId,        setBizId]        = useState('')
 
-  /** Fetch all transactions for the selected BS month */
-  const fetchReport = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true)
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -57,219 +73,237 @@ export default function ReportPage() {
     const { data: biz } = await supabase
       .from('businesses').select('id').eq('owner_id', user.id).single()
     if (!biz) { setLoading(false); return }
+    setBizId(biz.id)
 
-    const { start, end } = bsMonthToAdRange(year, month)
-    const startISO = new Date(start + 'T00:00:00').toISOString()
-    const endISO   = new Date(end   + 'T23:59:59').toISOString()
+    const { start, end } = getDateRange(period, customFrom, customTo)
 
-    const { data } = await supabase
-      .from('transactions')
-      .select('*')
-      .eq('business_id', biz.id)
-      .gte('created_at', startISO)
-      .lte('created_at', endISO)
-      .order('created_at', { ascending: false })
+    const [{ data: txs }, { data: custs }] = await Promise.all([
+      supabase
+        .from('transactions')
+        .select('*')
+        .eq('business_id', biz.id)
+        .gte('created_at', start)
+        .lte('created_at', end)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('customers')
+        .select('id, balance')
+        .eq('business_id', biz.id),
+    ])
 
-    setTransactions((data as Transaction[]) ?? [])
+    setTransactions((txs as Transaction[]) ?? [])
+    setCustomers((custs as Customer[]) ?? [])
     setLoading(false)
-  }, [month, year])
+  }, [period, customFrom, customTo])
 
-  useEffect(() => { fetchReport() }, [fetchReport])
+  useEffect(() => { fetchData() }, [fetchData])
 
-  const totalIncome  = transactions.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
-  const totalExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0)
+  // ── Aggregations ──────────────────────────────────────────────────────────
+
+  const totalIncome  = useMemo(() => transactions.filter(t => t.type === 'income').reduce((s, t)  => s + Number(t.amount), 0), [transactions])
+  const totalExpense = useMemo(() => transactions.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0), [transactions])
   const net          = totalIncome - totalExpense
-  const incomeCount  = transactions.filter(t => t.type === 'income').length
-  const expenseCount = transactions.filter(t => t.type === 'expense').length
-  const displayList  = transactions.filter(t => tab === 'income' ? t.type === 'income' : t.type === 'expense')
 
-  /** Export visible month's transactions as CSV */
+  const totalKhataOwed = useMemo(() =>
+    customers.reduce((s, c) => s + Math.max(0, Number(c.balance)), 0),
+    [customers]
+  )
+
+  // Group income transactions by item_name, sum amounts, sort desc
+  const topSelling = useMemo(() => {
+    const map = new Map<string, number>()
+    transactions
+      .filter(t => t.type === 'income')
+      .forEach(t => {
+        const key = (t.item_name ?? 'Unnamed').split(' — ')[0].trim() // strip "CustomerName — " prefix
+        map.set(key, (map.get(key) ?? 0) + Number(t.amount))
+      })
+    return Array.from(map.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+  }, [transactions])
+
+  // ── CSV Export ────────────────────────────────────────────────────────────
+
   function handleExportCSV() {
+    const { start, end } = getDateRange(period, customFrom, customTo)
+    const label = PERIOD_LABELS[period]
+
     const rows = [
-      ['PasalSathi Report', `${BS_MONTH_NAMES[month - 1]} ${year} BS`],
+      ['PasalSathi Report', label],
+      ['Period', `${new Date(start).toLocaleDateString()} – ${new Date(end).toLocaleDateString()}`],
       [],
-      ['Date', 'Type', 'Item', 'Payment', 'Amount (NPR)'],
+      ['Date', 'Type', 'Item', 'Payment Method', 'Amount (NPR)'],
       ...transactions.map(t => [
         new Date(t.created_at).toLocaleDateString(),
         t.type,
-        t.item_name,
-        t.payment_method,
+        `"${(t.item_name ?? '').replace(/"/g, '""')}"`,
+        t.payment_method ?? '',
         t.amount,
       ]),
       [],
       ['Total Income',  totalIncome],
       ['Total Expense', totalExpense],
       ['Net',           net],
+      [],
+      ['Khata Owed (all time)', totalKhataOwed],
     ]
+
     const csv  = rows.map(r => r.join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url  = URL.createObjectURL(blob)
     const a    = document.createElement('a')
     a.href     = url
-    a.download = `PasalSathi-${BS_MONTH_NAMES[month - 1]}-${year}.csv`
+    a.download = `PasalSathi-${label.replace(' ', '-')}-${new Date().toISOString().slice(0, 10)}.csv`
     a.click()
+    URL.revokeObjectURL(url)
   }
 
-  const selectClass = 'bg-white/5 border border-white/10 rounded-xl px-3 h-11 text-white outline-none text-sm'
-
   return (
-    <div className="pb-8">
-      {/* Sticky header with month/year picker */}
-      <div className="sticky top-0 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/10 z-10 px-4 pt-5 pb-3">
-        <div className="flex items-center justify-between mb-3">
-          <h1 className="text-2xl font-bold text-white">📊 Reports</h1>
-          <div className="flex gap-2">
-            <button
-              onClick={() => window.print()}
-              className="flex items-center gap-1.5 bg-red-600 text-white px-3 py-2 rounded-xl font-semibold text-sm active:scale-95"
-            >
-              <Download size={16} /> PDF
-            </button>
-            <button
-              onClick={handleExportCSV}
-              className="flex items-center gap-1.5 bg-green-600 text-white px-3 py-2 rounded-xl font-semibold text-sm active:scale-95"
-            >
-              <FileSpreadsheet size={16} /> Export
-            </button>
-          </div>
+    <div className="min-h-screen bg-[#0a0a0a] pb-32">
+
+      {/* Sticky header */}
+      <div className="sticky top-0 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/10 z-20 px-4 pt-5 pb-3">
+        <h1 className="text-2xl font-bold text-white mb-3">📊 Reports</h1>
+
+        {/* Period selector */}
+        <div className="relative">
+          <button
+            onClick={() => setShowPicker(p => !p)}
+            className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm font-semibold text-white"
+          >
+            {PERIOD_LABELS[period]}
+            <ChevronDown size={15} className={`text-gray-400 transition-transform ${showPicker ? 'rotate-180' : ''}`} />
+          </button>
+
+          {showPicker && (
+            <div className="absolute top-full left-0 mt-1 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-xl z-30 overflow-hidden min-w-[160px]">
+              {(Object.keys(PERIOD_LABELS) as Period[]).map(p => (
+                <button
+                  key={p}
+                  onClick={() => { setPeriod(p); setShowPicker(false) }}
+                  className={`w-full text-left px-4 py-3 text-sm font-semibold border-b border-white/5 last:border-0 active:bg-white/5 ${
+                    period === p ? 'text-orange-400' : 'text-white'
+                  }`}
+                >
+                  {PERIOD_LABELS[p]}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        <div className="flex gap-2">
-          <select
-            value={month}
-            onChange={e => setMonth(Number(e.target.value))}
-            className={`flex-1 ${selectClass}`}
-          >
-            {BS_MONTH_NAMES.map((m, i) => (
-              <option key={i + 1} value={i + 1} className="bg-[#111]">{m}</option>
-            ))}
-          </select>
-          <select
-            value={year}
-            onChange={e => setYear(Number(e.target.value))}
-            className={`w-28 ${selectClass}`}
-          >
-            {[todayBs.year - 2, todayBs.year - 1, todayBs.year].map(y => (
-              <option key={y} value={y} className="bg-[#111]">{y} BS</option>
-            ))}
-          </select>
-        </div>
+        {/* Custom date range inputs */}
+        {period === 'custom' && (
+          <div className="flex gap-2 mt-2">
+            <input
+              type="date"
+              value={customFrom}
+              onChange={e => setCustomFrom(e.target.value)}
+              className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-orange-500/50"
+            />
+            <span className="text-gray-500 self-center text-sm">to</span>
+            <input
+              type="date"
+              value={customTo}
+              onChange={e => setCustomTo(e.target.value)}
+              className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-orange-500/50"
+            />
+          </div>
+        )}
       </div>
 
       {loading ? (
-        <div className="text-center py-16 text-gray-500 text-lg">Loading...</div>
+        <PageSkeleton rows={4} />
       ) : (
         <div className="px-4 pt-4 space-y-4">
-          {/* Summary cards */}
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              onClick={() => setTab('income')}
-              className={`rounded-2xl p-3.5 border-2 text-center transition-all active:scale-[0.97] ${
-                tab === 'income' ? 'bg-green-500/20 border-green-500/50' : 'bg-white/5 border-white/10'
-              }`}
-            >
-              <p className="text-[10px] font-bold uppercase tracking-wide text-gray-500 mb-1">Income</p>
-              <p className="text-sm font-black text-green-400">{formatNPR(totalIncome)}</p>
-              <p className="text-[10px] text-gray-600 mt-0.5">{incomeCount} entries</p>
-            </button>
 
-            <button
-              onClick={() => setTab('expense')}
-              className={`rounded-2xl p-3.5 border-2 text-center transition-all active:scale-[0.97] ${
-                tab === 'expense' ? 'bg-red-500/20 border-red-500/50' : 'bg-white/5 border-white/10'
-              }`}
-            >
-              <p className="text-[10px] font-bold uppercase tracking-wide text-gray-500 mb-1">Expense</p>
-              <p className="text-sm font-black text-red-400">{formatNPR(totalExpense)}</p>
-              <p className="text-[10px] text-gray-600 mt-0.5">{expenseCount} entries</p>
-            </button>
-
-            <div className={`rounded-2xl p-3.5 border-2 text-center ${
-              net >= 0 ? 'bg-green-500/10 border-green-500/30' : 'bg-red-500/10 border-red-500/30'
-            }`}>
-              <p className="text-[10px] font-bold uppercase tracking-wide text-gray-500 mb-1">Net</p>
-              <p className={`text-sm font-black ${net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {net >= 0 ? '+' : '-'}{formatNPR(Math.abs(net))}
-              </p>
-              <p className={`text-[10px] mt-0.5 ${net >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                {net >= 0 ? 'profit' : 'loss'}
+          {/* ── Income / Expense / Net ── */}
+          <section className="bg-white/[0.03] border border-white/10 rounded-2xl overflow-hidden divide-y divide-white/5">
+            <div className="flex items-center justify-between px-5 py-4">
+              <div className="flex items-center gap-2">
+                <TrendingUp size={18} className="text-green-400" />
+                <span className="text-sm font-semibold text-gray-400">Income</span>
+              </div>
+              <p className="text-lg font-bold text-green-400">{fmtNPR(totalIncome)}</p>
+            </div>
+            <div className="flex items-center justify-between px-5 py-4">
+              <div className="flex items-center gap-2">
+                <TrendingDown size={18} className="text-red-400" />
+                <span className="text-sm font-semibold text-gray-400">Expense</span>
+              </div>
+              <p className="text-lg font-bold text-red-400">{fmtNPR(totalExpense)}</p>
+            </div>
+            <div className={`flex items-center justify-between px-5 py-4 ${net >= 0 ? 'bg-green-500/5' : 'bg-red-500/5'}`}>
+              <span className="text-sm font-bold text-gray-300">Net</span>
+              <p className={`text-xl font-black ${net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {net >= 0 ? '+' : ''}{fmtNPR(net)}
               </p>
             </div>
-          </div>
+          </section>
 
-          {/* Income / Expense tab toggle */}
-          <div className="flex bg-white/5 rounded-2xl p-1 gap-1">
-            <button
-              onClick={() => setTab('income')}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-                tab === 'income' ? 'bg-green-600 text-white' : 'text-gray-500'
-              }`}
-            >
-              <TrendingUp size={15} /> Income
-              {incomeCount > 0 && (
-                <span className={`text-[11px] px-1.5 py-0.5 rounded-full font-bold ${
-                  tab === 'income' ? 'bg-white/20 text-white' : 'bg-white/10 text-gray-500'
-                }`}>{incomeCount}</span>
-              )}
-            </button>
-            <button
-              onClick={() => setTab('expense')}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-                tab === 'expense' ? 'bg-red-600 text-white' : 'text-gray-500'
-              }`}
-            >
-              <TrendingDown size={15} /> Expense
-              {expenseCount > 0 && (
-                <span className={`text-[11px] px-1.5 py-0.5 rounded-full font-bold ${
-                  tab === 'expense' ? 'bg-white/20 text-white' : 'bg-white/10 text-gray-500'
-                }`}>{expenseCount}</span>
-              )}
-            </button>
-          </div>
-
-          {/* Transaction list */}
-          {displayList.length === 0 ? (
-            <div className="text-center py-14">
-              <p className="text-5xl mb-3">{tab === 'income' ? '💰' : '💸'}</p>
-              <p className="text-gray-500 font-semibold text-base">
-                No {tab} in {BS_MONTH_NAMES[month - 1]} {year}
-              </p>
+          {/* ── Top Selling ── */}
+          <section className="bg-white/[0.03] border border-white/10 rounded-2xl overflow-hidden">
+            <div className="px-5 py-3 border-b border-white/5">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Top Selling</p>
             </div>
-          ) : (
-            <div className="space-y-2">
-              {displayList.map(tx => (
-                <div key={tx.id} className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3">
-                  <div className="flex items-center gap-3">
+            {topSelling.length === 0 ? (
+              <p className="text-center py-8 text-gray-600 text-sm">No sales in this period</p>
+            ) : (
+              <div className="divide-y divide-white/5">
+                {topSelling.map(([item, total], i) => (
+                  <div key={item} className="flex items-center gap-3 px-5 py-3">
+                    <span className="text-sm font-bold text-gray-600 w-5 shrink-0">#{i + 1}</span>
+                    <span className="flex-1 text-sm font-semibold text-white truncate">{item}</span>
+                    <span className="text-sm font-bold text-green-400 shrink-0">{fmtNPR(total)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* ── Khata Owed ── */}
+          <section className="bg-amber-500/10 border border-amber-500/20 rounded-2xl px-5 py-4 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-amber-600 uppercase tracking-widest mb-1">Khata Owed</p>
+              <p className="text-xs text-gray-500">Total outstanding (all customers)</p>
+            </div>
+            <p className="text-2xl font-black text-amber-400">{fmtNPR(totalKhataOwed)}</p>
+          </section>
+
+          {/* ── Transaction list ── */}
+          {transactions.length > 0 && (
+            <section>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 px-1">
+                All Transactions ({transactions.length})
+              </p>
+              <div className="space-y-2">
+                {transactions.map(tx => (
+                  <div key={tx.id} className="bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 flex items-center gap-3">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs text-gray-500 font-medium">
-                          {new Date(tx.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        </span>
-                        <span className="text-sm">{PM_EMOJI[tx.payment_method] ?? '💳'}</span>
-                      </div>
-                      <p className="text-sm font-semibold text-white truncate">{tx.item_name}</p>
+                      <p className="text-sm font-semibold text-white truncate">{tx.item_name ?? '—'}</p>
+                      <p className="text-xs text-gray-600 mt-0.5">
+                        {new Date(tx.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        {' · '}{tx.payment_method ?? ''}
+                      </p>
                     </div>
-                    <p className={`text-base font-bold shrink-0 ${
-                      tx.type === 'income' ? 'text-green-400' : 'text-red-400'
-                    }`}>
-                      {tx.type === 'income' ? '+' : '-'}NPR {Number(tx.amount).toLocaleString('ne-NP')}
+                    <p className={`text-sm font-bold shrink-0 ${tx.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
+                      {tx.type === 'income' ? '+' : '-'}{fmtNPR(Number(tx.amount))}
                     </p>
                   </div>
-                </div>
-              ))}
-
-              <div className={`rounded-2xl p-4 border text-center ${
-                tab === 'income' ? 'bg-green-500/10 border-green-500/20' : 'bg-red-500/10 border-red-500/20'
-              }`}>
-                <p className="text-xs text-gray-500 mb-1">
-                  Total {tab === 'income' ? 'Income' : 'Expense'} — {BS_MONTH_NAMES[month - 1]} {year}
-                </p>
-                <p className={`text-2xl font-black ${tab === 'income' ? 'text-green-400' : 'text-red-400'}`}>
-                  NPR {(tab === 'income' ? totalIncome : totalExpense).toLocaleString('ne-NP')}
-                </p>
+                ))}
               </div>
-            </div>
+            </section>
           )}
+
+          {/* ── Export CSV ── */}
+          <button
+            onClick={handleExportCSV}
+            className="w-full flex items-center justify-center gap-2 py-4 bg-green-600 text-white rounded-2xl font-bold text-base active:scale-[0.98] transition-all"
+          >
+            <Download size={20} /> Export CSV
+          </button>
+
         </div>
       )}
     </div>

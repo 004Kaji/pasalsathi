@@ -2,51 +2,96 @@
 /**
  * use-sell.ts
  * POS sell hook — manages cart state and the full checkout submit flow.
- * All Supabase column names match 004_clean_schema.sql exactly.
+ * Supports offline queuing: if no internet, sale is saved to IndexedDB
+ * and replayed automatically when the device reconnects.
  */
 
 import { useCallback, useEffect, useState } from 'react'
 import { createClient } from '@/lib/db/supabase'
+import {
+  queueSale, getPendingSales, removePendingSale, countPendingSales,
+  type PendingSale,
+} from '@/lib/offline-queue'
 import type { CartItem, SaleResult } from '@/lib/types/app'
 import type { Product, Customer, PaymentMethod } from '@/lib/types/database'
 
 interface SellState {
-  bizId: string
-  userId: string
-  products: Product[]
-  customers: Customer[]
-  cart: CartItem[]
-  paymentMethod: PaymentMethod
-  discountPercent: string
-  customerName: string
+  bizId:            string
+  products:         Product[]
+  customers:        Customer[]
+  cart:             CartItem[]
+  paymentMethod:    PaymentMethod
+  discountPercent:  string
+  customerName:     string
   selectedCustomer: Customer | null
-  loading: boolean
-  submitting: boolean
-  error: string
-  /** Add a catalog product to the cart (or increment qty if already in cart) */
-  addToCart: (product: Product) => void
-  /** Add a manually typed quick item that is not in the product catalog */
-  addCustomItem: (name: string, price: number, qty: number) => void
-  /** Increment (+1) or decrement (-1) a cart item quantity */
-  updateQty: (itemId: string, delta: number) => void
-  /** Override the unit price of a cart item */
-  updatePrice: (itemId: string, price: string) => void
-  /** Remove an item from the cart by id */
-  removeItem: (itemId: string) => void
-  /** Clear cart and reset all checkout state */
-  clearCart: () => void
-  setPaymentMethod: (method: PaymentMethod) => void
-  setDiscountPercent: (value: string) => void
-  setCustomerName: (value: string) => void
-  setSelectedCustomer: (customer: Customer | null) => void
-  /** Submit the sale — returns SaleResult on success, sets error string on failure */
-  handleSell: () => Promise<SaleResult | null>
+  pendingCount:     number
+  loading:          boolean
+  submitting:       boolean
+  syncing:          boolean
+  error:            string
+  addToCart:               (product: Product) => void
+  addCustomItem:           (name: string, price: number, qty: number) => void
+  updateQty:               (itemId: string, delta: number) => void
+  updatePrice:             (itemId: string, price: string) => void
+  removeItem:              (itemId: string) => void
+  clearCart:               () => void
+  setPaymentMethod:        (method: PaymentMethod) => void
+  setDiscountPercent:      (value: string) => void
+  setCustomerName:         (value: string) => void
+  setSelectedCustomer:     (customer: Customer | null) => void
+  createAndSelectCustomer: (name: string) => Promise<void>
+  handleSell:              () => Promise<SaleResult | null>
 }
 
-/** Full POS state and actions — drives the Sell page */
+// ── shared DB submission (used for both online checkout and offline sync) ──────
+
+async function submitPendingToDB(sale: PendingSale): Promise<void> {
+  const supabase    = createClient()
+  const itemSummary = sale.items.map(i => `${i.name} x${i.qty}`).join(', ')
+  const displayName = sale.customerName || sale.selectedCustomer?.name || sale.paymentMethod
+
+  const { error: txErr } = await supabase.from('transactions').insert({
+    business_id:    sale.bizId,
+    type:           'income',
+    amount:         sale.total,
+    item_name:      sale.customerName ? `${displayName} — ${itemSummary}` : itemSummary,
+    payment_method: sale.paymentMethod,
+    customer_id:    sale.selectedCustomer?.id ?? null,
+  })
+  if (txErr) throw new Error(txErr.message)
+
+  const stockable = sale.items.filter(
+    i => !i.isQuick && i.product?.type !== 'service' && i.product?.track_stock
+  )
+  for (const item of stockable) {
+    if (!item.product) continue
+    const { data: prod } = await supabase
+      .from('products').select('stock').eq('id', item.product.id).single()
+    if (!prod) continue
+    const newStock = Math.max(0, Number(prod.stock) - item.qty)
+    await supabase.from('products').update({ stock: newStock }).eq('id', item.product.id)
+  }
+
+  if (sale.paymentMethod === 'khata' && sale.selectedCustomer) {
+    const { error: khErr } = await supabase.from('khata_entries').insert({
+      business_id: sale.bizId,
+      customer_id: sale.selectedCustomer.id,
+      type:        'credit',
+      amount:      sale.total,
+    })
+    if (khErr) throw new Error(khErr.message)
+
+    await supabase
+      .from('customers')
+      .update({ balance: Number(sale.selectedCustomer.balance) + sale.total })
+      .eq('id', sale.selectedCustomer.id)
+  }
+}
+
+// ── hook ──────────────────────────────────────────────────────────────────────
+
 export function useSell(): SellState {
   const [bizId,     setBizId]     = useState('')
-  const [userId,    setUserId]    = useState('')
   const [products,  setProducts]  = useState<Product[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
   const [cart,      setCart]      = useState<CartItem[]>([])
@@ -55,25 +100,22 @@ export function useSell(): SellState {
   const [discountPercent,  setDiscountPercent]  = useState('')
   const [customerName,     setCustomerName]     = useState('')
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
+  const [pendingCount,     setPendingCount]     = useState(0)
 
   const [loading,    setLoading]    = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [syncing,    setSyncing]    = useState(false)
   const [error,      setError]      = useState('')
 
-  /** Fetch the current user's business, products, and customers */
+  // ── initial data fetch ─────────────────────────────────────────────────────
+
   const fetchData = useCallback(async () => {
     const supabase = createClient()
-
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setLoading(false); return }
-    setUserId(user.id)
 
     const { data: business } = await supabase
-      .from('businesses')
-      .select('id')
-      .eq('owner_id', user.id)
-      .single()
-
+      .from('businesses').select('id').eq('owner_id', user.id).single()
     if (!business) { setLoading(false); return }
     setBizId(business.id)
 
@@ -85,81 +127,96 @@ export function useSell(): SellState {
     setProducts((prods as Product[]) ?? [])
     setCustomers((custs as Customer[]) ?? [])
     setLoading(false)
+
+    const count = await countPendingSales().catch(() => 0)
+    setPendingCount(count)
   }, [])
 
   useEffect(() => { fetchData() }, [fetchData])
 
-  /** Add a catalog product to cart. Blocks out-of-stock products. */
-  function addToCart(product: Product) {
-    const isService  = product.type === 'service'
-    const isOutOfStock = !isService && product.track_stock && product.stock <= 0
+  // ── sync pending sales when device comes back online ───────────────────────
 
+  const runSync = useCallback(async () => {
+    const pending = await getPendingSales().catch(() => [] as PendingSale[])
+    if (pending.length === 0) return
+
+    setSyncing(true)
+    let synced = 0
+
+    for (const sale of pending) {
+      try {
+        await submitPendingToDB(sale)
+        await removePendingSale(sale.id)
+        synced++
+      } catch {
+        // Leave in queue — will retry on next reconnect
+      }
+    }
+
+    setSyncing(false)
+
+    if (synced > 0) {
+      const remaining = await countPendingSales().catch(() => 0)
+      setPendingCount(remaining)
+      fetchData()
+    }
+  }, [fetchData])
+
+  useEffect(() => {
+    window.addEventListener('online', runSync)
+    return () => window.removeEventListener('online', runSync)
+  }, [runSync])
+
+  // ── cart operations ────────────────────────────────────────────────────────
+
+  function addToCart(product: Product) {
+    const isService    = product.type === 'service'
+    const isOutOfStock = !isService && product.track_stock && product.stock <= 0
     if (isOutOfStock) return
 
     setCart(prev => {
-      const existing = prev.find(item => item.id === product.id)
+      const existing = prev.find(i => i.id === product.id)
       if (existing) {
-        const wouldExceedStock = !isService && product.track_stock && existing.qty >= product.stock
-        if (wouldExceedStock) return prev
-        return prev.map(item =>
-          item.id === product.id ? { ...item, qty: item.qty + 1 } : item
-        )
+        const wouldExceed = !isService && product.track_stock && existing.qty >= product.stock
+        if (wouldExceed) return prev
+        return prev.map(i => i.id === product.id ? { ...i, qty: i.qty + 1 } : i)
       }
       return [...prev, {
-        id:        product.id,
-        name:      product.name,
-        unit:      product.unit,
-        product,
-        qty:       1,
-        unitPrice: Number(product.price),
-        isQuick:   false,
+        id: product.id, name: product.name, unit: product.unit,
+        product, qty: 1, unitPrice: Number(product.price), isQuick: false,
       }]
     })
   }
 
-  /** Add a freeform quick item that is not in the product catalog */
   function addCustomItem(name: string, price: number, qty: number) {
-    const uniqueKey = `quick-${Date.now()}-${Math.random()}`
-    setCart(prev => [
-      ...prev,
-      { id: uniqueKey, name, unit: 'item', qty, unitPrice: price, isQuick: true },
-    ])
+    const key = `quick-${Date.now()}-${Math.random()}`
+    setCart(prev => [...prev, { id: key, name, unit: 'item', qty, unitPrice: price, isQuick: true }])
   }
 
-  /** Increment or decrement a cart item's quantity. Removes item if qty reaches 0. */
   function updateQty(itemId: string, delta: number) {
     setCart(prev =>
       prev.map(item => {
         if (item.id !== itemId) return item
-
         const newQty = item.qty + delta
         if (newQty <= 0) return null as unknown as CartItem
-
-        const isService = item.product?.type === 'service'
-        const wouldExceedStock =
+        const isService   = item.product?.type === 'service'
+        const wouldExceed =
           !item.isQuick && !isService && item.product?.track_stock &&
           item.product && newQty > item.product.stock
-
-        if (wouldExceedStock) return item
+        if (wouldExceed) return item
         return { ...item, qty: newQty }
       }).filter(Boolean)
     )
   }
 
-  /** Override the unit price of a specific cart item */
   function updatePrice(itemId: string, price: string) {
-    const parsedPrice = parseFloat(price) || 0
-    setCart(prev =>
-      prev.map(item => item.id === itemId ? { ...item, unitPrice: parsedPrice } : item)
-    )
+    setCart(prev => prev.map(i => i.id === itemId ? { ...i, unitPrice: parseFloat(price) || 0 } : i))
   }
 
-  /** Remove a specific cart item */
   function removeItem(itemId: string) {
-    setCart(prev => prev.filter(item => item.id !== itemId))
+    setCart(prev => prev.filter(i => i.id !== itemId))
   }
 
-  /** Reset cart and all checkout fields to initial state */
   function clearCart() {
     setCart([])
     setDiscountPercent('')
@@ -169,59 +226,95 @@ export function useSell(): SellState {
     setError('')
   }
 
-  /** Submit the sale: insert transaction, decrement stock, create khata entry if credit */
-  async function handleSell(): Promise<SaleResult | null> {
-    const discountAmount  = parseFloat(discountPercent) || 0
-    const subtotal        = cart.reduce((sum, item) => sum + item.qty * item.unitPrice, 0)
-    const total           = subtotal - subtotal * (discountAmount / 100)
-    const isKhataPayment  = paymentMethod === 'khata'
-    const buyerName       = customerName.trim()
-    const itemSummary     = cart.map(item => `${item.name} x${item.qty}`).join(', ')
+  // ── create a new khata customer inline and immediately select them ──────────
 
-    if (cart.length === 0)                  { setError('Add at least one item'); return null }
-    if (isKhataPayment && !selectedCustomer) { setError('Select a customer for khata sale'); return null }
-    if (total <= 0)                         { setError('Total must be greater than 0'); return null }
+  async function createAndSelectCustomer(name: string): Promise<void> {
+    if (!bizId || !name.trim()) return
+    const supabase = createClient()
+    const { data, error: err } = await supabase
+      .from('customers')
+      .insert({ business_id: bizId, name: name.trim(), balance: 0 })
+      .select()
+      .single()
+    if (err || !data) return
+    const created = data as Customer
+    setCustomers(prev => [created, ...prev])
+    setSelectedCustomer(created)
+    setCustomerName('')
+  }
+
+  // ── checkout ───────────────────────────────────────────────────────────────
+
+  async function handleSell(): Promise<SaleResult | null> {
+    const discountAmt = parseFloat(discountPercent) || 0
+    const subtotal    = cart.reduce((sum, i) => sum + i.qty * i.unitPrice, 0)
+    const total       = subtotal - subtotal * (discountAmt / 100)
+    const isKhata     = paymentMethod === 'khata'
+    const itemSummary = cart.map(i => `${i.name} x${i.qty}`).join(', ')
+
+    if (cart.length === 0)            { setError('Add at least one item'); return null }
+    if (isKhata && !selectedCustomer) { setError('Select a customer for khata sale'); return null }
+    if (total <= 0)                   { setError('Total must be greater than 0'); return null }
 
     setSubmitting(true)
     setError('')
 
-    const supabase     = createClient()
-    const displayName  = buyerName || (isKhataPayment ? selectedCustomer!.name : paymentMethod)
+    // ── OFFLINE: queue in IndexedDB ──────────────────────────────────────────
+    if (!navigator.onLine) {
+      const pending: PendingSale = {
+        id:               crypto.randomUUID(),
+        bizId,
+        total,
+        itemSummary,
+        items:            cart,
+        paymentMethod,
+        discountPercent:  discountAmt,
+        selectedCustomer,
+        customerName:     customerName.trim(),
+        createdAt:        new Date().toISOString(),
+      }
+      await queueSale(pending).catch(() => {})
+      setPendingCount(c => c + 1)
+      setSubmitting(false)
+      return {
+        total, items: cart, discountPercent: discountAmt,
+        paymentMethod, customer: selectedCustomer, offline: true,
+      }
+    }
+
+    // ── ONLINE: submit directly ──────────────────────────────────────────────
+    const supabase    = createClient()
+    const displayName = customerName.trim() || (isKhata ? selectedCustomer!.name : paymentMethod)
 
     try {
-      // 1 — Insert the main transaction record
-      const { error: transactionError } = await supabase.from('transactions').insert({
+      const { error: txErr } = await supabase.from('transactions').insert({
         business_id:    bizId,
         type:           'income',
         amount:         total,
-        item_name:      buyerName ? `${buyerName} — ${itemSummary}` : itemSummary,
+        item_name:      customerName.trim() ? `${displayName} — ${itemSummary}` : itemSummary,
         payment_method: paymentMethod,
         customer_id:    selectedCustomer?.id ?? null,
       })
-      if (transactionError) throw new Error(transactionError.message)
+      if (txErr) throw new Error(txErr.message)
 
-      // 2 — Decrement stock for each physical product sold
-      const stockableItems = cart.filter(
-        item => !item.isQuick && item.product?.type !== 'service' && item.product?.track_stock
+      const stockable = cart.filter(
+        i => !i.isQuick && i.product?.type !== 'service' && i.product?.track_stock
       )
-
-      for (const item of stockableItems) {
+      for (const item of stockable) {
         if (!item.product) continue
         const newStock = Math.max(0, item.product.stock - item.qty)
         await supabase.from('products').update({ stock: newStock }).eq('id', item.product.id)
       }
 
-      // 3 — Create khata ledger entry when payment method is khata (credit)
-      if (isKhataPayment && selectedCustomer) {
-        const { error: khataError } = await supabase.from('khata_entries').insert({
+      if (isKhata && selectedCustomer) {
+        const { error: khErr } = await supabase.from('khata_entries').insert({
           business_id: bizId,
           customer_id: selectedCustomer.id,
           type:        'credit',
           amount:      total,
         })
-        if (khataError) throw new Error(khataError.message)
+        if (khErr) throw new Error(khErr.message)
 
-        // Update the customer's running balance
         await supabase
           .from('customers')
           .update({ balance: Number(selectedCustomer.balance) + total })
@@ -229,26 +322,19 @@ export function useSell(): SellState {
       }
 
       setSubmitting(false)
-      return {
-        total,
-        items:           cart,
-        discountPercent: discountAmount,
-        paymentMethod,
-        customer:        selectedCustomer,
-      }
+      return { total, items: cart, discountPercent: discountAmt, paymentMethod, customer: selectedCustomer }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to save sale. Try again.'
-      setError(message)
+      setError(err instanceof Error ? err.message : 'Failed to save sale. Try again.')
       setSubmitting(false)
       return null
     }
   }
 
   return {
-    bizId, userId, products, customers, cart, paymentMethod, discountPercent,
-    customerName, selectedCustomer, loading, submitting, error,
+    bizId, products, customers, cart, paymentMethod, discountPercent,
+    customerName, selectedCustomer, pendingCount, loading, submitting, syncing, error,
     addToCart, addCustomItem, updateQty, updatePrice, removeItem, clearCart,
     setPaymentMethod, setDiscountPercent, setCustomerName, setSelectedCustomer,
-    handleSell,
+    createAndSelectCustomer, handleSell,
   }
 }

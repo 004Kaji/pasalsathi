@@ -44,7 +44,6 @@ export async function POST(request: NextRequest) {
   const sparrowToken = process.env.SPARROW_SMS_TOKEN
 
   if (!sparrowToken) {
-    console.log(`[DEV SMS] To: ${phone}\nMessage: ${message}`)
     return NextResponse.json({ success: true, dev: true })
   }
 

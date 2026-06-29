@@ -1,32 +1,29 @@
 'use client'
 // POS sell page — thin orchestrator that wires useSell hook into sub-components
 import { useState } from 'react'
-import { Trash2 } from 'lucide-react'
+import { Trash2, WifiOff, RefreshCw } from 'lucide-react'
 import { formatBSFull } from '@/lib/utils/date'
 import { useSell } from '@/hooks/use-sell'
 import type { SaleResult } from '@/lib/types/app'
 
-import ProductSearch    from '@/components/sell/product-search'
-import ProductGrid      from '@/components/sell/product-grid'
-import CartList         from '@/components/sell/cart-list'
-import CheckoutBar      from '@/components/sell/checkout-bar'
-import CustomItemSheet  from '@/components/sell/custom-item-sheet'
-import CustomerPicker   from '@/components/sell/customer-picker'
-import SuccessScreen    from '@/components/sell/success-screen'
+import ProductSearch   from '@/components/sell/product-search'
+import ProductGrid     from '@/components/sell/product-grid'
+import CartList        from '@/components/sell/cart-list'
+import CheckoutBar     from '@/components/sell/checkout-bar'
+import CustomItemSheet from '@/components/sell/custom-item-sheet'
+import CustomerPicker  from '@/components/sell/customer-picker'
+import SuccessScreen   from '@/components/sell/success-screen'
 
 export default function SellPage() {
   const sell = useSell()
 
-  // Local UI state for search/dropdown/custom-item sheet
-  const [search,          setSearch]          = useState('')
-  const [showDropdown,    setShowDropdown]     = useState(false)
-  const [showCustom,      setShowCustom]       = useState(false)
-  const [customPrefill,   setCustomPrefill]    = useState('')
-  const [showCustomerList, setShowCustomerList] = useState(false)
-  const [cashGiven,       setCashGiven]        = useState('')
-
-  // Post-sale result shown on success screen
-  const [saleResult, setSaleResult] = useState<SaleResult | null>(null)
+  const [search,           setSearch]           = useState('')
+  const [showDropdown,     setShowDropdown]      = useState(false)
+  const [showCustom,       setShowCustom]        = useState(false)
+  const [customPrefill,    setCustomPrefill]     = useState('')
+  const [showCustomerList, setShowCustomerList]  = useState(false)
+  const [cashGiven,        setCashGiven]         = useState('')
+  const [saleResult,       setSaleResult]        = useState<SaleResult | null>(null)
 
   const bsDate = formatBSFull(new Date())
 
@@ -72,6 +69,18 @@ export default function SellPage() {
             <p className="text-xs text-gray-600 mt-0.5">{bsDate}</p>
           </div>
           <div className="flex items-center gap-2">
+            {/* Pending offline sync badge */}
+            {sell.pendingCount > 0 && (
+              <div className="flex items-center gap-1.5 bg-amber-500/15 border border-amber-500/30 rounded-xl px-2.5 py-1.5">
+                {sell.syncing
+                  ? <RefreshCw size={13} className="text-amber-400 animate-spin" />
+                  : <WifiOff size={13} className="text-amber-400" />
+                }
+                <span className="text-amber-400 font-bold text-xs">
+                  {sell.syncing ? 'Syncing...' : `${sell.pendingCount} offline`}
+                </span>
+              </div>
+            )}
             {sell.cart.length > 0 && (
               <>
                 <div className="bg-orange-500/20 border border-orange-500/30 rounded-xl px-3 py-1.5">
@@ -143,6 +152,7 @@ export default function SellPage() {
             onShowList={setShowCustomerList}
             onSelect={sell.setSelectedCustomer}
             onDeselect={() => sell.setSelectedCustomer(null)}
+            onCreateNew={sell.createAndSelectCustomer}
           />
         )}
 

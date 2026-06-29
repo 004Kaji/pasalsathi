@@ -36,6 +36,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/login`)
   }
 
+  // next param used for recovery flow (e.g. ?next=/update-password)
+  const next = searchParams.get('next')
+  if (next && next.startsWith('/')) {
+    return NextResponse.redirect(`${origin}${next}`)
+  }
+
   // Route new users to onboarding, returning users to dashboard
   const { data: business } = await supabase
     .from('businesses')
