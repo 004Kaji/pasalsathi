@@ -243,3 +243,8 @@ body {
   body { @apply bg-background text-foreground; }
   html { @apply font-sans; }
 }
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+}

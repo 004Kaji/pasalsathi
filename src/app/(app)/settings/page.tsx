@@ -4,13 +4,25 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/db/supabase'
-import { Building2, LogOut, Download, Trash2, CreditCard, Users, ChevronRight, KeyRound, Mail } from 'lucide-react'
+import { LogOut, Download, Trash2, KeyRound, Mail, Users, CreditCard, Gift } from 'lucide-react'
 import { PageSkeleton } from '@/components/ui/skeleton'
 import type { Business } from '@/lib/types/database'
+
+type Tab = 'business' | 'account' | 'subscription' | 'referral' | 'data' | 'team'
+
+const TABS: { id: Tab; label: string; emoji?: string }[] = [
+  { id: 'business',     label: 'Business'     },
+  { id: 'account',      label: 'Account'      },
+  { id: 'subscription', label: 'Subscription' },
+  { id: 'referral',     label: 'Referral', emoji: '🎁' },
+  { id: 'data',         label: 'Data'         },
+  { id: 'team',         label: 'Team'         },
+]
 
 export default function SettingsPage() {
   const router = useRouter()
 
+  const [tab,        setTab]        = useState<Tab>('business')
   const [business,   setBusiness]   = useState<Business | null>(null)
   const [userEmail,  setUserEmail]  = useState('')
   const [name,       setName]       = useState('')
@@ -88,75 +100,45 @@ export default function SettingsPage() {
     setClearStep('idle'); alert('All transaction data cleared.')
   }
 
-  if (loading) return <div className="min-h-screen bg-[#F5F0E8] pt-16"><PageSkeleton rows={4} /></div>
+  if (loading) return <div className="pt-6 px-4"><PageSkeleton rows={4} /></div>
 
   const inp = 'w-full bg-white border border-[#D5CFC6] rounded-xl px-4 h-12 text-[#1C1917] placeholder:text-[#9B948E] outline-none focus:border-[#C84B2F] focus:ring-2 focus:ring-[#C84B2F]/20 text-base transition-all'
 
   return (
-    <div className="min-h-screen bg-[#F5F0E8] pb-32">
+    <div className="pb-12">
 
-      {/* Header */}
-      <div className="sticky top-0 bg-[#F5F0E8]/90 backdrop-blur-xl border-b border-[#D5CFC6] z-10 px-4 pt-5 pb-4">
+      {/* Page header */}
+      <div className="px-4 pt-6 pb-4">
         <h1 className="text-2xl font-bold text-[#1C1917] font-display">Settings</h1>
+        {business && <p className="text-sm text-[#9B948E] mt-0.5">{business.name}</p>}
       </div>
 
-      <div className="px-4 pt-4 space-y-4">
+      {/* Tab bar */}
+      <div className="border-b border-[#D5CFC6] px-4">
+        <div className="flex gap-0 overflow-x-auto no-scrollbar">
+          {TABS.map(t => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`shrink-0 px-4 py-3 text-sm font-semibold transition-colors border-b-2 -mb-px ${
+                tab === t.id
+                  ? 'border-[#1C1917] text-[#1C1917]'
+                  : 'border-transparent text-[#9B948E] hover:text-[#6B6560]'
+              }`}
+            >
+              {t.label}{t.emoji ? ` ${t.emoji}` : ''}
+            </button>
+          ))}
+        </div>
+      </div>
 
-        {/* Account */}
-        <section className="bg-white border border-[#D5CFC6] rounded-2xl overflow-hidden shadow-sm">
-          <div className="px-5 py-3 border-b border-[#E0D9CE]">
-            <p className="text-xs font-bold text-[#9B948E] uppercase tracking-widest">Account</p>
-          </div>
-          <div className="flex items-center gap-3 px-5 py-4 border-b border-[#E0D9CE]">
-            <Mail size={18} className="text-[#9B948E] shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-xs text-[#9B948E] font-medium">Email</p>
-              <p className="text-sm text-[#1C1917] truncate mt-0.5 font-mono">{userEmail || '—'}</p>
-            </div>
-          </div>
-          <Link href="/forgot-password" className="flex items-center gap-3 px-5 py-4 border-b border-[#E0D9CE] active:bg-[#F5F0E8]">
-            <KeyRound size={18} className="text-[#9B948E] shrink-0" />
-            <span className="flex-1 text-sm font-semibold text-[#1C1917]">Change Password</span>
-            <ChevronRight size={16} className="text-[#9B948E]" />
-          </Link>
-          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-5 py-4 text-left active:bg-[#F5F0E8]">
-            <LogOut size={18} className="text-[#C84B2F] shrink-0" />
-            <span className="flex-1 text-sm font-semibold text-[#C84B2F]">Logout</span>
-          </button>
-        </section>
+      {/* Tab content */}
+      <div className="px-4 pt-6 space-y-4">
 
-        {/* Quick links */}
-        <section className="bg-white border border-[#D5CFC6] rounded-2xl overflow-hidden shadow-sm divide-y divide-[#E0D9CE]">
-          <Link href="/settings/billing" className="flex items-center justify-between px-5 py-4 active:bg-[#F5F0E8]">
-            <div className="flex items-center gap-3">
-              <div className="bg-[#C84B2F]/10 rounded-xl p-2"><CreditCard size={18} className="text-[#C84B2F]" /></div>
-              <div>
-                <p className="text-sm font-semibold text-[#1C1917]">Billing & Plan</p>
-                <p className="text-xs text-[#9B948E]">Manage subscription</p>
-              </div>
-            </div>
-            <ChevronRight size={16} className="text-[#9B948E]" />
-          </Link>
-          <Link href="/settings/users" className="flex items-center justify-between px-5 py-4 active:bg-[#F5F0E8]">
-            <div className="flex items-center gap-3">
-              <div className="bg-blue-500/10 rounded-xl p-2"><Users size={18} className="text-blue-600" /></div>
-              <div>
-                <p className="text-sm font-semibold text-[#1C1917]">Team Members</p>
-                <p className="text-xs text-[#9B948E]">Give staff access</p>
-              </div>
-            </div>
-            <ChevronRight size={16} className="text-[#9B948E]" />
-          </Link>
-        </section>
-
-        {/* Business Info */}
-        <form onSubmit={handleSave} className="space-y-4">
-          <div className="bg-white border border-[#D5CFC6] rounded-2xl overflow-hidden shadow-sm">
-            <div className="px-5 py-3 border-b border-[#E0D9CE] flex items-center gap-2">
-              <Building2 size={16} className="text-[#9B948E]" />
-              <p className="text-xs font-bold text-[#9B948E] uppercase tracking-widest">Business Info</p>
-            </div>
-            <div className="p-5 space-y-4">
+        {/* BUSINESS */}
+        {tab === 'business' && (
+          <form onSubmit={handleSave} className="space-y-4">
+            <div className="bg-white border border-[#D5CFC6] rounded-2xl p-5 space-y-4 shadow-sm">
               <div>
                 <label className="text-xs font-semibold text-[#6B6560] block mb-1.5">Business Name *</label>
                 <input value={name} onChange={e => setName(e.target.value)} className={inp} required placeholder="Ram Kirana Pasal" />
@@ -170,77 +152,119 @@ export default function SettingsPage() {
                 <input placeholder="New Road, Kathmandu" value={address} onChange={e => setAddress(e.target.value)} className={inp} />
               </div>
             </div>
-          </div>
-          <button
-            type="submit"
-            disabled={saving}
-            className={`w-full py-4 rounded-2xl font-bold text-base active:scale-[0.98] transition-all disabled:opacity-60 text-white ${
-              saved ? 'bg-[#4A7055]' : 'bg-[#C84B2F]'
-            }`}
-          >
-            {saved ? '✓ Saved!' : saving ? 'Saving...' : 'Save Changes'}
-          </button>
-        </form>
-
-        {/* Data */}
-        <section className="bg-white border border-[#D5CFC6] rounded-2xl overflow-hidden shadow-sm">
-          <div className="px-5 py-3 border-b border-[#E0D9CE]">
-            <p className="text-xs font-bold text-[#9B948E] uppercase tracking-widest">Data</p>
-          </div>
-          <button onClick={handleExportAll} disabled={exporting}
-            className="w-full flex items-center gap-3 px-5 py-4 border-b border-[#E0D9CE] active:bg-[#F5F0E8] disabled:opacity-50">
-            <Download size={18} className="text-[#4A7055] shrink-0" />
-            <div className="flex-1 text-left">
-              <p className="text-sm font-semibold text-[#1C1917]">Export All Data</p>
-              <p className="text-xs text-[#9B948E] mt-0.5">Download transactions as CSV</p>
-            </div>
-            {exporting && <div className="w-4 h-4 border-2 border-[#4A7055]/50 border-t-[#4A7055] rounded-full animate-spin" />}
-          </button>
-
-          {clearStep === 'idle' && (
-            <button onClick={() => setClearStep('confirm')} className="w-full flex items-center gap-3 px-5 py-4 active:bg-[#F5F0E8]">
-              <Trash2 size={18} className="text-[#C84B2F] shrink-0" />
-              <div className="flex-1 text-left">
-                <p className="text-sm font-semibold text-[#C84B2F]">Clear All Data</p>
-                <p className="text-xs text-[#9B948E] mt-0.5">Delete all transactions & reset balances</p>
-              </div>
+            <button
+              type="submit"
+              disabled={saving}
+              className={`w-full py-4 rounded-2xl font-bold text-base active:scale-[0.98] transition-all disabled:opacity-60 text-white ${
+                saved ? 'bg-[#4A7055]' : 'bg-[#C84B2F]'
+              }`}
+            >
+              {saved ? '✓ Saved!' : saving ? 'Saving...' : 'Save Changes'}
             </button>
-          )}
-          {clearStep === 'confirm' && (
-            <div className="px-5 py-4 bg-[#C84B2F]/5 border-t border-[#C84B2F]/20">
-              <p className="text-sm font-semibold text-[#C84B2F] mb-1">Delete all transactions?</p>
-              <p className="text-xs text-[#9B948E] mb-3">Removes all sales, expenses, and resets customer balances. Cannot be undone.</p>
-              <div className="flex gap-2">
-                <button onClick={() => setClearStep('idle')}
-                  className="flex-1 py-2.5 rounded-xl border border-[#D5CFC6] text-[#6B6560] text-sm font-semibold">Cancel</button>
-                <button onClick={handleClearData}
-                  className="flex-1 py-2.5 rounded-xl bg-[#C84B2F] text-white text-sm font-bold">Yes, Delete</button>
-              </div>
-            </div>
-          )}
-          {clearStep === 'clearing' && (
-            <div className="px-5 py-4 text-center">
-              <p className="text-sm text-[#6B6560]">Clearing data...</p>
-            </div>
-          )}
-        </section>
+          </form>
+        )}
 
-        {/* About */}
-        <section className="bg-white border border-[#D5CFC6] rounded-2xl overflow-hidden shadow-sm">
-          <div className="px-5 py-3 border-b border-[#E0D9CE]">
-            <p className="text-xs font-bold text-[#9B948E] uppercase tracking-widest">About</p>
-          </div>
-          <div className="px-5 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-[#C84B2F] rounded-xl flex items-center justify-center text-white font-bold text-sm font-display">PS</div>
-              <div>
-                <p className="text-sm font-bold text-[#1C1917]">PasalSathi</p>
-                <p className="text-xs text-[#9B948E]">Version 1.0.0</p>
+        {/* ACCOUNT */}
+        {tab === 'account' && (
+          <div className="bg-white border border-[#D5CFC6] rounded-2xl overflow-hidden shadow-sm">
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-[#E0D9CE]">
+              <Mail size={18} className="text-[#9B948E] shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-[#9B948E] font-medium">Email</p>
+                <p className="text-sm text-[#1C1917] truncate mt-0.5 font-mono">{userEmail || '—'}</p>
               </div>
             </div>
-            <p className="text-xs text-[#9B948E]">Nepali Business App</p>
+            <Link href="/forgot-password" className="flex items-center gap-3 px-5 py-4 border-b border-[#E0D9CE] active:bg-[#F5F0E8]">
+              <KeyRound size={18} className="text-[#9B948E] shrink-0" />
+              <span className="flex-1 text-sm font-semibold text-[#1C1917]">Change Password</span>
+            </Link>
+            <button onClick={handleLogout} className="w-full flex items-center gap-3 px-5 py-4 text-left active:bg-[#F5F0E8]">
+              <LogOut size={18} className="text-[#C84B2F] shrink-0" />
+              <span className="flex-1 text-sm font-semibold text-[#C84B2F]">Logout</span>
+            </button>
           </div>
-        </section>
+        )}
+
+        {/* SUBSCRIPTION */}
+        {tab === 'subscription' && (
+          <div className="bg-white border border-[#D5CFC6] rounded-2xl p-8 text-center shadow-sm">
+            <div className="w-14 h-14 bg-[#C84B2F]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <CreditCard size={28} className="text-[#C84B2F]" />
+            </div>
+            <h2 className="text-lg font-bold text-[#1C1917] mb-1">Subscription</h2>
+            <p className="text-sm text-[#9B948E]">Billing and plan management coming soon.</p>
+          </div>
+        )}
+
+        {/* REFERRAL */}
+        {tab === 'referral' && (
+          <div className="bg-white border border-[#D5CFC6] rounded-2xl p-8 text-center shadow-sm">
+            <div className="w-14 h-14 bg-[#4A7055]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Gift size={28} className="text-[#4A7055]" />
+            </div>
+            <h2 className="text-lg font-bold text-[#1C1917] mb-1">Referral 🎁</h2>
+            <p className="text-sm text-[#9B948E]">Invite friends and earn rewards — coming soon.</p>
+          </div>
+        )}
+
+        {/* DATA */}
+        {tab === 'data' && (
+          <div className="space-y-4">
+            <div className="bg-white border border-[#D5CFC6] rounded-2xl overflow-hidden shadow-sm">
+              <button onClick={handleExportAll} disabled={exporting}
+                className="w-full flex items-center gap-3 px-5 py-4 border-b border-[#E0D9CE] active:bg-[#F5F0E8] disabled:opacity-50">
+                <Download size={18} className="text-[#4A7055] shrink-0" />
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-semibold text-[#1C1917]">Export All Data</p>
+                  <p className="text-xs text-[#9B948E] mt-0.5">Download transactions as CSV</p>
+                </div>
+                {exporting && <div className="w-4 h-4 border-2 border-[#4A7055]/50 border-t-[#4A7055] rounded-full animate-spin" />}
+              </button>
+
+              {clearStep === 'idle' && (
+                <button onClick={() => setClearStep('confirm')} className="w-full flex items-center gap-3 px-5 py-4 active:bg-[#F5F0E8]">
+                  <Trash2 size={18} className="text-[#C84B2F] shrink-0" />
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-semibold text-[#C84B2F]">Clear All Data</p>
+                    <p className="text-xs text-[#9B948E] mt-0.5">Delete all transactions & reset balances</p>
+                  </div>
+                </button>
+              )}
+              {clearStep === 'confirm' && (
+                <div className="px-5 py-4 bg-[#C84B2F]/5 border-t border-[#C84B2F]/20">
+                  <p className="text-sm font-semibold text-[#C84B2F] mb-1">Delete all transactions?</p>
+                  <p className="text-xs text-[#9B948E] mb-3">Removes all sales, expenses, and resets customer balances. Cannot be undone.</p>
+                  <div className="flex gap-2">
+                    <button onClick={() => setClearStep('idle')}
+                      className="flex-1 py-2.5 rounded-xl border border-[#D5CFC6] text-[#6B6560] text-sm font-semibold">Cancel</button>
+                    <button onClick={handleClearData}
+                      className="flex-1 py-2.5 rounded-xl bg-[#C84B2F] text-white text-sm font-bold">Yes, Delete</button>
+                  </div>
+                </div>
+              )}
+              {clearStep === 'clearing' && (
+                <div className="px-5 py-4 text-center">
+                  <p className="text-sm text-[#6B6560]">Clearing data...</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* TEAM */}
+        {tab === 'team' && (
+          <div className="bg-white border border-[#D5CFC6] rounded-2xl overflow-hidden shadow-sm">
+            <Link href="/settings/users" className="flex items-center justify-between px-5 py-5 active:bg-[#F5F0E8]">
+              <div className="flex items-center gap-3">
+                <div className="bg-blue-500/10 rounded-xl p-2.5"><Users size={20} className="text-blue-600" /></div>
+                <div>
+                  <p className="text-sm font-semibold text-[#1C1917]">Team Members</p>
+                  <p className="text-xs text-[#9B948E] mt-0.5">Give staff access to PasalSathi</p>
+                </div>
+              </div>
+            </Link>
+          </div>
+        )}
 
       </div>
     </div>
