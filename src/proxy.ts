@@ -43,18 +43,6 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL(business ? '/home' : '/onboarding', request.url))
   }
 
-  if (user && !isOnboarding && !isAuthPage) {
-    const { data: business } = await supabase
-      .from('businesses')
-      .select('id')
-      .eq('owner_id', user.id)
-      .single()
-
-    if (!business) {
-      return NextResponse.redirect(new URL('/onboarding', request.url))
-    }
-  }
-
   return supabaseResponse
 }
 

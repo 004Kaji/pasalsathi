@@ -42,12 +42,20 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}${next}`)
   }
 
-  // Route new users to onboarding, returning users to dashboard
+  // Auto-create business on first login so user lands on /home directly
   const { data: business } = await supabase
     .from('businesses')
     .select('id')
     .eq('owner_id', user.id)
     .single()
 
-  return NextResponse.redirect(`${origin}${business ? '/home' : '/onboarding'}`)
+  if (!business) {
+    const defaultName = (user.email ?? 'My Business').split('@')[0].replace(/[._]/g, ' ')
+    await supabase.from('businesses').insert({
+      owner_id: user.id,
+      name:     defaultName.charAt(0).toUpperCase() + defaultName.slice(1),
+    })
+  }
+
+  return NextResponse.redirect(`${origin}/home`)
 }

@@ -20,7 +20,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .eq('owner_id', user.id)
     .single()
 
-  if (!business) redirect('/onboarding')
+  if (!business) {
+    // Business should have been auto-created at auth/callback — create fallback here just in case
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const defaultName = (user.email ?? 'My Business').split('@')[0].replace(/[._]/g, ' ')
+      await supabase.from('businesses').insert({
+        owner_id: user.id,
+        name: defaultName.charAt(0).toUpperCase() + defaultName.slice(1),
+      })
+    }
+    redirect('/home')
+  }
 
   const subStatus = getSubscriptionStatus(business as Business)
 
