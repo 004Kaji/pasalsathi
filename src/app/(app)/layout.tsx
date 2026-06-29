@@ -5,6 +5,7 @@ import TopNav from '@/components/shared/top-nav'
 import SubscriptionBanner from '@/components/shared/subscription-banner'
 import OfflineIndicator from '@/components/pwa/offline-indicator'
 import InstallPrompt from '@/components/pwa/install-prompt'
+import ReferralClaimer from '@/components/shared/referral-claimer'
 import { ErrorBoundary } from '@/components/shared/error-boundary'
 import { getSubscriptionStatus } from '@/lib/utils/subscription'
 import type { Business } from '@/lib/types/database'
@@ -23,9 +24,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   if (!business) {
     const defaultName = (user.email ?? 'My Business').split('@')[0].replace(/[._]/g, ' ')
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+    const refCode = Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
     await supabase.from('businesses').insert({
-      owner_id: user.id,
-      name: defaultName.charAt(0).toUpperCase() + defaultName.slice(1),
+      owner_id:      user.id,
+      name:          defaultName.charAt(0).toUpperCase() + defaultName.slice(1),
+      referral_code: refCode,
     })
     redirect('/home')
   }
@@ -48,6 +52,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <BottomNav />
       </div>
       <InstallPrompt />
+      <ReferralClaimer />
     </div>
   )
 }

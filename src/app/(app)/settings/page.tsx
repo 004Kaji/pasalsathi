@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/db/supabase'
-import { LogOut, Download, Trash2, KeyRound, Mail, Users, CreditCard, Gift } from 'lucide-react'
+import { LogOut, Download, Trash2, KeyRound, Mail, Users, CreditCard, Gift, Copy, Check } from 'lucide-react'
 import { PageSkeleton } from '@/components/ui/skeleton'
 import type { Business } from '@/lib/types/database'
 
@@ -34,8 +34,12 @@ export default function SettingsPage() {
   const [loading,    setLoading]    = useState(true)
   const [saving,     setSaving]     = useState(false)
   const [saved,      setSaved]      = useState(false)
-  const [exporting,  setExporting]  = useState(false)
-  const [clearStep,  setClearStep]  = useState<'idle' | 'confirm' | 'clearing'>('idle')
+  const [exporting,      setExporting]      = useState(false)
+  const [clearStep,      setClearStep]      = useState<'idle' | 'confirm' | 'clearing'>('idle')
+  const [referralCode,   setReferralCode]   = useState('')
+  const [referralCount,  setReferralCount]  = useState(0)
+  const [monthsEarned,   setMonthsEarned]   = useState(0)
+  const [copied,         setCopied]         = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -45,14 +49,21 @@ export default function SettingsPage() {
       setUserEmail(user.email ?? '')
       const { data: biz } = await supabase.from('businesses').select('*').eq('owner_id', user.id).single()
       if (biz) {
-        const b = biz as Business
-        setBusiness(b)
+        const b = biz as Business & { referral_code?: string; months_earned?: number }
+        setBusiness(b as Business)
         setName(b.name)
         setPhone(b.phone ?? '')
         setAddress(b.address ?? '')
         setPanNumber(b.pan_number ?? '')
         setVatNumber(b.vat_number ?? '')
         setBusinessRegNumber(b.business_reg_number ?? '')
+        setReferralCode(b.referral_code ?? '')
+        setMonthsEarned(b.months_earned ?? 0)
+
+        const { count } = await supabase
+          .from('referrals').select('id', { count: 'exact', head: true })
+          .eq('referrer_id', b.id)
+        setReferralCount(count ?? 0)
       }
       setLoading(false)
     }
@@ -295,12 +306,113 @@ export default function SettingsPage() {
 
         {/* REFERRAL */}
         {tab === 'referral' && (
-          <div className="bg-white border border-[#D5CFC6] rounded-2xl p-8 text-center shadow-sm">
-            <div className="w-14 h-14 bg-[#4A7055]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Gift size={28} className="text-[#4A7055]" />
+          <div className="space-y-4">
+
+            {/* Hero card */}
+            <div className="bg-gradient-to-br from-[#4A7055] to-emerald-700 rounded-2xl p-6 text-white shadow-sm">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-3xl">🎁</span>
+                <div>
+                  <h2 className="text-lg font-bold">Invite Friends, Earn Free Months</h2>
+                  <p className="text-sm text-white/75">साथीलाई बोलाउनुस्, फाइदा लिनुस्!</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 mt-4">
+                <div className="bg-white/15 rounded-xl p-3 text-center">
+                  <p className="text-2xl font-bold">{referralCount}</p>
+                  <p className="text-xs text-white/75">Friends joined</p>
+                </div>
+                <div className="bg-white/15 rounded-xl p-3 text-center">
+                  <p className="text-2xl font-bold">{monthsEarned}</p>
+                  <p className="text-xs text-white/75">Free months earned</p>
+                </div>
+              </div>
+              {referralCount >= 5 && (
+                <div className="mt-3 bg-yellow-400/20 border border-yellow-300/30 rounded-xl px-3 py-2 flex items-center gap-2">
+                  <span>🏆</span>
+                  <p className="text-sm font-semibold text-yellow-100">PasalSathi Partner — 5+ referrals!</p>
+                </div>
+              )}
             </div>
-            <h2 className="text-lg font-bold text-[#1C1917] mb-1">Referral 🎁</h2>
-            <p className="text-sm text-[#9B948E]">Invite friends and earn rewards — coming soon.</p>
+
+            {/* Referral code + share */}
+            <div className="bg-white border border-[#D5CFC6] rounded-2xl p-5 shadow-sm space-y-4">
+              <div>
+                <p className="text-xs font-semibold text-[#6B6560] mb-2">Your referral code</p>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-[#F5F0E8] border border-[#D5CFC6] rounded-xl px-4 py-3">
+                    <p className="text-xl font-mono font-bold text-[#C84B2F] tracking-widest">
+                      {referralCode || '------'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      const link = `https://pasalsathi.net/signup?ref=${referralCode}`
+                      await navigator.clipboard.writeText(link)
+                      setCopied(true)
+                      setTimeout(() => setCopied(false), 2000)
+                    }}
+                    className="p-3 bg-[#F5F0E8] border border-[#D5CFC6] rounded-xl text-[#6B6560] hover:text-[#1C1917] active:scale-95 transition-all"
+                  >
+                    {copied ? <Check size={20} className="text-[#4A7055]" /> : <Copy size={20} />}
+                  </button>
+                </div>
+                {copied && <p className="text-xs text-[#4A7055] mt-1 font-semibold">Link copied!</p>}
+              </div>
+
+              {/* WhatsApp share — Nepal's primary channel */}
+              <button
+                onClick={() => {
+                  const msg = encodeURIComponent(
+                    `नमस्ते! 🙏\n\nमैले PasalSathi प्रयोग गर्दैछु — Nepal को लागि सबैभन्दा राम्रो POS र हिसाब किताब app।\n\n✅ बिक्री, invoice, payslip सबै एकै ठाउँमा\n✅ Nepali calendar (BS) support\n✅ Nepali मा SMS reminder\n\nMero referral code: ${referralCode}\nSign up गर्नुहोस् र 45 दिन FREE पाउनुहोस्!\n\n👉 https://pasalsathi.net/signup?ref=${referralCode}`
+                  )
+                  window.open(`https://wa.me/?text=${msg}`, '_blank')
+                }}
+                className="w-full flex items-center justify-center gap-3 bg-[#25D366] hover:bg-[#1FB855] active:scale-[0.98] text-white rounded-xl py-3.5 font-semibold transition-all"
+              >
+                <span className="text-xl">💬</span>
+                Share on WhatsApp
+              </button>
+
+              <button
+                onClick={() => {
+                  const link = `https://pasalsathi.net/signup?ref=${referralCode}`
+                  if (navigator.share) {
+                    navigator.share({ title: 'PasalSathi', text: `Join PasalSathi with my code ${referralCode} and get 45 days free!`, url: link })
+                  } else {
+                    navigator.clipboard.writeText(link)
+                    setCopied(true)
+                    setTimeout(() => setCopied(false), 2000)
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-2 border border-[#D5CFC6] rounded-xl py-3 text-sm text-[#6B6560] hover:bg-[#F5F0E8] active:scale-[0.98] transition-all"
+              >
+                Share via other apps
+              </button>
+            </div>
+
+            {/* How it works */}
+            <div className="bg-white border border-[#D5CFC6] rounded-2xl p-5 shadow-sm">
+              <h3 className="text-sm font-bold text-[#1C1917] mb-3">How it works</h3>
+              <div className="space-y-3">
+                {[
+                  { step: '1', text: 'Share your code with a friend', sub: 'WhatsApp, Viber, in person — anywhere' },
+                  { step: '2', text: 'They sign up using your link', sub: 'They get 45 days free (15 bonus days)' },
+                  { step: '3', text: 'You earn 1 free month', sub: 'Per friend who joins — no limit!' },
+                ].map(s => (
+                  <div key={s.step} className="flex items-start gap-3">
+                    <div className="w-7 h-7 rounded-full bg-[#4A7055]/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-[#4A7055]">{s.step}</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-[#1C1917]">{s.text}</p>
+                      <p className="text-xs text-[#9B948E]">{s.sub}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </div>
         )}
 
