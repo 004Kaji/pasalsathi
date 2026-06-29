@@ -24,23 +24,17 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
-  const isAuthPage  = pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/forgot-password')
-  const isOnboarding = pathname.startsWith('/onboarding')
+  const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/forgot-password')
   // /update-password is public (recovery session) but NOT in isAuthPage — authenticated users must reach it
-  const isPublic    = isAuthPage || pathname === '/' || pathname.startsWith('/auth/') || pathname.startsWith('/update-password')
+  const isPublic   = isAuthPage || pathname === '/' || pathname.startsWith('/auth/') || pathname.startsWith('/update-password')
 
   if (!user && !isPublic) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
+  // Logged-in users visiting auth pages always go to /home
   if (user && isAuthPage) {
-    const { data: business } = await supabase
-      .from('businesses')
-      .select('id')
-      .eq('owner_id', user.id)
-      .single()
-
-    return NextResponse.redirect(new URL(business ? '/home' : '/onboarding', request.url))
+    return NextResponse.redirect(new URL('/home', request.url))
   }
 
   return supabaseResponse
