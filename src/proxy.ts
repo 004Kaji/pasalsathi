@@ -32,11 +32,6 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Logged-in users visiting auth pages always go to /home
-  if (user && isAuthPage) {
-    return NextResponse.redirect(new URL('/home', request.url))
-  }
-
   return supabaseResponse
 }
 
