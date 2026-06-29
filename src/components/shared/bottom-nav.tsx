@@ -3,14 +3,14 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, Users, Package, UserCheck, ShoppingCart, BarChart2 } from 'lucide-react'
+import { LayoutDashboard, Users, Package, ShoppingCart, BarChart2, Settings } from 'lucide-react'
 
 const BASE_ITEMS = [
-  { href: '/home',    icon: LayoutDashboard, label: 'Home'   },
-  { href: '/sell',    icon: ShoppingCart,    label: 'Sell'   },
-  { href: '/khata',   icon: Users,           label: 'Khata'  },
-  { href: '/staff',   icon: UserCheck,       label: 'Staff'  },
-  { href: '/reports', icon: BarChart2,       label: 'Report' },
+  { href: '/home',     icon: LayoutDashboard, label: 'Home'     },
+  { href: '/sell',     icon: ShoppingCart,    label: 'Sell'     },
+  { href: '/khata',    icon: Users,           label: 'Khata'    },
+  { href: '/reports',  icon: BarChart2,       label: 'Report'   },
+  { href: '/settings', icon: Settings,        label: 'Settings' },
 ]
 
 const STOCK_ITEM = { href: '/products', icon: Package, label: 'Product' }
