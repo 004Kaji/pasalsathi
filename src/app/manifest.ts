@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'PasalSathi',
     short_name: 'PasalSathi',
     description: 'Nepali business management — POS, Khata, Inventory',
-    start_url: '/home',
+    start_url: '/',
     scope: '/',
     display: 'standalone',
     orientation: 'portrait',
