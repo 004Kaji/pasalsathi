@@ -111,11 +111,10 @@ export default function CheckoutBar({
             <span className="text-white/40 text-lg">⌃</span>
           </button>
           <button
-            onClick={handleCharge}
-            disabled={isChargeDisabled}
-            className="py-4 px-6 rounded-2xl font-bold text-base text-white bg-[#C84B2F] active:scale-[0.98] transition-all disabled:opacity-40 shrink-0"
+            onClick={onToggleExpanded}
+            className="py-4 px-6 rounded-2xl font-bold text-base text-white bg-[#C84B2F] active:scale-[0.98] transition-all shrink-0"
           >
-            {submitting ? 'Saving…' : `✓ Charge ${PAYMENT_METHODS.find(p => p.value === paymentMethod)?.emoji ?? ''}`}
+            Charge ⌃
           </button>
         </div>
       </div>
