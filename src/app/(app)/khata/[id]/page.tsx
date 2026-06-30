@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/db/supabase'
-import { ArrowLeft, MessageSquare, TrendingUp, TrendingDown, Phone, MapPin, ShoppingBag } from 'lucide-react'
+import { ArrowLeft, MessageSquare, TrendingUp, TrendingDown, Phone, MapPin, ShoppingBag, Trash2 } from 'lucide-react'
 import { formatBSFull } from '@/lib/utils/date'
 import type { Customer, KhataEntry, Transaction } from '@/lib/types/database'
 
@@ -30,8 +30,10 @@ export default function CustomerDetailPage() {
   const [saving,        setSaving]        = useState(false)
   const [formError,     setFormError]     = useState('')
 
-  const [smsLoading, setSmsLoading] = useState(false)
-  const [smsMsg,     setSmsMsg]     = useState('')
+  const [smsLoading,     setSmsLoading]     = useState(false)
+  const [smsMsg,         setSmsMsg]         = useState('')
+  const [confirmDelete,  setConfirmDelete]  = useState(false)
+  const [deleting,       setDeleting]       = useState(false)
 
   const fetchData = useCallback(async () => {
     const supabase = createClient()
@@ -95,6 +97,14 @@ export default function CustomerDetailPage() {
     await fetchData()
   }
 
+  async function handleDelete() {
+    setDeleting(true)
+    const supabase = createClient()
+    await supabase.from('khata_entries').delete().eq('customer_id', customerId)
+    await supabase.from('customers').delete().eq('id', customerId)
+    router.replace('/khata')
+  }
+
   async function sendReminder() {
     if (!customer?.phone) return
     const outstanding = Number(customer.balance)
@@ -128,7 +138,10 @@ export default function CustomerDetailPage() {
           <button onClick={() => router.back()} className="p-2 rounded-xl bg-white/20 text-white active:scale-95 transition-transform">
             <ArrowLeft size={22} />
           </button>
-          <h1 className="text-xl font-bold text-white truncate">{customer.name}</h1>
+          <h1 className="text-xl font-bold text-white truncate flex-1">{customer.name}</h1>
+          <button onClick={() => setConfirmDelete(true)} className="p-2 rounded-xl bg-white/20 text-white active:scale-95 transition-transform">
+            <Trash2 size={18} />
+          </button>
         </div>
 
         <div className="bg-white/15 rounded-2xl p-4 space-y-1.5">
@@ -154,6 +167,21 @@ export default function CustomerDetailPage() {
       </div>
 
       <div className="px-4 pt-4 space-y-4">
+
+        {/* Delete confirm */}
+        {confirmDelete && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 space-y-3">
+            <p className="font-bold text-red-700">Delete {customer.name}?</p>
+            <p className="text-sm text-red-600">This will remove the customer and all their khata entries. Cannot be undone.</p>
+            <div className="flex gap-2">
+              <button onClick={() => setConfirmDelete(false)} className="flex-1 py-2.5 rounded-xl border border-[#D5CFC6] text-[#6B6560] font-semibold text-sm">Cancel</button>
+              <button onClick={handleDelete} disabled={deleting} className="flex-1 py-2.5 rounded-xl bg-red-600 text-white font-bold text-sm disabled:opacity-50">
+                {deleting ? 'Deleting...' : 'Yes, Delete'}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Action buttons */}
         <div className="grid grid-cols-2 gap-3">
           <button
