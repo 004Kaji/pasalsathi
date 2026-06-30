@@ -161,7 +161,8 @@ export default function InvoiceSheet({ result, businessName, businessPhone, busi
     setDownloading(false)
   }
 
-  const canShare = typeof window !== 'undefined' && typeof navigator.share === 'function'
+  // Only show WhatsApp share on mobile (touch devices) — desktop share sheet doesn't have WhatsApp
+  const canShare = typeof window !== 'undefined' && typeof navigator.share === 'function' && navigator.maxTouchPoints > 0
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-end">
