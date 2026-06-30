@@ -12,6 +12,14 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // assetlinks.json must be served as JSON for TWA verification
+        source: '/.well-known/assetlinks.json',
+        headers: [
+          { key: 'Content-Type', value: 'application/json' },
+          { key: 'Cache-Control', value: 'no-cache' },
+        ],
+      },
+      {
         // Ensure SW is never cached so users always get the latest version
         source: '/sw.js',
         headers: [
