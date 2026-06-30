@@ -132,6 +132,21 @@ export default function CheckoutBar({
       </button>
       <div className="max-w-2xl mx-auto px-4 pt-2 pb-[76px] space-y-3">
 
+        {/* Cart summary */}
+        <div className="bg-white/8 border border-white/10 rounded-2xl overflow-hidden">
+          <div className="max-h-28 overflow-y-auto divide-y divide-white/8">
+            {cart.map(item => (
+              <div key={item.id} className="flex items-center justify-between px-3 py-2">
+                <p className="text-white/80 text-xs font-medium truncate flex-1">{item.name}</p>
+                <p className="text-white/50 text-xs ml-2 shrink-0">×{item.qty}</p>
+                <p className="text-white text-xs font-bold ml-3 shrink-0">
+                  NPR {(item.qty * item.unitPrice).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Payment method grid — 3 cols × 2 rows */}
         <div className="grid grid-cols-3 gap-2">
           {PAYMENT_METHODS.map(pm => {
