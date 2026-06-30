@@ -25,8 +25,13 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/forgot-password')
-  // /update-password is public (recovery session) but NOT in isAuthPage — authenticated users must reach it
-  const isPublic   = isAuthPage || pathname === '/' || pathname.startsWith('/auth/') || pathname.startsWith('/update-password')
+  const isPublic   = isAuthPage || pathname === '/' || pathname.startsWith('/auth/') || pathname.startsWith('/update-password') || pathname === '/staff-login' || pathname.startsWith('/privacy')
+
+  // Staff cookie grants access to /sell only
+  const staffCookie = request.cookies.get('ps_staff')?.value
+  if (!user && staffCookie && pathname.startsWith('/sell')) {
+    return supabaseResponse
+  }
 
   if (!user && !isPublic) {
     return NextResponse.redirect(new URL('/login', request.url))

@@ -97,6 +97,19 @@ export interface Transaction {
 }
 
 /**
+ * TABLE: staff
+ * POS-only staff members with PIN login. Not Supabase auth users.
+ */
+export interface Staff {
+  id: string
+  business_id: string
+  name: string
+  pin_hash: string
+  active: boolean
+  created_at: string
+}
+
+/**
  * TABLE: khata_entries
  * Ledger entries for customer credit accounts.
  * type = 'credit'  → money lent to the customer

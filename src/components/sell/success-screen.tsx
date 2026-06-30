@@ -1,7 +1,10 @@
 'use client'
 
-import { CheckCircle, WifiOff, MessageCircle } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { CheckCircle, WifiOff, MessageCircle, FileText } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/db/supabase'
+import InvoiceSheet from '@/components/sell/invoice-sheet'
 import type { SaleResult } from '@/lib/types/app'
 
 const METHOD_LABELS: Record<string, string> = {
@@ -17,6 +20,21 @@ export default function SuccessScreen({ result, onNewSale }: Props) {
   const router = useRouter()
   const { total, subtotalBeforeVat, vatAmount, vatNumber, items, discountPercent, discountType, paymentMethod, customer, offline, splitMethod, splitAmount } = result
   const hadCatalog = items.some(i => !i.isQuick)
+
+  const [showInvoice, setShowInvoice] = useState(false)
+  const [bizName,     setBizName]     = useState('')
+  const [bizPhone,    setBizPhone]    = useState<string | null>(null)
+  const [bizAddress,  setBizAddress]  = useState<string | null>(null)
+
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data }) => {
+      if (!data.user) return
+      createClient().from('businesses').select('name, phone, address').eq('owner_id', data.user.id).single()
+        .then(({ data: biz }) => {
+          if (biz) { setBizName(biz.name); setBizPhone(biz.phone); setBizAddress(biz.address) }
+        })
+    })
+  }, [])
 
   function shareWhatsApp() {
     const fmt = (n: number) => `NPR ${n.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
@@ -109,15 +127,34 @@ export default function SuccessScreen({ result, onNewSale }: Props) {
         }
       </p>
 
-      {/* WhatsApp share */}
+      {/* Actions */}
       {!offline && (
-        <button
-          onClick={shareWhatsApp}
-          className="flex items-center gap-2 mb-4 px-5 py-2.5 bg-green-500/10 border border-green-500/20 rounded-2xl text-green-700 font-semibold text-sm active:scale-95"
-        >
-          <MessageCircle size={16} />
-          Share Receipt on WhatsApp
-        </button>
+        <div className="flex gap-3 mb-4">
+          <button
+            onClick={shareWhatsApp}
+            className="flex items-center gap-2 px-4 py-2.5 bg-green-500/10 border border-green-500/20 rounded-2xl text-green-700 font-semibold text-sm active:scale-95"
+          >
+            <MessageCircle size={16} />
+            WhatsApp
+          </button>
+          <button
+            onClick={() => setShowInvoice(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-2xl text-blue-700 font-semibold text-sm active:scale-95"
+          >
+            <FileText size={16} />
+            Invoice
+          </button>
+        </div>
+      )}
+
+      {showInvoice && (
+        <InvoiceSheet
+          result={result}
+          businessName={bizName}
+          businessPhone={bizPhone}
+          businessAddress={bizAddress}
+          onClose={() => setShowInvoice(false)}
+        />
       )}
 
       <div className="flex gap-3 w-full max-w-xs">

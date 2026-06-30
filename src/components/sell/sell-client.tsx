@@ -20,6 +20,18 @@ const HELD_CART_KEY = 'ps_held_cart'
 export default function SellClient() {
   const sell = useSell()
 
+  const [isStaffMode,      setIsStaffMode]      = useState(false)
+
+  useEffect(() => {
+    // Detect staff session via cookie presence (cookie is httpOnly so we check a flag)
+    fetch('/api/staff/me').then(r => r.ok && setIsStaffMode(true)).catch(() => {})
+  }, [])
+
+  async function handleStaffLogout() {
+    await fetch('/api/staff/logout', { method: 'POST' })
+    window.location.href = '/staff-login'
+  }
+
   const [search,           setSearch]           = useState('')
   const [showDropdown,     setShowDropdown]     = useState(false)
   const [showCustom,       setShowCustom]       = useState(false)
@@ -85,6 +97,14 @@ export default function SellClient() {
 
   return (
     <div className={sell.cart.length > 0 ? checkoutExpanded ? 'pb-[420px]' : 'pb-28' : 'pb-0'}>
+
+      {/* Staff mode banner */}
+      {isStaffMode && (
+        <div className="bg-blue-600 px-4 py-2 flex items-center justify-between">
+          <p className="text-white text-xs font-semibold">👤 Staff Mode — POS only</p>
+          <button onClick={handleStaffLogout} className="text-white/80 text-xs font-semibold active:opacity-60">Exit →</button>
+        </div>
+      )}
 
       {/* Sticky POS header */}
       <div className="sticky top-14 bg-[#F5F0E8]/90 backdrop-blur-xl border-b border-[#D5CFC6] z-20 px-4 pt-4 pb-3">
