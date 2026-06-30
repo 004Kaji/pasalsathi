@@ -96,7 +96,7 @@ export default function SellClient() {
   }
 
   return (
-    <div className={sell.cart.length > 0 ? checkoutExpanded ? 'pb-[420px]' : 'pb-28' : 'pb-0'}>
+    <div className={sell.cart.length > 0 ? checkoutExpanded ? 'pb-[480px]' : 'pb-28' : 'pb-0'}>
 
       {/* Staff mode banner */}
       {isStaffMode && (
