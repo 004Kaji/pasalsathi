@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { X, Printer, Share2 } from 'lucide-react'
+import { X, Printer, Share2, Download } from 'lucide-react'
 import { formatBSFull } from '@/lib/utils/date'
 import type { SaleResult } from '@/lib/types/app'
 
@@ -22,29 +22,43 @@ export default function InvoiceSheet({ result, businessName, businessPhone, busi
   const fmt = (n: number) => `NPR ${n.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
   const today = formatBSFull(new Date())
   const invoiceRef = useRef<HTMLDivElement>(null)
-  const [sharing, setSharing] = useState(false)
+  const [sharing,      setSharing]      = useState(false)
+  const [downloading,  setDownloading]  = useState(false)
+
+  async function getImageBlob() {
+    const { toPng } = await import('html-to-image')
+    const dataUrl = await toPng(invoiceRef.current!, { pixelRatio: 2, backgroundColor: '#ffffff' })
+    const blob = await (await fetch(dataUrl)).blob()
+    return { dataUrl, blob }
+  }
 
   async function handleShare() {
     if (!invoiceRef.current) return
     setSharing(true)
     try {
-      const { toPng } = await import('html-to-image')
-      const dataUrl = await toPng(invoiceRef.current, { pixelRatio: 2, backgroundColor: '#ffffff' })
-      const blob = await (await fetch(dataUrl)).blob()
-      const file = new File([blob], `invoice-${Date.now()}.png`, { type: 'image/png' })
-
+      const { blob } = await getImageBlob()
+      const file = new File([blob], `invoice.png`, { type: 'image/png' })
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file], title: `Invoice — ${businessName}` })
-      } else {
-        // Fallback: download the image
-        const a = document.createElement('a')
-        a.href = dataUrl
-        a.download = `invoice-${Date.now()}.png`
-        a.click()
       }
-    } catch (_) { /* user cancelled share */ }
+    } catch (_) {}
     setSharing(false)
   }
+
+  async function handleDownload() {
+    if (!invoiceRef.current) return
+    setDownloading(true)
+    try {
+      const { dataUrl } = await getImageBlob()
+      const a = document.createElement('a')
+      a.href = dataUrl
+      a.download = `invoice-${Date.now()}.png`
+      a.click()
+    } catch (_) {}
+    setDownloading(false)
+  }
+
+  const canShare = typeof window !== 'undefined' && typeof navigator !== 'undefined' && typeof navigator.share === 'function'
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-end">
@@ -54,9 +68,15 @@ export default function InvoiceSheet({ result, businessName, businessPhone, busi
         <div className="sticky top-0 bg-white border-b border-[#E0D9CE] px-5 py-4 flex items-center justify-between">
           <p className="font-bold text-[#1C1917]">Invoice</p>
           <div className="flex items-center gap-3">
-            <button onClick={handleShare} disabled={sharing}
-              className="flex items-center gap-1.5 text-sm text-green-700 font-semibold active:opacity-70 disabled:opacity-40">
-              <Share2 size={16} /> {sharing ? 'Preparing...' : 'Share'}
+            {canShare && (
+              <button onClick={handleShare} disabled={sharing}
+                className="flex items-center gap-1.5 text-sm text-green-700 font-semibold active:opacity-70 disabled:opacity-40">
+                <Share2 size={16} /> {sharing ? 'Preparing...' : 'Share'}
+              </button>
+            )}
+            <button onClick={handleDownload} disabled={downloading}
+              className="flex items-center gap-1.5 text-sm text-blue-600 font-semibold active:opacity-70 disabled:opacity-40">
+              <Download size={16} /> {downloading ? 'Saving...' : 'Download'}
             </button>
             <button onClick={() => window.print()} className="flex items-center gap-1.5 text-sm text-[#6B6560] font-semibold active:opacity-70">
               <Printer size={16} /> Print
