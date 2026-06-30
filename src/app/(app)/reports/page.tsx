@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/db/supabase'
 import { Download, TrendingUp, TrendingDown, ChevronDown } from 'lucide-react'
 import { PageSkeleton } from '@/components/ui/skeleton'
+import { formatBSFull } from '@/lib/utils/date'
 import type { Transaction, Customer } from '@/lib/types/database'
 
 type Period = 'today' | 'week' | 'month' | 'custom'
@@ -69,6 +70,19 @@ export default function ReportsPage() {
   const totalExpense = useMemo(() => transactions.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0), [transactions])
   const net          = totalIncome - totalExpense
   const totalKhataOwed = useMemo(() => customers.reduce((s, c) => s + Math.max(0, Number(c.balance)), 0), [customers])
+
+  const paymentBreakdown = useMemo(() => {
+    const map = new Map<string, number>()
+    transactions.filter(t => t.type === 'income').forEach(t => {
+      const m = t.payment_method ?? 'cash'
+      map.set(m, (map.get(m) ?? 0) + Number(t.amount))
+    })
+    return Array.from(map.entries()).sort((a, b) => b[1] - a[1])
+  }, [transactions])
+
+  const PAYMENT_EMOJI: Record<string, string> = {
+    cash: '💵', khata: '📒', esewa: '🟢', khalti: '🟣', fonepay: '📱', split: '✂️',
+  }
 
   const topSelling = useMemo(() => {
     const map = new Map<string, number>()
@@ -168,6 +182,25 @@ export default function ReportsPage() {
             </div>
           </section>
 
+          {/* Payment method breakdown */}
+          {paymentBreakdown.length > 0 && (
+            <section className="bg-white border border-[#D5CFC6] rounded-2xl overflow-hidden shadow-sm">
+              <div className="px-5 py-3 border-b border-[#E0D9CE]">
+                <p className="text-xs font-bold text-[#9B948E] uppercase tracking-widest">Payment Methods</p>
+              </div>
+              <div className="divide-y divide-[#E0D9CE]">
+                {paymentBreakdown.map(([method, amount]) => (
+                  <div key={method} className="flex items-center justify-between px-5 py-3">
+                    <span className="text-sm font-semibold text-[#1C1917] capitalize">
+                      {PAYMENT_EMOJI[method] ?? '💳'} {method.charAt(0).toUpperCase() + method.slice(1)}
+                    </span>
+                    <span className="text-sm font-bold text-[#4A7055] font-mono">{fmtNPR(amount)}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
           {/* Top Selling */}
           <section className="bg-white border border-[#D5CFC6] rounded-2xl overflow-hidden shadow-sm">
             <div className="px-5 py-3 border-b border-[#E0D9CE]">
@@ -209,8 +242,8 @@ export default function ReportsPage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-[#1C1917] truncate">{tx.item_name ?? '—'}</p>
                       <p className="text-xs text-[#9B948E] mt-0.5">
-                        {new Date(tx.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        {' · '}{tx.payment_method ?? ''}
+                        {formatBSFull(new Date(tx.created_at))}
+                        {' · '}{PAYMENT_EMOJI[tx.payment_method ?? 'cash'] ?? ''} {tx.payment_method ?? 'cash'}
                       </p>
                     </div>
                     <p className={`text-sm font-bold shrink-0 font-mono ${tx.type === 'income' ? 'text-[#4A7055]' : 'text-[#C84B2F]'}`}>

@@ -346,6 +346,7 @@ export default function LandingPage() {
           <div className="flex gap-6 text-sm text-[#6B6560]">
             <Link href="/login" className="hover:text-[#1C1917] transition-colors">{t.footerLogin}</Link>
             <Link href="/signup" className="hover:text-[#1C1917] transition-colors">{t.footerSignup}</Link>
+            <Link href="/privacy" className="hover:text-[#1C1917] transition-colors">Privacy</Link>
           </div>
         </div>
       </footer>
