@@ -24,6 +24,8 @@ interface Props {
   submitting: boolean
   selectedCustomer: Customer | null
   customers: Customer[]
+  expanded: boolean
+  onToggleExpanded: () => void
   onPaymentMethodChange: (method: PaymentMethod) => void
   onCustomerNameChange: (value: string) => void
   onCashGivenChange: (value: string) => void
@@ -37,7 +39,7 @@ interface Props {
 
 export default function CheckoutBar({
   cart, vatNumber, discountPercent, discountType, paymentMethod, customerName, cashGiven,
-  submitting, selectedCustomer, customers,
+  submitting, selectedCustomer, customers, expanded, onToggleExpanded,
   onPaymentMethodChange, onCustomerNameChange, onCashGivenChange,
   onDiscountChange, onDiscountTypeChange,
   onSelectCustomer, onDeselectCustomer, onCreateNewCustomer,
@@ -89,9 +91,47 @@ export default function CheckoutBar({
 
   const SPLIT_METHODS = PAYMENT_METHODS.filter(p => p.value !== 'khata' && p.value !== paymentMethod)
 
+  // Collapsed: just show total + quick charge button
+  if (!expanded) {
+    return (
+      <div className="fixed bottom-0 left-0 right-0 z-30 bg-[#1C1917]">
+        <div className="max-w-2xl mx-auto px-4 pt-3 pb-[76px] flex items-center gap-3">
+          <button
+            onClick={onToggleExpanded}
+            className="flex-1 flex items-center gap-3 bg-white/10 border border-white/15 rounded-2xl px-4 py-3 active:bg-white/15 transition-colors"
+          >
+            <div className="flex-1 text-left">
+              <p className="text-2xl font-black text-white leading-tight">
+                NPR {total.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+              </p>
+              <p className="text-xs text-white/40 mt-0.5">
+                {cart.reduce((s, i) => s + i.qty, 0)} items · tap to set payment
+              </p>
+            </div>
+            <span className="text-white/40 text-lg">⌃</span>
+          </button>
+          <button
+            onClick={handleCharge}
+            disabled={isChargeDisabled}
+            className="py-4 px-6 rounded-2xl font-bold text-base text-white bg-[#C84B2F] active:scale-[0.98] transition-all disabled:opacity-40 shrink-0"
+          >
+            {submitting ? 'Saving…' : `✓ Charge ${PAYMENT_METHODS.find(p => p.value === paymentMethod)?.emoji ?? ''}`}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-30 bg-[#1C1917]">
-      <div className="max-w-2xl mx-auto px-4 pt-4 pb-[76px] space-y-3">
+      {/* Drag-down handle / collapse button */}
+      <button
+        onClick={onToggleExpanded}
+        className="w-full flex justify-center pt-2 pb-1 active:opacity-70"
+      >
+        <div className="w-10 h-1 rounded-full bg-white/20" />
+      </button>
+      <div className="max-w-2xl mx-auto px-4 pt-2 pb-[76px] space-y-3">
 
         {/* Payment method grid — 3 cols × 2 rows */}
         <div className="grid grid-cols-3 gap-2">

@@ -20,13 +20,14 @@ const HELD_CART_KEY = 'ps_held_cart'
 export default function SellClient() {
   const sell = useSell()
 
-  const [search,        setSearch]        = useState('')
-  const [showDropdown,  setShowDropdown]  = useState(false)
-  const [showCustom,    setShowCustom]    = useState(false)
-  const [customPrefill, setCustomPrefill] = useState('')
-  const [cashGiven,     setCashGiven]     = useState('')
-  const [saleResult,    setSaleResult]    = useState<SaleResult | null>(null)
-  const [hasHeld,       setHasHeld]       = useState(false)
+  const [search,           setSearch]           = useState('')
+  const [showDropdown,     setShowDropdown]     = useState(false)
+  const [showCustom,       setShowCustom]       = useState(false)
+  const [customPrefill,    setCustomPrefill]    = useState('')
+  const [cashGiven,        setCashGiven]        = useState('')
+  const [saleResult,       setSaleResult]       = useState<SaleResult | null>(null)
+  const [hasHeld,          setHasHeld]          = useState(false)
+  const [checkoutExpanded, setCheckoutExpanded] = useState(false)
 
   const bsDate = formatBSFull(new Date())
 
@@ -83,7 +84,7 @@ export default function SellClient() {
   }
 
   return (
-    <div className={sell.cart.length > 0 ? 'pb-[400px]' : 'pb-0'}>
+    <div className={sell.cart.length > 0 ? checkoutExpanded ? 'pb-[420px]' : 'pb-28' : 'pb-0'}>
 
       {/* Sticky POS header */}
       <div className="sticky top-14 bg-[#F5F0E8]/90 backdrop-blur-xl border-b border-[#D5CFC6] z-20 px-4 pt-4 pb-3">
@@ -169,7 +170,7 @@ export default function SellClient() {
           <ProductGrid
             products={sell.products}
             cart={sell.cart}
-            onSelect={sell.addToCart}
+            onSelect={p => { sell.addToCart(p); setCheckoutExpanded(false) }}
             onUpdateQty={sell.updateQty}
             onAddCustom={() => { setCustomPrefill(''); setShowCustom(true) }}
           />
@@ -209,6 +210,8 @@ export default function SellClient() {
           submitting={sell.submitting}
           selectedCustomer={sell.selectedCustomer}
           customers={sell.customers}
+          expanded={checkoutExpanded}
+          onToggleExpanded={() => setCheckoutExpanded(v => !v)}
           onPaymentMethodChange={m => {
             sell.setPaymentMethod(m)
             if (m !== 'khata') sell.setSelectedCustomer(null)
