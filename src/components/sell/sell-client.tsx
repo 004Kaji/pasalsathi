@@ -170,6 +170,7 @@ export default function SellClient() {
             products={sell.products}
             cart={sell.cart}
             onSelect={sell.addToCart}
+            onUpdateQty={sell.updateQty}
             onAddCustom={() => { setCustomPrefill(''); setShowCustom(true) }}
           />
         )}

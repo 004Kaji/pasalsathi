@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Plus, Star } from 'lucide-react'
+import { Plus, Minus, Star } from 'lucide-react'
 import type { Product } from '@/lib/types/database'
 import type { CartItem } from '@/lib/types/app'
 
@@ -11,10 +11,11 @@ interface Props {
   products: Product[]
   cart: CartItem[]
   onSelect: (product: Product) => void
+  onUpdateQty: (id: string, delta: number) => void
   onAddCustom: () => void
 }
 
-export default function ProductGrid({ products, cart, onSelect, onAddCustom }: Props) {
+export default function ProductGrid({ products, cart, onSelect, onUpdateQty, onAddCustom }: Props) {
   const [pinned, setPinned] = useState<Set<string>>(new Set())
 
   useEffect(() => {
@@ -45,13 +46,12 @@ export default function ProductGrid({ products, cart, onSelect, onAddCustom }: P
         const outOfStock = !isService && product.track_stock && product.stock <= 0
         const inCart     = cart.find(item => item.id === product.id)
         const isPinned   = pinned.has(product.id)
+        const atMax      = !isService && product.track_stock && inCart ? inCart.qty >= product.stock : false
 
         return (
-          <button
+          <div
             key={product.id}
-            onClick={() => onSelect(product)}
-            disabled={outOfStock}
-            className={`relative rounded-2xl p-3.5 text-left active:scale-[0.97] transition-all border ${
+            className={`relative rounded-2xl border transition-all ${
               outOfStock
                 ? 'bg-[#EDE8DF] border-[#D5CFC6] opacity-50'
                 : inCart
@@ -61,10 +61,10 @@ export default function ProductGrid({ products, cart, onSelect, onAddCustom }: P
                   : 'bg-[#EDE8DF] border-[#D5CFC6]'
             }`}
           >
-            {/* Pin star — top left */}
+            {/* Pin star */}
             <button
               onClick={(e) => togglePin(e, product.id)}
-              className="absolute top-2 left-2 p-0.5"
+              className="absolute top-2 left-2 p-0.5 z-10"
             >
               <Star
                 size={13}
@@ -72,35 +72,64 @@ export default function ProductGrid({ products, cart, onSelect, onAddCustom }: P
               />
             </button>
 
-            {/* Quantity badge — top right */}
-            {inCart && (
-              <div className={`absolute top-2.5 right-2.5 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white ${
-                isService ? 'bg-purple-600' : 'bg-[#C84B2F]'
+            {/* Tappable product info area */}
+            <button
+              onClick={() => !outOfStock && onSelect(product)}
+              disabled={outOfStock}
+              className="w-full p-3.5 text-left active:scale-[0.97] transition-transform"
+            >
+              <div className="text-xl mb-2 mt-1">
+                {isService ? '🛠️' : outOfStock ? '📭' : '📦'}
+              </div>
+              <p className="text-sm font-bold text-[#1C1917] leading-tight line-clamp-2 mb-1.5 pr-2">
+                {product.name}
+              </p>
+              <p className={`text-base font-black ${
+                isService ? 'text-purple-600' : outOfStock ? 'text-[#9B948E]' : 'text-[#C84B2F]'
               }`}>
-                {inCart.qty}
+                NPR {Number(product.price).toLocaleString('ne-NP')}
+              </p>
+              {!isService && (
+                <p className={`text-[11px] mt-0.5 ${outOfStock ? 'text-red-500' : 'text-[#9B948E]'}`}>
+                  {outOfStock ? 'Out of stock' : `${product.stock} ${product.unit}`}
+                </p>
+              )}
+            </button>
+
+            {/* In-cart qty controls — shown directly on card */}
+            {inCart && (
+              <div className="flex items-center justify-between px-2.5 pb-2.5 gap-1">
+                <button
+                  onClick={() => onUpdateQty(product.id, -1)}
+                  className="w-8 h-8 rounded-xl bg-white border border-[#D5CFC6] flex items-center justify-center active:scale-90 transition-transform"
+                >
+                  <Minus size={14} className="text-[#6B6560]" />
+                </button>
+                <span className={`text-base font-black ${isService ? 'text-purple-600' : 'text-[#C84B2F]'}`}>
+                  {inCart.qty}
+                </span>
+                <button
+                  onClick={() => onUpdateQty(product.id, 1)}
+                  disabled={atMax}
+                  className="w-8 h-8 rounded-xl bg-[#C84B2F] flex items-center justify-center active:scale-90 transition-transform disabled:opacity-30"
+                >
+                  <Plus size={14} className="text-white" />
+                </button>
               </div>
             )}
 
-            <div className="text-xl mb-2 mt-1">
-              {isService ? '🛠️' : outOfStock ? '📭' : '📦'}
-            </div>
-
-            <p className="text-sm font-bold text-[#1C1917] leading-tight line-clamp-2 mb-1.5 pr-6">
-              {product.name}
-            </p>
-
-            <p className={`text-base font-black ${
-              isService ? 'text-purple-600' : outOfStock ? 'text-[#9B948E]' : 'text-[#C84B2F]'
-            }`}>
-              NPR {Number(product.price).toLocaleString('ne-NP')}
-            </p>
-
-            {!isService && (
-              <p className={`text-[11px] mt-0.5 ${outOfStock ? 'text-red-500' : 'text-[#9B948E]'}`}>
-                {outOfStock ? 'Out of stock' : `${product.stock} ${product.unit}`}
-              </p>
+            {/* Add button when not in cart */}
+            {!inCart && !outOfStock && (
+              <div className="px-2.5 pb-2.5">
+                <button
+                  onClick={() => onSelect(product)}
+                  className="w-full h-8 rounded-xl bg-[#C84B2F] flex items-center justify-center active:scale-95 transition-transform"
+                >
+                  <Plus size={16} className="text-white" />
+                </button>
+              </div>
             )}
-          </button>
+          </div>
         )
       })}
 
