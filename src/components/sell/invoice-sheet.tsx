@@ -1,6 +1,7 @@
 'use client'
 
-import { X, Printer } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { X, Printer, Share2 } from 'lucide-react'
 import { formatBSFull } from '@/lib/utils/date'
 import type { SaleResult } from '@/lib/types/app'
 
@@ -9,17 +10,41 @@ const METHOD_LABELS: Record<string, string> = {
 }
 
 interface Props {
-  result:       SaleResult
-  businessName: string
-  businessPhone: string | null
+  result:          SaleResult
+  businessName:    string
+  businessPhone:   string | null
   businessAddress: string | null
-  onClose:      () => void
+  onClose:         () => void
 }
 
 export default function InvoiceSheet({ result, businessName, businessPhone, businessAddress, onClose }: Props) {
   const { total, subtotalBeforeVat, vatAmount, vatNumber, items, discountPercent, discountType, paymentMethod, customer, splitMethod, splitAmount } = result
   const fmt = (n: number) => `NPR ${n.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
   const today = formatBSFull(new Date())
+  const invoiceRef = useRef<HTMLDivElement>(null)
+  const [sharing, setSharing] = useState(false)
+
+  async function handleShare() {
+    if (!invoiceRef.current) return
+    setSharing(true)
+    try {
+      const { toPng } = await import('html-to-image')
+      const dataUrl = await toPng(invoiceRef.current, { pixelRatio: 2, backgroundColor: '#ffffff' })
+      const blob = await (await fetch(dataUrl)).blob()
+      const file = new File([blob], `invoice-${Date.now()}.png`, { type: 'image/png' })
+
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: `Invoice — ${businessName}` })
+      } else {
+        // Fallback: download the image
+        const a = document.createElement('a')
+        a.href = dataUrl
+        a.download = `invoice-${Date.now()}.png`
+        a.click()
+      }
+    } catch (_) { /* user cancelled share */ }
+    setSharing(false)
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-end">
@@ -29,6 +54,10 @@ export default function InvoiceSheet({ result, businessName, businessPhone, busi
         <div className="sticky top-0 bg-white border-b border-[#E0D9CE] px-5 py-4 flex items-center justify-between">
           <p className="font-bold text-[#1C1917]">Invoice</p>
           <div className="flex items-center gap-3">
+            <button onClick={handleShare} disabled={sharing}
+              className="flex items-center gap-1.5 text-sm text-green-700 font-semibold active:opacity-70 disabled:opacity-40">
+              <Share2 size={16} /> {sharing ? 'Preparing...' : 'Share'}
+            </button>
             <button onClick={() => window.print()} className="flex items-center gap-1.5 text-sm text-[#6B6560] font-semibold active:opacity-70">
               <Printer size={16} /> Print
             </button>
@@ -39,7 +68,7 @@ export default function InvoiceSheet({ result, businessName, businessPhone, busi
         </div>
 
         {/* Invoice body */}
-        <div id="invoice-print" className="px-6 py-6 space-y-5">
+        <div id="invoice-print" ref={invoiceRef} className="px-6 py-6 space-y-5 bg-white">
 
           {/* Business header */}
           <div className="text-center border-b border-dashed border-[#D5CFC6] pb-5">
