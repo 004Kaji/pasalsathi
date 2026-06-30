@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { X, Printer, Share2, Download } from 'lucide-react'
+import { X, Printer, Download } from 'lucide-react'
 import { formatBSFull } from '@/lib/utils/date'
 import type { SaleResult } from '@/lib/types/app'
 
@@ -19,25 +19,132 @@ interface Props {
 
 export default function InvoiceSheet({ result, businessName, businessPhone, businessAddress, onClose }: Props) {
   const { total, subtotalBeforeVat, vatAmount, vatNumber, items, discountPercent, discountType, paymentMethod, customer, splitMethod, splitAmount } = result
-  const fmt = (n: number) => `NPR ${n.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
-  const today = formatBSFull(new Date())
+  const fmt     = (n: number) => `NPR ${n.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
+  const today   = formatBSFull(new Date())
   const invoiceRef = useRef<HTMLDivElement>(null)
-  const [sharing,      setSharing]      = useState(false)
-  const [downloading,  setDownloading]  = useState(false)
+  const [sharing,     setSharing]     = useState(false)
+  const [downloading, setDownloading] = useState(false)
 
-  async function getImageBlob() {
-    const { toPng } = await import('html-to-image')
-    const dataUrl = await toPng(invoiceRef.current!, { pixelRatio: 2, backgroundColor: '#ffffff' })
-    const blob = await (await fetch(dataUrl)).blob()
-    return { dataUrl, blob }
+  async function buildPdf() {
+    const { jsPDF } = await import('jspdf')
+    const doc   = new jsPDF({ unit: 'mm', format: 'a4' })
+    const W     = 210
+    const pad   = 20
+    let   y     = 20
+
+    const centerText = (text: string, size: number, bold = false) => {
+      doc.setFontSize(size)
+      doc.setFont('helvetica', bold ? 'bold' : 'normal')
+      doc.text(text, W / 2, y, { align: 'center' })
+      y += size * 0.45
+    }
+
+    const row = (left: string, right: string, size = 10, bold = false) => {
+      doc.setFontSize(size)
+      doc.setFont('helvetica', bold ? 'bold' : 'normal')
+      doc.text(left,  pad, y)
+      doc.text(right, W - pad, y, { align: 'right' })
+      y += size * 0.45
+    }
+
+    // Business header
+    centerText(businessName, 16, true);             y += 2
+    if (businessAddress) { centerText(businessAddress, 9); y += 1 }
+    if (businessPhone)   { centerText(businessPhone,   9); y += 1 }
+    if (vatNumber)       { centerText(`VAT No: ${vatNumber}`, 9, true); y += 1 }
+
+    // Divider
+    y += 3
+    doc.setDrawColor(180, 173, 166)
+    doc.line(pad, y, W - pad, y)
+    y += 6
+
+    // Meta
+    doc.setFontSize(9); doc.setFont('helvetica', 'normal')
+    doc.setTextColor(120, 113, 108)
+    doc.text('Date', pad, y)
+    doc.text('Payment', W - pad, y, { align: 'right' })
+    y += 5
+    doc.setTextColor(28, 25, 23); doc.setFont('helvetica', 'bold')
+    doc.text(today, pad, y)
+    doc.text(METHOD_LABELS[paymentMethod] ?? paymentMethod, W - pad, y, { align: 'right' })
+    y += 8
+
+    // Customer
+    if (customer) {
+      doc.setFillColor(245, 240, 232)
+      doc.roundedRect(pad, y - 4, W - pad * 2, 12, 2, 2, 'F')
+      doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(120, 113, 108)
+      doc.text('Customer', pad + 3, y)
+      y += 5
+      doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(28, 25, 23)
+      doc.text(customer.name, pad + 3, y)
+      y += 9
+    }
+
+    // Items table header
+    doc.setFillColor(245, 240, 232)
+    doc.rect(pad, y - 4, W - pad * 2, 8, 'F')
+    doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(120, 113, 108)
+    doc.text('ITEM',  pad + 2,       y)
+    doc.text('QTY',   W / 2 - 10,   y, { align: 'center' })
+    doc.text('RATE',  W - pad - 24,  y, { align: 'right' })
+    doc.text('AMT',   W - pad,       y, { align: 'right' })
+    y += 7
+
+    // Items
+    doc.setFont('helvetica', 'normal'); doc.setTextColor(28, 25, 23)
+    for (const item of items) {
+      doc.setFontSize(9)
+      doc.text(item.name.slice(0, 30),                              pad + 2,      y)
+      doc.text(String(item.qty),                                    W / 2 - 10,  y, { align: 'center' })
+      doc.text(item.unitPrice.toLocaleString('en-IN'),              W - pad - 24, y, { align: 'right' })
+      doc.text((item.qty * item.unitPrice).toLocaleString('en-IN'), W - pad,      y, { align: 'right' })
+      y += 7
+      doc.setDrawColor(220, 214, 206)
+      doc.line(pad, y - 2, W - pad, y - 2)
+    }
+
+    y += 4
+    doc.setDrawColor(180, 173, 166)
+    doc.line(pad, y, W - pad, y)
+    y += 6
+
+    // Totals
+    doc.setTextColor(28, 25, 23)
+    if (discountPercent > 0) {
+      const label = `Discount${discountType === 'percent' ? ` (${discountPercent}%)` : ''}`
+      const val   = discountType === 'amount' ? `- ${fmt(discountPercent)}` : ''
+      row(label, val, 9)
+      y += 3
+    }
+    if (vatAmount > 0) {
+      row('Subtotal', fmt(subtotalBeforeVat), 9); y += 3
+      row('VAT 13%',  fmt(vatAmount),         9); y += 3
+    }
+    if (splitMethod && splitAmount) {
+      const label = `${METHOD_LABELS[paymentMethod]} + ${METHOD_LABELS[splitMethod]}`
+      row(label, `${fmt(total - splitAmount)} + ${fmt(splitAmount)}`, 8)
+      y += 3
+    }
+
+    doc.line(pad, y, W - pad, y); y += 5
+    row('Total', fmt(total), 13, true)
+    y += 10
+
+    // Footer
+    doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(120, 113, 108)
+    doc.text('Thank you for your business! — PasalSathi', W / 2, y, { align: 'center' })
+
+    return doc
   }
 
-  async function handleShare() {
-    if (!invoiceRef.current) return
+  async function handleSharePdf() {
     setSharing(true)
     try {
-      const { blob } = await getImageBlob()
-      const file = new File([blob], `invoice.png`, { type: 'image/png' })
+      const doc  = await buildPdf()
+      const blob = doc.output('blob')
+      const file = new File([blob], `invoice-${businessName}.pdf`, { type: 'application/pdf' })
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file], title: `Invoice — ${businessName}` })
       }
@@ -45,20 +152,16 @@ export default function InvoiceSheet({ result, businessName, businessPhone, busi
     setSharing(false)
   }
 
-  async function handleDownload() {
-    if (!invoiceRef.current) return
+  async function handleDownloadPdf() {
     setDownloading(true)
     try {
-      const { dataUrl } = await getImageBlob()
-      const a = document.createElement('a')
-      a.href = dataUrl
-      a.download = `invoice-${Date.now()}.png`
-      a.click()
+      const doc = await buildPdf()
+      doc.save(`invoice-${businessName}-${Date.now()}.pdf`)
     } catch (_) {}
     setDownloading(false)
   }
 
-  const canShare = typeof window !== 'undefined' && typeof navigator !== 'undefined' && typeof navigator.share === 'function'
+  const canShare = typeof window !== 'undefined' && typeof navigator.share === 'function'
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-end">
@@ -69,12 +172,12 @@ export default function InvoiceSheet({ result, businessName, businessPhone, busi
           <p className="font-bold text-[#1C1917]">Invoice</p>
           <div className="flex items-center gap-3">
             {canShare && (
-              <button onClick={handleShare} disabled={sharing}
-                className="flex items-center gap-1.5 text-sm text-green-700 font-semibold active:opacity-70 disabled:opacity-40">
-                <Share2 size={16} /> {sharing ? 'Preparing...' : 'Share'}
+              <button onClick={handleSharePdf} disabled={sharing}
+                className="flex items-center gap-1.5 text-sm font-semibold text-green-700 active:opacity-70 disabled:opacity-40">
+                <span className="text-base">💬</span> {sharing ? 'Preparing...' : 'WhatsApp'}
               </button>
             )}
-            <button onClick={handleDownload} disabled={downloading}
+            <button onClick={handleDownloadPdf} disabled={downloading}
               className="flex items-center gap-1.5 text-sm text-blue-600 font-semibold active:opacity-70 disabled:opacity-40">
               <Download size={16} /> {downloading ? 'Saving...' : 'Download'}
             </button>
@@ -87,7 +190,7 @@ export default function InvoiceSheet({ result, businessName, businessPhone, busi
           </div>
         </div>
 
-        {/* Invoice body */}
+        {/* Invoice body (preview) */}
         <div id="invoice-print" ref={invoiceRef} className="px-6 py-6 space-y-5 bg-white">
 
           {/* Business header */}
