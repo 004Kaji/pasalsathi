@@ -36,6 +36,7 @@ export default function SettingsPage() {
   const [saved,      setSaved]      = useState(false)
   const [exporting,      setExporting]      = useState(false)
   const [clearStep,      setClearStep]      = useState<'idle' | 'confirm' | 'clearing'>('idle')
+  const [deleteStep,     setDeleteStep]     = useState<'idle' | 'confirm' | 'deleting'>('idle')
   const [referralCode,   setReferralCode]   = useState('')
   const [referralCount,  setReferralCount]  = useState(0)
   const [monthsEarned,   setMonthsEarned]   = useState(0)
@@ -123,6 +124,13 @@ export default function SettingsPage() {
     ])
     await supabase.from('customers').update({ balance: 0 }).eq('business_id', business.id)
     setClearStep('idle'); alert('All transaction data cleared.')
+  }
+
+  async function handleDeleteAccount() {
+    setDeleteStep('deleting')
+    const res = await fetch('/api/account/delete', { method: 'DELETE' })
+    if (!res.ok) { setDeleteStep('confirm'); alert('Delete failed. Please try again.'); return }
+    router.push('/')
   }
 
   if (loading) return <div className="pt-6 px-4"><PageSkeleton rows={4} /></div>
@@ -457,6 +465,44 @@ export default function SettingsPage() {
                 </div>
               )}
             </div>
+
+            {/* Delete Account */}
+            <div className="bg-white border border-red-200 rounded-2xl overflow-hidden shadow-sm">
+              {deleteStep === 'idle' && (
+                <button onClick={() => setDeleteStep('confirm')} className="w-full flex items-center gap-3 px-5 py-4 active:bg-red-50">
+                  <Trash2 size={18} className="text-red-600 shrink-0" />
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-semibold text-red-600">Delete Account</p>
+                    <p className="text-xs text-[#9B948E] mt-0.5">Permanently delete your account and all data</p>
+                  </div>
+                </button>
+              )}
+              {deleteStep === 'confirm' && (
+                <div className="px-5 py-4 bg-red-50">
+                  <p className="text-sm font-bold text-red-600 mb-1">Delete your account?</p>
+                  <p className="text-xs text-[#6B6560] mb-3">
+                    This will permanently delete your business, all products, transactions, customers, and your account. This cannot be undone.
+                  </p>
+                  <div className="flex gap-2">
+                    <button onClick={() => setDeleteStep('idle')}
+                      className="flex-1 py-2.5 rounded-xl border border-[#D5CFC6] text-[#6B6560] text-sm font-semibold">Cancel</button>
+                    <button onClick={handleDeleteAccount}
+                      className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-bold">Yes, Delete Everything</button>
+                  </div>
+                </div>
+              )}
+              {deleteStep === 'deleting' && (
+                <div className="px-5 py-4 text-center">
+                  <p className="text-sm text-[#6B6560]">Deleting account...</p>
+                </div>
+              )}
+            </div>
+
+            {/* Privacy Policy link */}
+            <Link href="/privacy" className="flex items-center justify-between px-5 py-3.5 bg-white border border-[#D5CFC6] rounded-2xl shadow-sm active:bg-[#F5F0E8]">
+              <p className="text-sm text-[#6B6560]">Privacy Policy</p>
+              <span className="text-xs text-[#9B948E]">→</span>
+            </Link>
           </div>
         )}
 
