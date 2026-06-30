@@ -45,9 +45,41 @@ export default function KhataPage() {
     (sum, c) => sum + Math.max(0, Number(c.balance)), 0
   )
 
-  function sendWhatsApp(customer: Customer) {
-    const amt = Number(customer.balance).toLocaleString('en-IN', { maximumFractionDigits: 0 })
-    const msg = `नमस्ते ${customer.name} जी, तपाईंको NPR ${amt} उधारो बाँकी छ। कृपया भुक्तानी गर्नुहोस्। - ${bizName}`
+  async function sendWhatsApp(customer: Customer) {
+    const supabase = createClient()
+    const { data: entries } = await supabase
+      .from('khata_entries')
+      .select('amount, type, created_at')
+      .eq('customer_id', customer.id)
+      .order('created_at', { ascending: false })
+      .limit(5)
+
+    const balance = Number(customer.balance)
+    const balFmt  = balance.toLocaleString('en-IN', { maximumFractionDigits: 0 })
+
+    const lines: string[] = [
+      `नमस्ते ${customer.name} जी 🙏`,
+      ``,
+      `📒 खाता विवरण — ${bizName}`,
+      `──────────────────`,
+    ]
+
+    if (entries && entries.length > 0) {
+      lines.push(`📋 पछिल्लो लेनदेन:`)
+      for (const e of entries) {
+        const date = new Date(e.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
+        const type = e.type === 'credit' ? '🔴 उधारो' : '🟢 भुक्तानी'
+        const amt  = Number(e.amount).toLocaleString('en-IN', { maximumFractionDigits: 0 })
+        lines.push(`  ${type}  NPR ${amt}  (${date})`)
+      }
+      lines.push(`──────────────────`)
+    }
+
+    lines.push(`💰 बाँकी रकम: *NPR ${balFmt}*`)
+    lines.push(``)
+    lines.push(`कृपया चाँडो भुक्तानी गर्नुहोस्। धन्यवाद! 🙏`)
+
+    const msg   = lines.join('\n')
     const phone = (customer.phone ?? '').replace(/^\+?977/, '').replace(/\D/g, '')
     window.open(`https://wa.me/977${phone}?text=${encodeURIComponent(msg)}`, '_blank')
   }
