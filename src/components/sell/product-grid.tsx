@@ -16,7 +16,8 @@ interface Props {
 }
 
 export default function ProductGrid({ products, cart, onSelect, onUpdateQty, onAddCustom }: Props) {
-  const [pinned, setPinned] = useState<Set<string>>(new Set())
+  const [pinned,   setPinned]   = useState<Set<string>>(new Set())
+  const [activeTab, setActiveTab] = useState<string>('All')
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY)
@@ -33,13 +34,34 @@ export default function ProductGrid({ products, cart, onSelect, onUpdateQty, onA
     })
   }
 
-  const sorted = [...products].sort((a, b) => {
+  // Build unique category tabs from products
+  const categories = ['All', ...Array.from(new Set(products.map(p => p.category).filter(Boolean) as string[]))]
+
+  const filtered = activeTab === 'All' ? products : products.filter(p => p.category === activeTab)
+
+  const sorted = [...filtered].sort((a, b) => {
     const aPin = pinned.has(a.id) ? 0 : 1
     const bPin = pinned.has(b.id) ? 0 : 1
     return aPin - bPin
   })
 
   return (
+    <div className="space-y-3">
+    {/* Category filter tabs */}
+    {categories.length > 1 && (
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+        {categories.map(cat => (
+          <button key={cat} onClick={() => setActiveTab(cat)}
+            className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all ${
+              activeTab === cat
+                ? 'bg-[#C84B2F] border-[#C84B2F] text-white'
+                : 'border-[#D5CFC6] text-[#6B6560] bg-white'
+            }`}>
+            {cat}
+          </button>
+        ))}
+      </div>
+    )}
     <div className="grid grid-cols-2 gap-3">
       {sorted.map(product => {
         const isService  = product.type === 'service'
@@ -143,6 +165,7 @@ export default function ProductGrid({ products, cart, onSelect, onUpdateQty, onA
         </div>
         <p className="text-xs font-semibold text-[#9B948E]">Custom Item</p>
       </button>
+    </div>
     </div>
   )
 }

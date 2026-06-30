@@ -63,6 +63,7 @@ function NewProductForm() {
 
   const [itemType,     setItemType]     = useState<ProductType>(initType)
   const [name,         setName]         = useState('')
+  const [category,     setCategory]     = useState('')
   const [unit,         setUnit]         = useState<ProductUnit>('piece')
   const [sellingPrice, setSellingPrice] = useState('')
   const [currentStock, setCurrentStock] = useState('')
@@ -102,6 +103,7 @@ function NewProductForm() {
       price:       parseFloat(sellingPrice) || 0,
       stock:       isProduct ? (parseFloat(currentStock) || 0) : 0,
       track_stock: isProduct,
+      category:    category.trim() || null,
     })
 
     if (insertError) { setError(insertError.message); setLoading(false); return }
@@ -163,6 +165,27 @@ function NewProductForm() {
             placeholder={cfg.namePlaceholder}
             className={inputClass}
             required
+          />
+        </div>
+
+        {/* Category */}
+        <div className="bg-white border border-[#D5CFC6] rounded-2xl p-5 shadow-sm">
+          <label className="text-sm font-semibold text-[#6B6560] block mb-3">Category <span className="text-[#9B948E] font-normal">(optional)</span></label>
+          <div className="flex flex-wrap gap-2 mb-3">
+            {['Grocery', 'Snacks', 'Beverages', 'Electronics', 'Clothing', 'Medical', 'Stationery', 'Other'].map(c => (
+              <button key={c} type="button" onClick={() => setCategory(prev => prev === c ? '' : c)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                  category === c ? 'bg-[#C84B2F]/10 border-[#C84B2F]/40 text-[#C84B2F]' : 'border-[#D5CFC6] text-[#6B6560]'
+                }`}>
+                {c}
+              </button>
+            ))}
+          </div>
+          <input
+            value={category}
+            onChange={e => setCategory(e.target.value)}
+            placeholder="or type custom category..."
+            className={inputClass}
           />
         </div>
 

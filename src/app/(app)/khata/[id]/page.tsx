@@ -3,9 +3,9 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/db/supabase'
-import { ArrowLeft, MessageSquare, TrendingUp, TrendingDown, Phone, MapPin } from 'lucide-react'
+import { ArrowLeft, MessageSquare, TrendingUp, TrendingDown, Phone, MapPin, ShoppingBag } from 'lucide-react'
 import { formatBSFull } from '@/lib/utils/date'
-import type { Customer, KhataEntry } from '@/lib/types/database'
+import type { Customer, KhataEntry, Transaction } from '@/lib/types/database'
 
 type EntryType = 'credit' | 'payment'
 
@@ -18,8 +18,10 @@ export default function CustomerDetailPage() {
 
   const [customer,   setCustomer]   = useState<Customer | null>(null)
   const [entries,    setEntries]    = useState<KhataEntry[]>([])
+  const [purchases,  setPurchases]  = useState<Transaction[]>([])
   const [businessId, setBusinessId] = useState('')
   const [loading,    setLoading]    = useState(true)
+  const [showHistory, setShowHistory] = useState(false)
 
   const [showForm,      setShowForm]      = useState(false)
   const [entryType,     setEntryType]     = useState<EntryType>('credit')
@@ -41,13 +43,16 @@ export default function CustomerDetailPage() {
     if (!biz) return
     setBusinessId(biz.id)
 
-    const [{ data: cust }, { data: ents }] = await Promise.all([
+    const [{ data: cust }, { data: ents }, { data: txs }] = await Promise.all([
       supabase.from('customers').select('*').eq('id', customerId).single(),
       supabase.from('khata_entries').select('*').eq('customer_id', customerId).order('created_at', { ascending: false }),
+      supabase.from('transactions').select('id, item_name, amount, payment_method, created_at')
+        .eq('customer_id', customerId).eq('type', 'income').order('created_at', { ascending: false }).limit(20),
     ])
 
     setCustomer(cust as Customer)
     setEntries((ents as KhataEntry[]) ?? [])
+    setPurchases((txs as Transaction[]) ?? [])
     setLoading(false)
   }, [customerId])
 
@@ -272,6 +277,38 @@ export default function CustomerDetailPage() {
             </div>
           )}
         </div>
+
+        {/* Purchase history */}
+        {purchases.length > 0 && (
+          <div>
+            <button
+              onClick={() => setShowHistory(v => !v)}
+              className="flex items-center justify-between w-full mb-3"
+            >
+              <div className="flex items-center gap-2">
+                <ShoppingBag size={18} className="text-[#4A7055]" />
+                <h2 className="text-lg font-bold text-[#1C1917]">Purchase History</h2>
+                <span className="text-xs bg-[#4A7055]/10 text-[#4A7055] font-bold px-2 py-0.5 rounded-full">{purchases.length}</span>
+              </div>
+              <span className="text-[#9B948E] text-sm">{showHistory ? '▲' : '▼'}</span>
+            </button>
+            {showHistory && (
+              <div className="space-y-2">
+                {purchases.map(tx => (
+                  <div key={tx.id} className="bg-white border border-[#D5CFC6] rounded-xl px-4 py-3 flex items-center gap-3 shadow-sm">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-[#1C1917] truncate">{tx.item_name ?? '—'}</p>
+                      <p className="text-xs text-[#9B948E] mt-0.5">{formatBSFull(new Date(tx.created_at))} · {tx.payment_method}</p>
+                    </div>
+                    <p className="text-sm font-bold text-[#4A7055] font-mono shrink-0">
+                      NPR {Number(tx.amount).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

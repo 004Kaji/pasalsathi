@@ -59,6 +59,7 @@ export interface Product {
   type: ProductType
   stock: number
   track_stock: boolean
+  category: string | null
   created_at: string
 }
 

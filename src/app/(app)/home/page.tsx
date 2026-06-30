@@ -25,7 +25,7 @@ export default async function HomePage() {
   const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
   const todayEnd   = new Date(); todayEnd.setHours(23, 59, 59, 999)
 
-  const [{ data: todayTx }, { data: khataCustomers }, { count: productCount }, { count: khataCount }] = await Promise.all([
+  const [{ data: todayTx }, { data: khataCustomers }, { count: productCount }, { count: khataCount }, { data: lowStockProducts }] = await Promise.all([
     supabase.from('transactions').select('type, amount')
       .eq('business_id', business.id)
       .gte('created_at', todayStart.toISOString())
@@ -39,6 +39,13 @@ export default async function HomePage() {
       .eq('business_id', business.id),
     supabase.from('customers').select('id', { count: 'exact', head: true })
       .eq('business_id', business.id),
+    supabase.from('products').select('id, name, stock, unit')
+      .eq('business_id', business.id)
+      .eq('track_stock', true)
+      .lte('stock', 5)
+      .gt('stock', -1)
+      .order('stock', { ascending: true })
+      .limit(5),
   ])
 
   // Onboarding checklist
@@ -171,6 +178,31 @@ export default async function HomePage() {
           <span className="font-bold text-[#1C1917] text-base">Reports</span>
         </Link>
       </div>
+
+      {/* Low stock alert */}
+      {lowStockProducts && lowStockProducts.length > 0 && (
+        <div className="bg-amber-50 border border-amber-300/60 rounded-2xl overflow-hidden shadow-sm">
+          <div className="px-5 py-3 border-b border-amber-200 flex items-center gap-2">
+            <span className="text-base">⚠️</span>
+            <p className="text-xs font-bold uppercase tracking-widest text-amber-700">Low Stock Alert</p>
+          </div>
+          <div className="divide-y divide-amber-100">
+            {lowStockProducts.map(p => (
+              <div key={p.id} className="flex items-center justify-between px-5 py-3">
+                <span className="text-sm font-semibold text-[#1C1917] truncate flex-1">{p.name}</span>
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-full shrink-0 ml-3 ${
+                  p.stock === 0 ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-700'
+                }`}>
+                  {p.stock === 0 ? 'Out of stock' : `${p.stock} ${p.unit} left`}
+                </span>
+              </div>
+            ))}
+          </div>
+          <Link href="/products" className="block text-center text-xs font-bold text-amber-700 py-3 border-t border-amber-200 active:bg-amber-100">
+            Restock →
+          </Link>
+        </div>
+      )}
 
       {/* Upcoming Festivals — max 2 */}
       {upcoming.length > 0 && (
