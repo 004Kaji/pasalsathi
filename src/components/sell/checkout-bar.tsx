@@ -123,49 +123,38 @@ export default function CheckoutBar({
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-30 bg-[#1C1917]">
-      {/* Drag-down handle / collapse button */}
-      <button
-        onClick={onToggleExpanded}
-        className="w-full flex justify-center pt-2 pb-1 active:opacity-70"
-      >
+      {/* Drag-down handle */}
+      <button onClick={onToggleExpanded} className="w-full flex justify-center pt-2 pb-1 active:opacity-70">
         <div className="w-10 h-1 rounded-full bg-white/20" />
       </button>
 
-      <div className="max-w-4xl mx-auto px-4 pt-2 pb-[76px] flex gap-3 h-[400px]">
+      <div className="max-w-2xl mx-auto px-4 pt-1 pb-[76px] overflow-y-auto max-h-[85vh] space-y-3">
 
-        {/* LEFT — cart items */}
-        <div className="w-[38%] flex flex-col gap-2 overflow-y-auto">
-          <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest shrink-0">Items</p>
-          <div className="flex-1 overflow-y-auto space-y-1">
-            {cart.map(item => (
-              <div key={item.id} className="flex items-center justify-between bg-white/8 border border-white/10 rounded-xl px-3 py-2.5">
-                <div className="flex-1 min-w-0">
-                  <p className="text-white/90 text-xs font-semibold truncate">{item.name}</p>
-                  <p className="text-white/40 text-[10px]">×{item.qty} @ {item.unitPrice.toLocaleString('en-IN')}</p>
-                </div>
-                <p className="text-white text-xs font-bold ml-2 shrink-0">
-                  {(item.qty * item.unitPrice).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-                </p>
-              </div>
-            ))}
-          </div>
-          {/* Total in left column */}
-          <div className="border-t border-white/15 pt-2 shrink-0">
-            {vatAmount > 0 && (
-              <p className="text-xs text-blue-300 mb-0.5">VAT 13%: NPR {vatAmount.toLocaleString('en-IN')}</p>
-            )}
-            <p className="text-2xl font-black text-white">
-              NPR {total.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+        {/* Cart items */}
+        <div className="bg-white/8 border border-white/10 rounded-2xl overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10">
+            <p className="text-white/50 text-xs font-bold uppercase tracking-widest">
+              {cart.reduce((s, i) => s + i.qty, 0)} Items
             </p>
-            {discountVal > 0 && (
-              <p className="text-xs text-amber-400">{discountType === 'amount' ? `NPR ${discountVal} off` : `${discountVal}% off`}</p>
-            )}
+            <button
+              onClick={onToggleExpanded}
+              className="flex items-center gap-1.5 bg-[#C84B2F]/80 text-white text-xs font-bold px-3 py-1.5 rounded-lg active:scale-95"
+            >
+              + Add More
+            </button>
           </div>
+          {cart.map((item, i) => (
+            <div key={item.id} className={`flex items-center justify-between px-4 py-3 ${i < cart.length - 1 ? 'border-b border-white/8' : ''}`}>
+              <div className="flex-1 min-w-0">
+                <p className="text-white text-sm font-semibold truncate">{item.name}</p>
+                <p className="text-white/40 text-xs mt-0.5">×{item.qty}  ·  NPR {item.unitPrice.toLocaleString('en-IN')} each</p>
+              </div>
+              <p className="text-white text-base font-bold ml-4 shrink-0">
+                NPR {(item.qty * item.unitPrice).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+              </p>
+            </div>
+          ))}
         </div>
-
-        {/* RIGHT — payment options */}
-        <div className="flex-1 flex flex-col gap-3 overflow-y-auto">
-          <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest shrink-0">Payment</p>
 
         {/* Payment method grid — 3 cols × 2 rows */}
         <div className="grid grid-cols-3 gap-2">
@@ -402,20 +391,32 @@ export default function CheckoutBar({
           </div>
         )}
 
-          {/* Charge button */}
+        {/* Total + charge */}
+        <div className="flex items-center gap-3">
+          <div className="shrink-0">
+            {discountVal > 0 && (
+              <p className="text-xs text-white/30 line-through">NPR {subtotal.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</p>
+            )}
+            <p className="text-3xl font-black text-white">
+              NPR {total.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+            </p>
+            {vatAmount > 0 && <p className="text-xs text-blue-300">Incl. VAT 13%: NPR {vatAmount.toLocaleString('en-IN')}</p>}
+            {splitEnabled && splitAmt > 0 && (
+              <p className="text-[10px] text-purple-400">
+                {PAYMENT_METHODS.find(p => p.value === paymentMethod)?.label} {primaryAmt.toLocaleString('en-IN', { maximumFractionDigits: 0 })} + {SPLIT_METHODS.find(p => p.value === splitMethod)?.label} {splitAmt.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+              </p>
+            )}
+          </div>
           <button
             onClick={handleCharge}
             disabled={isChargeDisabled}
-            className="w-full py-4 rounded-2xl font-bold text-lg text-white active:scale-[0.98] transition-all disabled:opacity-40 bg-[#C84B2F] shrink-0 mt-auto"
+            className="flex-1 py-4 rounded-2xl font-bold text-lg text-white active:scale-[0.98] transition-all disabled:opacity-40 bg-[#C84B2F]"
           >
-            {submitting
-              ? 'Saving...'
-              : `✓ Charge ${PAYMENT_METHODS.find(p => p.value === paymentMethod)?.emoji}`
-            }
+            {submitting ? 'Saving...' : `✓ Charge ${PAYMENT_METHODS.find(p => p.value === paymentMethod)?.emoji}`}
           </button>
+        </div>
 
-        </div>{/* end right column */}
-      </div>{/* end flex */}
+      </div>
     </div>
   )
 }
