@@ -65,16 +65,11 @@ async function submitPendingToDB(sale: PendingSale): Promise<void> {
   if (txErr) throw new Error(txErr.message)
 
   const stockable = sale.items.filter(
-    i => !i.isQuick && i.product?.type !== 'service' && i.product?.track_stock
+    i => !i.isQuick && i.product?.type !== 'service' && i.product?.track_stock && i.product
   )
-  for (const item of stockable) {
-    if (!item.product) continue
-    const { data: prod } = await supabase
-      .from('products').select('stock').eq('id', item.product.id).single()
-    if (!prod) continue
-    const newStock = Math.max(0, Number(prod.stock) - item.qty)
-    await supabase.from('products').update({ stock: newStock }).eq('id', item.product.id)
-  }
+  await Promise.all(stockable.map(item =>
+    supabase.rpc('decrement_stock', { product_id: item.product!.id, qty: item.qty })
+  ))
 
   if (sale.paymentMethod === 'khata' && sale.selectedCustomer) {
     const { error: khErr } = await supabase.from('khata_entries').insert({
@@ -117,18 +112,32 @@ export function useSell(): SellState {
 
   const fetchData = useCallback(async () => {
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setLoading(false); return }
 
-    const { data: business } = await supabase
-      .from('businesses').select('id, vat_number').eq('owner_id', user.id).single()
-    if (!business) { setLoading(false); return }
-    setBizId(business.id)
-    setVatNumber((business as { id: string; vat_number: string | null }).vat_number ?? '')
+    // Try cached business first to skip the getUser→getBusiness waterfall
+    const cachedBizId  = sessionStorage.getItem('ps_biz_id')
+    const cachedVat    = sessionStorage.getItem('ps_vat') ?? ''
+
+    let resolvedBizId: string = cachedBizId ?? ''
+    let resolvedVat:   string = cachedVat
+
+    if (!cachedBizId) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setLoading(false); return }
+      const { data: business } = await supabase
+        .from('businesses').select('id, vat_number').eq('owner_id', user.id).single()
+      if (!business) { setLoading(false); return }
+      resolvedBizId = business.id
+      resolvedVat   = (business as { id: string; vat_number: string | null }).vat_number ?? ''
+      sessionStorage.setItem('ps_biz_id', resolvedBizId)
+      sessionStorage.setItem('ps_vat',    resolvedVat)
+    }
+
+    setBizId(resolvedBizId!)
+    setVatNumber(resolvedVat)
 
     const [{ data: prods }, { data: custs }] = await Promise.all([
-      supabase.from('products').select('*').eq('business_id', business.id).order('name'),
-      supabase.from('customers').select('*').eq('business_id', business.id).order('name'),
+      supabase.from('products').select('*').eq('business_id', resolvedBizId!).order('name'),
+      supabase.from('customers').select('*').eq('business_id', resolvedBizId!).order('name'),
     ])
 
     setProducts((prods as Product[]) ?? [])
@@ -317,13 +326,11 @@ export function useSell(): SellState {
       if (txErr) throw new Error(txErr.message)
 
       const stockable = cart.filter(
-        i => !i.isQuick && i.product?.type !== 'service' && i.product?.track_stock
+        i => !i.isQuick && i.product?.type !== 'service' && i.product?.track_stock && i.product
       )
-      for (const item of stockable) {
-        if (!item.product) continue
-        const newStock = Math.max(0, item.product.stock - item.qty)
-        await supabase.from('products').update({ stock: newStock }).eq('id', item.product.id)
-      }
+      await Promise.all(stockable.map(item =>
+        supabase.rpc('decrement_stock', { product_id: item.product!.id, qty: item.qty })
+      ))
 
       if (isKhata && selectedCustomer) {
         const { error: khErr } = await supabase.from('khata_entries').insert({

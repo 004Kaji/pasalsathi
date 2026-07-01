@@ -232,10 +232,14 @@ body {
 .ps-badge-pending { background: rgba(201,147,58,0.12); color: var(--gold); }
 .ps-badge-due     { background: rgba(200,75,47,0.12);  color: var(--ember); }
 
+/* ── Tap delay fix — eliminates 300ms delay on ALL devices ─── */
+button, a, [role="button"], input[type="submit"], input[type="button"] {
+  touch-action: manipulation;
+}
+
 /* ── iOS input zoom fix ─────────────────────────────────────── */
 @media (max-width: 768px) {
   input, select, textarea { font-size: 16px !important; }
-  button, a { touch-action: manipulation; }
 }
 
 @layer base {
