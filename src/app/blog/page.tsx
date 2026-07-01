@@ -9,12 +9,13 @@ export const metadata = {
   description: 'Practical guides for Nepal small business owners: digital khata, VAT, payroll, inventory, and digital payments.',
 }
 
-export default function BlogPage({
+export default async function BlogPage({
   searchParams,
 }: {
-  searchParams: { category?: string }
+  searchParams: Promise<{ category?: string }>
 }) {
-  const activeCategory = searchParams.category ?? 'All'
+  const { category } = await searchParams
+  const activeCategory = category ?? 'All'
   const posts = activeCategory === 'All'
     ? BLOG_POSTS
     : BLOG_POSTS.filter(p => p.category === activeCategory)
