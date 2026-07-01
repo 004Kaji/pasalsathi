@@ -25,7 +25,7 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/forgot-password')
-  const isPublic   = isAuthPage || pathname === '/' || pathname.startsWith('/auth/') || pathname.startsWith('/update-password') || pathname === '/staff-login' || pathname.startsWith('/privacy')
+  const isPublic   = isAuthPage || pathname === '/' || pathname.startsWith('/auth/') || pathname.startsWith('/update-password') || pathname === '/staff-login' || pathname.startsWith('/privacy') || pathname.startsWith('/blog')
 
   // Staff cookie grants access to /sell only
   const staffCookie = request.cookies.get('ps_staff')?.value

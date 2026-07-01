@@ -317,6 +317,65 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Blog Preview */}
+      <section className="py-20 px-6 bg-white border-t border-[#D5CFC6]">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-end justify-between mb-10">
+            <div>
+              <span className="inline-block text-xs font-bold text-[#C84B2F] bg-[#C84B2F]/10 px-3 py-1.5 rounded-full uppercase tracking-wider mb-3">From the Blog</span>
+              <h2 className="text-3xl md:text-4xl font-black text-[#1C1917]">Guides for Nepal<br />Business Owners</h2>
+            </div>
+            <Link href="/blog" className="hidden md:inline-flex items-center gap-2 text-sm font-semibold text-[#C84B2F] hover:opacity-80 transition-opacity">
+              All articles <ArrowRight size={16} />
+            </Link>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                slug: 'digital-khata-book-nepal',
+                category: 'Khata Management',
+                title: 'Digital Khata Book: Why Nepal\'s Shopkeepers Are Switching from Paper',
+                excerpt: 'Millions of Nepali businesses still track credit in paper notebooks. Here\'s why digital khata is safer, faster, and earns you more money back.',
+                readMin: 9,
+              },
+              {
+                slug: 'esewa-khalti-fonepay-for-business-nepal',
+                category: 'Payments',
+                title: 'eSewa vs Khalti vs FonePay: Which Digital Payment is Best for Your Nepal Business?',
+                excerpt: 'Nepal\'s digital payment ecosystem has three major players. Here\'s a practical breakdown for business owners on which to accept and what fees to expect.',
+                readMin: 9,
+              },
+              {
+                slug: 'reduce-udhari-nepal-business',
+                category: 'Khata Management',
+                title: 'How to Reduce Udhari Losses in Your Nepal Business',
+                excerpt: 'Udhari is part of Nepali business culture — you can\'t refuse it. But you can manage it. These strategies help recover outstanding credit without damaging relationships.',
+                readMin: 9,
+              },
+            ].map(post => (
+              <Link
+                key={post.slug}
+                href={`/blog/${post.slug}`}
+                className="group bg-[#F5F0E8] border border-[#D5CFC6] rounded-2xl p-6 hover:shadow-md transition-all hover:border-[#C84B2F]/30 flex flex-col"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-semibold text-[#C84B2F] bg-[#C84B2F]/10 px-2.5 py-1 rounded-full">{post.category}</span>
+                  <span className="text-xs text-[#9B948E]">{post.readMin} min</span>
+                </div>
+                <h3 className="font-bold text-[#1C1917] text-base leading-snug mb-3 group-hover:text-[#C84B2F] transition-colors flex-1">{post.title}</h3>
+                <p className="text-[#6B6560] text-sm leading-relaxed line-clamp-2 mb-4">{post.excerpt}</p>
+                <span className="text-sm font-semibold text-[#C84B2F] group-hover:translate-x-1 transition-transform inline-block">Read →</span>
+              </Link>
+            ))}
+          </div>
+          <div className="mt-8 text-center md:hidden">
+            <Link href="/blog" className="inline-flex items-center gap-2 text-sm font-semibold text-[#C84B2F]">
+              See all articles <ArrowRight size={16} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="py-24 px-6">
         <div className="max-w-3xl mx-auto text-center">

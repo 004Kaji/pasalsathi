@@ -252,3 +252,58 @@ button, a, [role="button"], input[type="submit"], input[type="button"] {
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 }
+
+/* ── Blog content styles ──────────────────────────────────── */
+.blog-content h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1C1917;
+  margin: 2.5rem 0 1rem;
+  padding-top: 0.5rem;
+  border-top: 2px solid #EDE8DF;
+}
+.blog-content h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1C1917;
+  margin: 1.75rem 0 0.75rem;
+}
+.blog-content p {
+  color: #3D3733;
+  line-height: 1.8;
+  margin: 0 0 1.25rem;
+  font-size: 1.0625rem;
+}
+.blog-content ul, .blog-content ol {
+  color: #3D3733;
+  line-height: 1.8;
+  margin: 0 0 1.25rem;
+  padding-left: 1.5rem;
+}
+.blog-content li { margin-bottom: 0.5rem; }
+.blog-content strong { color: #1C1917; font-weight: 700; }
+.blog-content em {
+  background: #EDE8DF;
+  padding: 0.125rem 0.5rem;
+  border-radius: 6px;
+  font-style: normal;
+  font-size: 0.9375rem;
+}
+.blog-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.9375rem;
+}
+.blog-content th {
+  background: #EDE8DF;
+  font-weight: 700;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border: 1px solid #D5CFC6;
+}
+.blog-content td {
+  padding: 0.75rem 1rem;
+  border: 1px solid #D5CFC6;
+}
+.blog-content tr:nth-child(even) td { background: #F9F7F4; }
