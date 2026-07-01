@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { getAuthUser, getBusinessByOwner } from '@/lib/db/queries'
 import { createServerClient } from '@/lib/db/supabase-server'
 import { todayBS, daysInBSMonth, firstWeekdayOfBSMonth, BS_MONTHS, BS_DAYS_SHORT } from '@/lib/utils/date'
 import { formatNPR } from '@/lib/utils/currency'
@@ -13,14 +14,14 @@ const BS_MONTHS_EN = [
 ]
 
 export default async function HomePage() {
-  const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  // getAuthUser/getBusinessByOwner are cached — same request as layout costs 0 extra round-trips
+  const user = await getAuthUser()
   if (!user) redirect('/login')
 
-  const { data: business } = await supabase
-    .from('businesses').select('id, name, phone, address').eq('owner_id', user.id).single()
-
+  const business = await getBusinessByOwner(user.id)
   if (!business) redirect('/')
+
+  const supabase = await createServerClient()
 
   const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
   const todayEnd   = new Date(); todayEnd.setHours(23, 59, 59, 999)

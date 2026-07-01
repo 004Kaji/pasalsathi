@@ -27,6 +27,11 @@ export async function proxy(request: NextRequest) {
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/forgot-password')
   const isPublic   = isAuthPage || pathname === '/' || pathname.startsWith('/auth/') || pathname.startsWith('/update-password') || pathname === '/staff-login' || pathname.startsWith('/privacy') || pathname.startsWith('/blog')
 
+  // Authenticated users hitting the landing page → send straight to the app
+  if (user && pathname === '/') {
+    return NextResponse.redirect(new URL('/sell', request.url))
+  }
+
   // Staff cookie grants access to /sell only
   const staffCookie = request.cookies.get('ps_staff')?.value
   if (!user && staffCookie && pathname.startsWith('/sell')) {

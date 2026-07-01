@@ -1,10 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import Link from 'next/link'
 import { ArrowRight, Store, BarChart3, BookOpen, Package, Users, TrendingUp, CheckCircle, Star } from 'lucide-react'
-import { createClient } from '@/lib/db/supabase'
 
 type Lang = 'en' | 'np'
 
@@ -109,13 +107,6 @@ const FEATURE_COLORS = [
 export default function LandingPage() {
   const [lang, setLang] = useState<Lang>('en')
   const t = T[lang]
-  const router = useRouter()
-
-  useEffect(() => {
-    createClient().auth.getSession().then(({ data }) => {
-      if (data.session) router.replace('/home')
-    })
-  }, [router])
 
   return (
     <div className="min-h-screen bg-[#F5F0E8] text-[#1C1917] overflow-x-hidden">

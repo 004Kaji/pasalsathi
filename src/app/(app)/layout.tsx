@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getAuthUser, getBusinessByOwner } from '@/lib/db/queries'
 import { createServerClient } from '@/lib/db/supabase-server'
 import BottomNav from '@/components/shared/bottom-nav'
 import TopNav from '@/components/shared/top-nav'
@@ -11,16 +12,11 @@ import { getSubscriptionStatus } from '@/lib/utils/subscription'
 import type { Business } from '@/lib/types/database'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
+  const user = await getAuthUser()
   if (!user) redirect('/login')
 
-  const { data: business } = await supabase
-    .from('businesses')
-    .select('*')
-    .eq('owner_id', user.id)
-    .single()
+  const business = await getBusinessByOwner(user.id)
+  const supabase = await createServerClient()
 
   const genRefCode = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'

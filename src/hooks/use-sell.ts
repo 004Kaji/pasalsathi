@@ -135,13 +135,24 @@ export function useSell(): SellState {
     setBizId(resolvedBizId!)
     setVatNumber(resolvedVat)
 
+    // Use cached products/customers for instant subsequent loads; always refresh in background
+    const cachedProds = sessionStorage.getItem('ps_products')
+    const cachedCusts = sessionStorage.getItem('ps_customers')
+    if (cachedProds) setProducts(JSON.parse(cachedProds) as Product[])
+    if (cachedCusts) setCustomers(JSON.parse(cachedCusts) as Customer[])
+    if (cachedProds && cachedCusts) setLoading(false)
+
     const [{ data: prods }, { data: custs }] = await Promise.all([
       supabase.from('products').select('*').eq('business_id', resolvedBizId!).order('name'),
       supabase.from('customers').select('*').eq('business_id', resolvedBizId!).order('name'),
     ])
 
-    setProducts((prods as Product[]) ?? [])
-    setCustomers((custs as Customer[]) ?? [])
+    const freshProds = (prods as Product[]) ?? []
+    const freshCusts = (custs as Customer[]) ?? []
+    setProducts(freshProds)
+    setCustomers(freshCusts)
+    sessionStorage.setItem('ps_products', JSON.stringify(freshProds))
+    sessionStorage.setItem('ps_customers', JSON.stringify(freshCusts))
     setLoading(false)
 
     const count = await countPendingSales().catch(() => 0)
