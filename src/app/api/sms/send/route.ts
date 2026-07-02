@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const sparrowResponse = await fetch('http://api.sparrowsms.com/v2/sms/', {
+    const sparrowResponse = await fetch('https://api.sparrowsms.com/v2/sms/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

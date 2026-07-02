@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
   const sparrowToken = process.env.SPARROW_SMS_TOKEN
 
   if (sparrowToken) {
-    const smsRes = await fetch('http://api.sparrowsms.com/v2/sms/', {
+    const smsRes = await fetch('https://api.sparrowsms.com/v2/sms/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

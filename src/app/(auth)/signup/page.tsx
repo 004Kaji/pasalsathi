@@ -40,6 +40,9 @@ function SignupForm() {
 
   async function handleGoogleSignup() {
     if (refCode) localStorage.setItem('ps_ref', refCode.toUpperCase())
+    // New signups are remembered — without these flags SessionGuard signs the user straight back out
+    localStorage.setItem('ps_remember_me', '1')
+    sessionStorage.setItem('ps_active', '1')
     const supabase = createClient()
     await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -63,6 +66,9 @@ function SignupForm() {
     const supabase = createClient()
     const { error: sessionError } = await supabase.auth.verifyOtp({ token_hash: data.hashed_token, type: 'magiclink' })
     if (sessionError) { setEmailError('Signup done — please sign in.'); setEmailLoading(false); return }
+    // New signups are remembered — without these flags SessionGuard signs the user straight back out
+    localStorage.setItem('ps_remember_me', '1')
+    sessionStorage.setItem('ps_active', '1')
     router.push('/home')
   }
 

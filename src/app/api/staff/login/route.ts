@@ -2,7 +2,35 @@ import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { createAdminClient } from '@/lib/db/supabase'
 
+// In-memory rate limit: 5 failed attempts per IP per 15 min. Resets on cold start,
+// but still makes brute-forcing a 4-digit PIN impractical within a window.
+const attempts = new Map<string, { count: number; resetAt: number }>()
+const MAX_ATTEMPTS = 5
+const WINDOW_MS = 15 * 60 * 1000
+
+function rateLimited(ip: string): boolean {
+  const now = Date.now()
+  const entry = attempts.get(ip)
+  if (!entry || now > entry.resetAt) return false
+  return entry.count >= MAX_ATTEMPTS
+}
+
+function recordFailure(ip: string) {
+  const now = Date.now()
+  const entry = attempts.get(ip)
+  if (!entry || now > entry.resetAt) {
+    attempts.set(ip, { count: 1, resetAt: now + WINDOW_MS })
+  } else {
+    entry.count++
+  }
+}
+
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  if (rateLimited(ip)) {
+    return NextResponse.json({ error: 'Too many attempts. Try again in 15 minutes.' }, { status: 429 })
+  }
+
   const { businessCode, name, pin } = await req.json() as { businessCode: string; name: string; pin: string }
 
   if (!businessCode?.trim() || !name?.trim() || !pin) {
@@ -38,7 +66,10 @@ export async function POST(req: NextRequest) {
   if (!matched) return NextResponse.json({ error: 'Staff not found' }, { status: 404 })
 
   const valid = await bcrypt.compare(pin, matched.pin_hash)
-  if (!valid) return NextResponse.json({ error: 'Wrong PIN' }, { status: 401 })
+  if (!valid) {
+    recordFailure(ip)
+    return NextResponse.json({ error: 'Wrong PIN' }, { status: 401 })
+  }
 
   const res = NextResponse.json({ ok: true, businessName: business.name, staffName: matched.name })
   // Simple cookie: staffId|businessId — read in middleware

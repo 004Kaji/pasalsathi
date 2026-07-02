@@ -8,6 +8,8 @@ import OfflineIndicator from '@/components/pwa/offline-indicator'
 import InstallPrompt from '@/components/pwa/install-prompt'
 import ReferralClaimer from '@/components/shared/referral-claimer'
 import { ErrorBoundary } from '@/components/shared/error-boundary'
+import { SessionGuard } from '@/components/shared/session-guard'
+import { PinGuard } from '@/components/shared/pin-guard'
 import { getSubscriptionStatus } from '@/lib/utils/subscription'
 import type { Business } from '@/lib/types/database'
 
@@ -44,6 +46,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen bg-[#F5F0E8] text-[#1C1917] flex flex-col">
+      <SessionGuard />
+      <PinGuard />
       <TopNav />
       <OfflineIndicator />
       <SubscriptionBanner status={subStatus} />

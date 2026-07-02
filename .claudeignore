@@ -1,0 +1,42 @@
+# Heavy build artifacts
+node_modules/
+.next/
+dist/
+build/
+out/
+.vercel/
+.turbo/
+
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# TypeScript cache
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# Images
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+
+# Env & logs
+*.log
+.env
+.env.local
+.env.*
+
+# Supabase local
+supabase/.temp/
+
+# Seed scripts (not needed during dev)
+seed-demo.mjs
+
+# Blog content files — large, Claude already wrote them
+src/lib/blog/content/
+
+# Generated
+coverage/

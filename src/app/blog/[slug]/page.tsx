@@ -15,11 +15,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `${post.title} — PasalSathi Blog`,
     description: post.excerpt,
+    alternates: { canonical: `https://pasalsathi.net/blog/${slug}` },
     openGraph: {
       title: post.title,
       description: post.excerpt,
       type: 'article',
       publishedTime: post.date,
+      url: `https://pasalsathi.net/blog/${slug}`,
     },
   }
 }
@@ -33,8 +35,21 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     .filter(p => p.slug !== post.slug && p.category === post.category)
     .slice(0, 3)
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: post.excerpt,
+    datePublished: post.date,
+    dateModified: post.date,
+    author: { '@type': 'Organization', name: 'PasalSathi', url: 'https://pasalsathi.net' },
+    publisher: { '@type': 'Organization', name: 'PasalSathi', url: 'https://pasalsathi.net' },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': `https://pasalsathi.net/blog/${post.slug}` },
+  }
+
   return (
     <div className="min-h-screen" style={{ background: '#F5F0E8', color: '#1C1917' }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       {/* Nav */}
       <nav className="border-b border-[#D5CFC6] bg-white/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">

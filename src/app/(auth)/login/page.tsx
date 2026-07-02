@@ -10,6 +10,7 @@ export default function LoginPage() {
 
   const [email, setEmail]           = useState('')
   const [password, setPassword]     = useState('')
+  const [rememberMe, setRememberMe] = useState(true)
   const [emailLoading, setEmailLoading] = useState(false)
   const [emailError, setEmailError] = useState('')
 
@@ -26,7 +27,20 @@ export default function LoginPage() {
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) { setEmailError('Incorrect email or password'); setEmailLoading(false); return }
+    if (rememberMe) {
+      localStorage.setItem('ps_remember_me', '1')
+    } else {
+      localStorage.removeItem('ps_remember_me')
+    }
+    sessionStorage.setItem('ps_active', '1')
     router.push('/home'); router.refresh()
+  }
+
+  async function handleGoogleLoginClick() {
+    // Google OAuth always remembers — user is on their own device
+    localStorage.setItem('ps_remember_me', '1')
+    sessionStorage.setItem('ps_active', '1')
+    await handleGoogleLogin()
   }
 
   const inp = 'w-full bg-white border border-[#D5CFC6] rounded-xl px-4 h-12 text-[#1C1917] placeholder:text-[#9B948E] outline-none focus:border-[#C84B2F] focus:ring-2 focus:ring-[#C84B2F]/20 text-base transition-all'
@@ -50,7 +64,7 @@ export default function LoginPage() {
           {/* Google */}
           <button
             type="button"
-            onClick={handleGoogleLogin}
+            onClick={handleGoogleLoginClick}
             className="w-full flex items-center justify-center gap-3 border border-[#D5CFC6] bg-white rounded-xl py-3 px-4 text-sm font-medium text-[#1C1917] hover:bg-[#F5F0E8] active:scale-[0.98] transition-all"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -83,6 +97,15 @@ export default function LoginPage() {
               <input type="password" placeholder="Password" value={password}
                 onChange={e => setPassword(e.target.value)} required className={inp} />
             </div>
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={e => setRememberMe(e.target.checked)}
+                className="w-4 h-4 rounded border-[#D5CFC6] accent-[#C84B2F] cursor-pointer"
+              />
+              <span className="text-sm text-[#6B6560]">Remember me on this device</span>
+            </label>
             {emailError && <p className="text-sm text-[#C84B2F]">{emailError}</p>}
             <button type="submit" disabled={emailLoading} className={btn}>
               {emailLoading ? 'Signing in...' : 'Sign In'}

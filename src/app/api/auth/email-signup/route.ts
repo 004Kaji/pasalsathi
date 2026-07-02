@@ -16,21 +16,17 @@ export async function POST(request: NextRequest) {
 
   const supabase = createAdminClient()
 
-  // Check if user already exists (listUsers paginates — fine for typical scale)
-  const { data: userPage } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 })
-  const existing = userPage?.users?.find(u => u.email === email)
-
-  if (existing) {
-    return NextResponse.json({ error: 'An account with this email already exists. Please sign in.' }, { status: 409 })
-  }
-
-  // Create user directly — bypasses email confirmation
+  // Create user directly — bypasses email confirmation.
+  // Supabase rejects duplicate emails, so no need to scan the user list first.
   const { data: created, error: createError } = await supabase.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
   })
 
+  if (createError?.code === 'email_exists') {
+    return NextResponse.json({ error: 'An account with this email already exists. Please sign in.' }, { status: 409 })
+  }
   if (createError || !created.user) {
     return NextResponse.json({ error: 'Could not create account. Please try again.' }, { status: 500 })
   }

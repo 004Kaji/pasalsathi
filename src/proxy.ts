@@ -24,13 +24,18 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
-  const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/forgot-password')
-  const isPublic   = isAuthPage || pathname === '/' || pathname.startsWith('/auth/') || pathname.startsWith('/update-password') || pathname === '/staff-login' || pathname.startsWith('/privacy') || pathname.startsWith('/blog')
 
-  // Authenticated users hitting the landing page → send straight to the app
-  if (user && pathname === '/') {
-    return NextResponse.redirect(new URL('/sell', request.url))
+  // API routes that must work without a Supabase session — each verifies its own
+  // auth: /api/auth/* serves signup/OTP + the Supabase SMS hook (Bearer secret),
+  // /api/staff/* authenticates via the ps_staff cookie or checks the user itself
+  const PUBLIC_API = ['/api/auth/', '/api/staff/']
+  if (PUBLIC_API.some(p => pathname.startsWith(p))) {
+    return supabaseResponse
   }
+
+  // Explicitly list protected app routes — unknown routes pass through so Next.js serves its own 404
+  const PROTECTED = ['/sell', '/khata', '/products', '/staff', '/reports', '/settings', '/supplier', '/hisab', '/home', '/api/']
+  const isProtected = PROTECTED.some(p => pathname.startsWith(p))
 
   // Staff cookie grants access to /sell only
   const staffCookie = request.cookies.get('ps_staff')?.value
@@ -38,7 +43,10 @@ export async function proxy(request: NextRequest) {
     return supabaseResponse
   }
 
-  if (!user && !isPublic) {
+  if (!user && isProtected) {
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     return NextResponse.redirect(new URL('/login', request.url))
   }
 

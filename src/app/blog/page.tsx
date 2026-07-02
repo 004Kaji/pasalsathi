@@ -7,6 +7,7 @@ const CATEGORIES = ['All', 'Khata Management', 'Tax & Compliance', 'Point of Sal
 export const metadata = {
   title: 'Blog — PasalSathi',
   description: 'Practical guides for Nepal small business owners: digital khata, VAT, payroll, inventory, and digital payments.',
+  alternates: { canonical: 'https://pasalsathi.net/blog' },
 }
 
 export default async function BlogPage({

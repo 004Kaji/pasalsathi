@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/db/supabase'
-import { LogOut, Download, Trash2, KeyRound, Mail, Users, CreditCard, Gift, Copy, Check } from 'lucide-react'
+import { LogOut, Download, Trash2, KeyRound, Mail, Users, CreditCard, Gift, Copy, Check, Shield, Timer } from 'lucide-react'
 import { PageSkeleton } from '@/components/ui/skeleton'
 import type { Business } from '@/lib/types/database'
 
@@ -41,6 +41,19 @@ export default function SettingsPage() {
   const [referralCount,  setReferralCount]  = useState(0)
   const [monthsEarned,   setMonthsEarned]   = useState(0)
   const [copied,         setCopied]         = useState(false)
+
+  // PIN lock state
+  const [pinEnabled,  setPinEnabled]  = useState(false)
+  const [pinTimeout,  setPinTimeout]  = useState('900')
+  const [pinStep,     setPinStep]     = useState<'idle' | 'set' | 'confirm' | 'remove'>('idle')
+  const [newPin,      setNewPin]      = useState('')
+  const [confirmPin,  setConfirmPin]  = useState('')
+  const [pinError,    setPinError]    = useState('')
+
+  useEffect(() => {
+    setPinEnabled(!!localStorage.getItem('ps_pin_hash'))
+    setPinTimeout(localStorage.getItem('ps_pin_timeout') ?? '900')
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -88,9 +101,39 @@ export default function SettingsPage() {
     setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000)
   }
 
+  async function hashPin(pin: string): Promise<string> {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin))
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
+  }
+
+  async function handleSavePin() {
+    if (newPin.length !== 4 || !/^\d{4}$/.test(newPin)) { setPinError('PIN must be 4 digits'); return }
+    if (newPin !== confirmPin) { setPinError('PINs do not match'); return }
+    const hash = await hashPin(newPin)
+    localStorage.setItem('ps_pin_hash', hash)
+    localStorage.setItem('ps_pin_timeout', pinTimeout)
+    sessionStorage.setItem('ps_active', '1')
+    setPinEnabled(true); setPinStep('idle'); setNewPin(''); setConfirmPin(''); setPinError('')
+  }
+
+  function handleRemovePin() {
+    localStorage.removeItem('ps_pin_hash')
+    localStorage.removeItem('ps_pin_timeout')
+    localStorage.removeItem('ps_last_activity')
+    sessionStorage.removeItem('ps_locked')
+    setPinEnabled(false); setPinStep('idle')
+  }
+
+  function handleTimeoutChange(val: string) {
+    setPinTimeout(val)
+    localStorage.setItem('ps_pin_timeout', val)
+  }
+
   async function handleLogout() {
     const supabase = createClient()
     await supabase.auth.signOut()
+    localStorage.removeItem('ps_remember_me')
+    sessionStorage.removeItem('ps_active')
     router.push('/login'); router.refresh()
   }
 
@@ -216,6 +259,7 @@ export default function SettingsPage() {
 
         {/* ACCOUNT */}
         {tab === 'account' && (
+          <div className="space-y-4">
           <div className="bg-white border border-[#D5CFC6] rounded-2xl overflow-hidden shadow-sm">
             <div className="flex items-center gap-3 px-5 py-4 border-b border-[#E0D9CE]">
               <Mail size={18} className="text-[#9B948E] shrink-0" />
@@ -232,6 +276,104 @@ export default function SettingsPage() {
               <LogOut size={18} className="text-[#C84B2F] shrink-0" />
               <span className="flex-1 text-sm font-semibold text-[#C84B2F]">Logout</span>
             </button>
+          </div>
+
+          {/* PIN Lock */}
+
+          <div className="bg-white border border-[#D5CFC6] rounded-2xl overflow-hidden shadow-sm mt-4">
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-[#E0D9CE]">
+              <Shield size={18} className="text-[#9B948E] shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-[#1C1917]">PIN Lock</p>
+                <p className="text-xs text-[#9B948E] mt-0.5">
+                  {pinEnabled ? 'Locks screen after inactivity' : 'Lock screen when you step away'}
+                </p>
+              </div>
+              <button
+                onClick={() => pinEnabled ? setPinStep('remove') : setPinStep('set')}
+                className={`relative w-11 h-6 rounded-full transition-colors ${pinEnabled ? 'bg-[#C84B2F]' : 'bg-[#D5CFC6]'}`}
+              >
+                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${pinEnabled ? 'translate-x-5' : ''}`} />
+              </button>
+            </div>
+
+            {pinEnabled && pinStep === 'idle' && (
+              <>
+                <div className="flex items-center gap-3 px-5 py-4 border-b border-[#E0D9CE]">
+                  <Timer size={18} className="text-[#9B948E] shrink-0" />
+                  <span className="flex-1 text-sm text-[#6B6560]">Lock after</span>
+                  <select
+                    value={pinTimeout}
+                    onChange={e => handleTimeoutChange(e.target.value)}
+                    className="text-sm text-[#1C1917] bg-transparent outline-none font-semibold cursor-pointer"
+                  >
+                    <option value="300">5 minutes</option>
+                    <option value="900">15 minutes</option>
+                    <option value="1800">30 minutes</option>
+                    <option value="3600">1 hour</option>
+                  </select>
+                </div>
+                <button
+                  onClick={() => { setNewPin(''); setConfirmPin(''); setPinError(''); setPinStep('set') }}
+                  className="w-full flex items-center gap-3 px-5 py-4 active:bg-[#F5F0E8]"
+                >
+                  <KeyRound size={18} className="text-[#9B948E] shrink-0" />
+                  <span className="text-sm text-[#6B6560]">Change PIN</span>
+                </button>
+              </>
+            )}
+
+            {/* Set / Change PIN flow */}
+            {(pinStep === 'set' || pinStep === 'confirm') && (
+              <div className="px-5 py-4 border-t border-[#E0D9CE] space-y-3">
+                <p className="text-sm font-bold text-[#1C1917]">{pinEnabled ? 'Change PIN' : 'Set up PIN lock'}</p>
+                <div>
+                  <label className="text-xs font-semibold text-[#6B6560] block mb-1.5">New 4-digit PIN</label>
+                  <input
+                    type="password" inputMode="numeric" maxLength={4}
+                    value={newPin} onChange={e => { setNewPin(e.target.value.replace(/\D/g, '').slice(0,4)); setPinError('') }}
+                    placeholder="••••" className={inp + ' tracking-[0.5em] text-center text-xl'}
+                  />
+                </div>
+                {newPin.length === 4 && (
+                  <div>
+                    <label className="text-xs font-semibold text-[#6B6560] block mb-1.5">Confirm PIN</label>
+                    <input
+                      type="password" inputMode="numeric" maxLength={4}
+                      value={confirmPin} onChange={e => { setConfirmPin(e.target.value.replace(/\D/g, '').slice(0,4)); setPinError('') }}
+                      placeholder="••••" className={inp + ' tracking-[0.5em] text-center text-xl'}
+                    />
+                  </div>
+                )}
+                {pinError && <p className="text-sm text-[#C84B2F]">{pinError}</p>}
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={() => { setPinStep('idle'); setNewPin(''); setConfirmPin(''); setPinError('') }}
+                    className="flex-1 py-2.5 rounded-xl border border-[#D5CFC6] text-sm font-semibold text-[#6B6560]"
+                  >Cancel</button>
+                  <button
+                    onClick={handleSavePin}
+                    disabled={newPin.length !== 4 || confirmPin.length !== 4}
+                    className="flex-1 py-2.5 rounded-xl bg-[#C84B2F] text-white text-sm font-bold disabled:opacity-40"
+                  >Save PIN</button>
+                </div>
+              </div>
+            )}
+
+            {/* Remove PIN confirm */}
+            {pinStep === 'remove' && (
+              <div className="px-5 py-4 border-t border-[#E0D9CE] bg-[#FFF8F6] space-y-3">
+                <p className="text-sm font-semibold text-[#C84B2F]">Remove PIN lock?</p>
+                <p className="text-xs text-[#9B948E]">Your screen will no longer lock automatically.</p>
+                <div className="flex gap-2">
+                  <button onClick={() => setPinStep('idle')}
+                    className="flex-1 py-2.5 rounded-xl border border-[#D5CFC6] text-sm font-semibold text-[#6B6560]">Cancel</button>
+                  <button onClick={handleRemovePin}
+                    className="flex-1 py-2.5 rounded-xl bg-[#C84B2F] text-white text-sm font-bold">Remove</button>
+                </div>
+              </div>
+            )}
+          </div>
           </div>
         )}
 

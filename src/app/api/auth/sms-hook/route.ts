@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
   const phone = user.phone.replace('+977', '')
   const message = `PasalSathi: तपाईंको OTP कोड ${sms.otp} हो। १० मिनटमा म्याद सकिन्छ।`
 
-  const sparrowRes = await fetch('http://api.sparrowsms.com/v2/sms/', {
+  const sparrowRes = await fetch('https://api.sparrowsms.com/v2/sms/', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

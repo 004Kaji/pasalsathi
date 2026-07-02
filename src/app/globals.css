@@ -307,3 +307,12 @@ button, a, [role="button"], input[type="submit"], input[type="button"] {
   border: 1px solid #D5CFC6;
 }
 .blog-content tr:nth-child(even) td { background: #F9F7F4; }
+
+@keyframes pin-shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-10px); }
+  40%       { transform: translateX(10px); }
+  60%       { transform: translateX(-10px); }
+  80%       { transform: translateX(10px); }
+}
+.animate-pin-shake { animation: pin-shake 0.45s ease-in-out; }

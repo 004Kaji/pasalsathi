@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { Download, Share, X } from 'lucide-react'
 
 type BeforeInstallPromptEvent = Event & {
@@ -9,6 +10,7 @@ type BeforeInstallPromptEvent = Event & {
 }
 
 export default function InstallPrompt() {
+  const pathname = usePathname()
   const [isIOS,          setIsIOS]          = useState(false)
   const [isStandalone,   setIsStandalone]   = useState(false)
   const [dismissed,      setDismissed]      = useState(false)
@@ -53,6 +55,9 @@ export default function InstallPrompt() {
     setDeferredPrompt(null)
     setInstalling(false)
   }
+
+  // Only show on the dashboard — on form pages the fixed banner covers submit buttons
+  if (pathname !== '/home') return null
 
   if (isStandalone || dismissed) return null
 
