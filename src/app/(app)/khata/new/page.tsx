@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/db/supabase'
+import { isStaffMode } from '@/lib/staff-mode'
 import { ArrowLeft } from 'lucide-react'
 
 export default function NewCustomerPage() {
@@ -20,6 +21,23 @@ export default function NewCustomerPage() {
     if (!name.trim()) { setError('Name is required'); return }
 
     setLoading(true)
+
+    // Staff mode: create via the staff API
+    if (isStaffMode()) {
+      const res = await fetch('/api/staff/customers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, phone, address }),
+      })
+      if (!res.ok) {
+        setError('Error adding customer. Please try again.')
+        setLoading(false)
+        return
+      }
+      router.push('/khata')
+      return
+    }
+
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login'); return }

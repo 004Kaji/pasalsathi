@@ -20,6 +20,7 @@ export async function POST(req: NextRequest) {
     business_id: business.id,
     name: name.trim(),
     pin_hash,
+    active: true,
   })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

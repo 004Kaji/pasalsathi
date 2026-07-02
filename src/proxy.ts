@@ -33,14 +33,25 @@ export async function proxy(request: NextRequest) {
     return supabaseResponse
   }
 
+  // The staff PIN login page must stay reachable logged-out
+  // (it would otherwise match the '/staff' protected prefix below)
+  if (pathname === '/staff-login') {
+    return supabaseResponse
+  }
+
   // Explicitly list protected app routes — unknown routes pass through so Next.js serves its own 404
   const PROTECTED = ['/sell', '/khata', '/products', '/staff', '/reports', '/settings', '/supplier', '/hisab', '/home', '/api/']
   const isProtected = PROTECTED.some(p => pathname.startsWith(p))
 
-  // Staff cookie grants access to /sell only
+  // Staff cookie grants access to the POS and khata — returns stay owner-only
   const staffCookie = request.cookies.get('ps_staff')?.value
-  if (!user && staffCookie && pathname.startsWith('/sell')) {
-    return supabaseResponse
+  if (!user && staffCookie) {
+    if (pathname.startsWith('/sell/return')) {
+      return NextResponse.redirect(new URL('/sell', request.url))
+    }
+    if (pathname.startsWith('/sell') || pathname.startsWith('/khata')) {
+      return supabaseResponse
+    }
   }
 
   if (!user && isProtected) {

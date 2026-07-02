@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 import { getAuthUser, getBusinessByOwner } from '@/lib/db/queries'
 import { createServerClient } from '@/lib/db/supabase-server'
+import StaffNav from '@/components/shared/staff-nav'
 import BottomNav from '@/components/shared/bottom-nav'
 import TopNav from '@/components/shared/top-nav'
 import SubscriptionBanner from '@/components/shared/subscription-banner'
@@ -15,7 +17,24 @@ import type { Business } from '@/lib/types/database'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await getAuthUser()
-  if (!user) redirect('/login')
+  if (!user) {
+    // Staff mode: PIN cookie but no Supabase session — minimal chrome,
+    // middleware already restricts them to /sell and /khata
+    const staffCookie = (await cookies()).get('ps_staff')?.value
+    if (staffCookie) {
+      return (
+        <div className="min-h-screen bg-[#F5F0E8] text-[#1C1917] flex flex-col">
+          <StaffNav />
+          <main className="flex-1 pt-11 pb-16 max-w-2xl md:max-w-5xl mx-auto w-full">
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
+          </main>
+        </div>
+      )
+    }
+    redirect('/login')
+  }
 
   const business = await getBusinessByOwner(user.id)
   const supabase = await createServerClient()

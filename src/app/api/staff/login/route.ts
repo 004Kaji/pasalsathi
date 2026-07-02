@@ -48,22 +48,25 @@ export async function POST(req: NextRequest) {
 
   if (!business) return NextResponse.json({ error: 'Business not found' }, { status: 404 })
 
-  // Find active staff by name in that business
+  // Find active staff by name — partial match is fine ("sanjog" finds
+  // "sanjog basnet") as long as it's unambiguous within the business
   const { data: staffList } = await admin
     .from('staff')
     .select('id, name, pin_hash')
     .eq('business_id', business.id)
     .eq('active', true)
-    .ilike('name', name.trim())
+    .ilike('name', `%${name.trim()}%`)
     .limit(5)
 
   if (!staffList || staffList.length === 0) {
     return NextResponse.json({ error: 'Staff not found' }, { status: 404 })
   }
 
-  // Try each match (case-insensitive name search may return multiple)
-  const matched = staffList.find(s => s.name.toLowerCase() === name.trim().toLowerCase())
-  if (!matched) return NextResponse.json({ error: 'Staff not found' }, { status: 404 })
+  const exact   = staffList.find(s => s.name.toLowerCase() === name.trim().toLowerCase())
+  const matched = exact ?? (staffList.length === 1 ? staffList[0] : null)
+  if (!matched) {
+    return NextResponse.json({ error: 'More than one staff matches — type the full name' }, { status: 409 })
+  }
 
   const valid = await bcrypt.compare(pin, matched.pin_hash)
   if (!valid) {
@@ -78,6 +81,14 @@ export async function POST(req: NextRequest) {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     maxAge: 60 * 60 * 12, // 12 hours
+    path: '/',
+  })
+  // Readable display cookie so client components can detect staff mode
+  res.cookies.set('ps_staff_name', matched.name, {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 12,
     path: '/',
   })
   return res

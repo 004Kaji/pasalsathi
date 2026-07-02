@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/db/supabase'
+import { isStaffMode } from '@/lib/staff-mode'
 import { Plus, Search, ChevronRight, Users } from 'lucide-react'
 import { PageSkeleton } from '@/components/ui/skeleton'
 import type { Customer } from '@/lib/types/database'
@@ -12,9 +13,23 @@ export default function KhataPage() {
   const [search,     setSearch]     = useState('')
   const [loading,    setLoading]    = useState(true)
   const [bizName,    setBizName]    = useState('')
+  const [staffView,  setStaffView]  = useState(false)
 
   const fetchCustomers = useCallback(async () => {
     setLoading(true)
+
+    // Staff mode: load via the staff API (no Supabase session)
+    if (isStaffMode()) {
+      setStaffView(true)
+      const res = await fetch('/api/staff/data')
+      if (!res.ok) { setLoading(false); return }
+      const data = await res.json() as { bizName: string; customers: Customer[] }
+      setBizName(data.bizName || 'PasalSathi')
+      setCustomers(data.customers)
+      setLoading(false)
+      return
+    }
+
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
@@ -153,7 +168,7 @@ export default function KhataPage() {
                     </div>
                   </Link>
 
-                  {customer.phone && outstanding > 0 && (
+                  {customer.phone && outstanding > 0 && !staffView && (
                     <div className="border-t border-[#E0D9CE] px-4 py-2.5">
                       <button
                         onClick={() => sendWhatsApp(customer)}

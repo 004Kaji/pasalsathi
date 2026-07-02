@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { CheckCircle, WifiOff, MessageCircle, FileText } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/db/supabase'
+import { isStaffMode } from '@/lib/staff-mode'
 import InvoiceSheet from '@/components/sell/invoice-sheet'
 import type { SaleResult } from '@/lib/types/app'
 
@@ -164,12 +165,14 @@ export default function SuccessScreen({ result, onNewSale }: Props) {
         >
           New Sale
         </button>
-        <button
-          onClick={() => router.push('/home')}
-          className="flex-1 py-4 bg-white border border-[#D5CFC6] text-[#6B6560] rounded-2xl font-bold text-lg active:scale-95"
-        >
-          Home
-        </button>
+        {!isStaffMode() && (
+          <button
+            onClick={() => router.push('/home')}
+            className="flex-1 py-4 bg-white border border-[#D5CFC6] text-[#6B6560] rounded-2xl font-bold text-lg active:scale-95"
+          >
+            Home
+          </button>
+        )}
       </div>
     </div>
   )

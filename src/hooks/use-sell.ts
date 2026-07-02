@@ -8,6 +8,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { createClient } from '@/lib/db/supabase'
+import { isStaffMode } from '@/lib/staff-mode'
 import {
   queueSale, getPendingSales, removePendingSale, countPendingSales,
   type PendingSale,
@@ -111,6 +112,21 @@ export function useSell(): SellState {
   // ── initial data fetch ─────────────────────────────────────────────────────
 
   const fetchData = useCallback(async () => {
+    // Staff mode: no Supabase session — load everything via the staff API
+    if (isStaffMode()) {
+      const res = await fetch('/api/staff/data')
+      if (!res.ok) { setLoading(false); return }
+      const data = await res.json() as {
+        businessId: string; vatNumber: string; products: Product[]; customers: Customer[]
+      }
+      setBizId(data.businessId)
+      setVatNumber(data.vatNumber)
+      setProducts(data.products)
+      setCustomers(data.customers)
+      setLoading(false)
+      return
+    }
+
     const supabase = createClient()
 
     // Try cached business first to skip the getUser→getBusiness waterfall
@@ -262,15 +278,28 @@ export function useSell(): SellState {
 
   async function createAndSelectCustomer(name: string): Promise<void> {
     if (!bizId || !name.trim()) return
-    const supabase = createClient()
-    const { data, error: err } = await supabase
-      .from('customers')
-      .insert({ business_id: bizId, name: name.trim(), balance: 0 })
-      .select()
-      .single()
-    if (err || !data) return
-    const created = data as Customer
-    setCustomers(prev => [created, ...prev])
+
+    let created: Customer | null = null
+    if (isStaffMode()) {
+      const res = await fetch('/api/staff/customers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim() }),
+      })
+      if (!res.ok) return
+      created = ((await res.json()) as { customer: Customer }).customer
+    } else {
+      const supabase = createClient()
+      const { data, error: err } = await supabase
+        .from('customers')
+        .insert({ business_id: bizId, name: name.trim(), balance: 0 })
+        .select()
+        .single()
+      if (err || !data) return
+      created = data as Customer
+    }
+
+    setCustomers(prev => [created!, ...prev])
     setSelectedCustomer(created)
     setCustomerName('')
   }
@@ -294,6 +323,44 @@ export function useSell(): SellState {
 
     setSubmitting(true)
     setError('')
+
+    // ── STAFF MODE: submit through the staff API (no Supabase session) ───────
+    if (isStaffMode()) {
+      if (!navigator.onLine) {
+        setError('No internet — staff sales need a connection. Try again.')
+        setSubmitting(false)
+        return null
+      }
+      const stockUpdates = cart
+        .filter(i => !i.isQuick && i.product?.type !== 'service' && i.product?.track_stock && i.product)
+        .map(i => ({ productId: i.product!.id, qty: i.qty }))
+
+      const res = await fetch('/api/staff/sale', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          total,
+          itemSummary,
+          displayName: customerName.trim() || undefined,
+          paymentMethod,
+          customerId: selectedCustomer?.id,
+          stockUpdates,
+        }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({})) as { error?: string }
+        setError(data.error ?? 'Failed to save sale. Try again.')
+        setSubmitting(false)
+        return null
+      }
+      setSubmitting(false)
+      return {
+        total, subtotalBeforeVat: subtotalAfterDiscount, vatAmount, vatNumber,
+        items: cart, discountPercent: discountAmt, discountType,
+        paymentMethod, customer: selectedCustomer,
+        splitMethod: split?.method, splitAmount: split?.amount,
+      }
+    }
 
     // ── OFFLINE: queue in IndexedDB ──────────────────────────────────────────
     if (!navigator.onLine) {

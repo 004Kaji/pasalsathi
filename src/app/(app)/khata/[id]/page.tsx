@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/db/supabase'
+import { isStaffMode } from '@/lib/staff-mode'
 import { ArrowLeft, MessageSquare, TrendingUp, TrendingDown, Phone, MapPin, ShoppingBag, Trash2 } from 'lucide-react'
 import { formatBSFull } from '@/lib/utils/date'
 import type { Customer, KhataEntry, Transaction } from '@/lib/types/database'
@@ -36,6 +37,20 @@ export default function CustomerDetailPage() {
   const [deleting,       setDeleting]       = useState(false)
 
   const fetchData = useCallback(async () => {
+    // Staff mode: load via the staff API (no Supabase session)
+    if (isStaffMode()) {
+      const res = await fetch(`/api/staff/khata?customerId=${customerId}`)
+      if (!res.ok) { setLoading(false); return }
+      const data = await res.json() as {
+        customer: Customer; entries: KhataEntry[]; purchases: Transaction[]
+      }
+      setCustomer(data.customer)
+      setEntries(data.entries)
+      setPurchases(data.purchases)
+      setLoading(false)
+      return
+    }
+
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
@@ -66,6 +81,22 @@ export default function CustomerDetailPage() {
     if (!amt || amt <= 0) { setFormError('Enter a valid amount'); return }
 
     setSaving(true)
+
+    // Staff mode: append-only entry through the staff API
+    if (isStaffMode()) {
+      const res = await fetch('/api/staff/khata', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customerId, type: entryType, amount: amt, collectMethod }),
+      })
+      if (!res.ok) { setFormError('Error saving entry'); setSaving(false); return }
+      setAmount('')
+      setShowForm(false)
+      setSaving(false)
+      await fetchData()
+      return
+    }
+
     const supabase = createClient()
 
     const { error: entryErr } = await supabase.from('khata_entries').insert({
@@ -139,9 +170,12 @@ export default function CustomerDetailPage() {
             <ArrowLeft size={22} />
           </button>
           <h1 className="text-xl font-bold text-white truncate flex-1">{customer.name}</h1>
-          <button onClick={() => setConfirmDelete(true)} className="p-2 rounded-xl bg-white/20 text-white active:scale-95 transition-transform">
-            <Trash2 size={18} />
-          </button>
+          {/* Delete is owner-only — staff can't erase khata history */}
+          {!isStaffMode() && (
+            <button onClick={() => setConfirmDelete(true)} className="p-2 rounded-xl bg-white/20 text-white active:scale-95 transition-transform">
+              <Trash2 size={18} />
+            </button>
+          )}
         </div>
 
         <div className="bg-white/15 rounded-2xl p-4 space-y-1.5">
@@ -198,8 +232,8 @@ export default function CustomerDetailPage() {
           </button>
         </div>
 
-        {/* SMS button */}
-        {customer.phone && outstanding > 0 && (
+        {/* SMS button — owner only (their SMS credits, their customer relationship) */}
+        {customer.phone && outstanding > 0 && !isStaffMode() && (
           <button
             onClick={sendReminder}
             disabled={smsLoading}
